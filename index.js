@@ -158,7 +158,6 @@ async function run() {
     "/auth/twitch/callback",
     passport.authenticate("twitch", {
       failureRedirect: "/",
-      successRedirect: "/login",
     }),
     function (req, res) {
       // Successful authentication, redirect home.
