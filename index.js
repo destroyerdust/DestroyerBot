@@ -9,6 +9,9 @@ const { ClientCredentialsAuthProvider } = require("twitch-auth");
 const { SimpleAdapter, WebHookListener } = require("twitch-webhooks");
 const { NgrokAdapter } = require("twitch-webhooks-ngrok");
 
+const { CommandoClient } = require("discord.js-commando");
+const path = require("path");
+
 // Env Variables
 process.env.NODE_ENV = "development";
 const config = require("./config/config.js");
@@ -30,17 +33,45 @@ const winstonLogger = winston.createLogger({
 
 // Discord Initializaiton
 // Create an instance of Discord Client
-const discordClient = new discord.Client();
-
-discordClient.on("ready", () => {
-  winstonLogger.info("Discord Bot Reeady");
+const discordClient = new CommandoClient({
+  commandPrefix: global.gConfig.botPrefix,
+  owner: "127550775919378432",
 });
 
+discordClient.registry
+  .registerDefaultTypes()
+  .registerGroups([["util", "Utility Command Group"]])
+  .registerDefaultGroups()
+  .registerDefaultCommands({
+    ping: false,
+  })
+  .registerCommandsIn(path.join(__dirname, "Discord", "commands"));
+
+discordClient
+  .on("ready", () => {
+    winstonLogger.info("Discord Bot Reeady");
+  })
+  .on("reconnecting", () => {
+    winstonLogger.info("Discord Bot Reconnecting");
+  })
+  .on("resume", () => {
+    winstonLogger.info("Discord Bot Reconnected");
+  })
+  .on("disconnect", () => {
+    winstonLogger.info("Discord Bot Disconnected");
+  });
+
 discordClient.on("message", (message) => {
-  if (message.content === "ping") {
-    winstonLogger.info("pong");
-    message.channel.send("pong");
-    discordClient.channels.cache.get(global.gConfig.botChannelId).send("pong");
+  if (message.author.bot) return;
+
+  if (message.channel.type == "dm") {
+    const embed = new discord.MessageEmbed()
+      .setAuthor(message.author.tag, message.author.displayAvatarURL())
+      .setDescription(message.content)
+      .setColor("#D48AD8")
+      .setTimestamp();
+
+    return message.channel.send({ embed });
   }
 });
 
@@ -136,6 +167,12 @@ async function run() {
     winstonLogger.info(`Website running at http://localhost:${port}`);
   });
 }
+
+process.on("SIGINT", () => {
+  winstonLogger.info(`Twitch Webhook Subscription Cleanup`);
+  subscription.stop();
+  process.exit(0);
+});
 
 run().catch((error) => {
   winstonLogger.error(error);
