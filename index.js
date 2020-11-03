@@ -134,11 +134,15 @@ async function getSubscriptions() {
   listener.subscribeToStreamChanges(user.id, async (stream) => {
     if (stream) {
       if (!prevStream) {
+        winstonLogger.info(
+          `${stream.userDisplayName} just went Live with Title: ${stream.title}`
+        );
         console.log(
           `${stream.userDisplayName} just went Live with Title: ${stream.title}`
         );
       }
     } else {
+      winstonLogger.info(`${user.displayName} just went offline`);
       console.log(`${user.displayName} just went offline`);
     }
   });
