@@ -1,81 +1,30 @@
 const dotenv = require("dotenv").config();
 const express = require("express");
+var bodyParser = require("body-parser");
+var cookieParser = require("cookie-parser");
+var cookieSession = require("cookie-session");
+var passport = require("passport");
+var twitchStrategy = require("passport-twitch-new").Strategy;
+
 const morgan = require("morgan");
-const winston = require("winston");
-const discord = require("discord.js");
+const logger = require("./Util/logger.js");
+
+const DiscordBot = require("./Discord/discordBot.js");
 
 const { ApiClient } = require("twitch");
 const { ClientCredentialsAuthProvider } = require("twitch-auth");
 const { SimpleAdapter, WebHookListener } = require("twitch-webhooks");
 const { NgrokAdapter } = require("twitch-webhooks-ngrok");
 
-const { CommandoClient } = require("discord.js-commando");
 const path = require("path");
 
 // Env Variables
 process.env.NODE_ENV = "development";
 const config = require("./config/config.js");
 
-// Logger:
-// TODO Review this logger
-const winstonLogger = winston.createLogger({
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: "log" }),
-  ],
-  format: winston.format.printf(
-    (log) =>
-      `[${new Date().toLocaleString()}] - [${log.level.toUpperCase()}] - ${
-        log.message
-      }`
-  ),
-});
-
 // Discord Initializaiton
-// Create an instance of Discord Client
-const discordClient = new CommandoClient({
-  commandPrefix: global.gConfig.botPrefix,
-  owner: "127550775919378432",
-});
-
-discordClient.registry
-  .registerDefaultTypes()
-  .registerGroups([["util", "Utility Command Group"]])
-  .registerDefaultGroups()
-  .registerDefaultCommands({
-    ping: false,
-  })
-  .registerCommandsIn(path.join(__dirname, "Discord", "commands"));
-
-discordClient
-  .on("ready", () => {
-    winstonLogger.info("Discord Bot Reeady");
-  })
-  .on("reconnecting", () => {
-    winstonLogger.info("Discord Bot Reconnecting");
-  })
-  .on("resume", () => {
-    winstonLogger.info("Discord Bot Reconnected");
-  })
-  .on("disconnect", () => {
-    winstonLogger.info("Discord Bot Disconnected");
-  });
-
-discordClient.on("message", (message) => {
-  if (message.author.bot) return;
-
-  if (message.channel.type == "dm") {
-    const embed = new discord.MessageEmbed()
-      .setAuthor(message.author.tag, message.author.displayAvatarURL())
-      .setDescription(message.content)
-      .setColor("#D48AD8")
-      .setTimestamp();
-
-    return message.channel.send({ embed });
-  }
-});
-
-discordClient.login(process.env.DISCORD_TOKEN);
+const discordBot = new DiscordBot();
+discordBot.start();
 
 // Twitch Initializaiton
 const authProvider = new ClientCredentialsAuthProvider(
@@ -118,6 +67,7 @@ async function getSubscriptions() {
   listener.listen();
 
   const user = await getUserById(global.gConfig.twitchUser);
+  logger.info(`${user.displayName} ID: ${user.id}`);
 
   listener.subscribeToFollowsToUser(user, async (follow) => {
     if (follow) {
@@ -134,7 +84,7 @@ async function getSubscriptions() {
   listener.subscribeToStreamChanges(user.id, async (stream) => {
     if (stream) {
       if (!prevStream) {
-        winstonLogger.info(
+        logger.info(
           `${stream.userDisplayName} just went Live with Title: ${stream.title}`
         );
         console.log(
@@ -142,9 +92,10 @@ async function getSubscriptions() {
         );
       }
     } else {
-      winstonLogger.info(`${user.displayName} just went offline`);
+      logger.info(`${user.displayName} just went offline`);
       console.log(`${user.displayName} just went offline`);
     }
+    prevStream = stream;
   });
 
   //   listener.subscribeToSubscriptionEvents(user.id, async (subscriptionEvent) => {
@@ -164,20 +115,68 @@ async function run() {
   const port = global.gConfig.web_port || 3000;
 
   app.use(morgan("combined"));
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(cookieParser());
+  app.use(cookieSession({ secret: "somethingsecretelkjwrlsadkf" }));
+  app.use(passport.initialize());
 
-  app.use(require("./routes"));
+  passport.use(
+    new twitchStrategy(
+      {
+        clientID: process.env.TWITCH_CLIENT_ID,
+        clientSecret: process.env.TWITCH_SECRET,
+        callbackURL: "http://localhost:3000/auth/twitch/callback",
+        scope: "user_read",
+      },
+      function (accessToken, refreshToken, profile, done) {
+        console.log(accessToken);
+        console.log(refreshToken);
+        console.log(profile.id);
+      }
+    )
+  );
+
+  passport.serializeUser(function (user, done) {
+    done(null, user);
+  });
+
+  passport.deserializeUser(function (user, done) {
+    done(null, user);
+  });
+
+  // app.use(require("./routes"));
+  app.get("/", (req, res) => {
+    res.send("Hello World!");
+  });
+
+  app.get("/login", (req, res) => {
+    res.send("Logged In");
+  });
+
+  app.get("/auth/twitch", passport.authenticate("twitch"));
+  app.get(
+    "/auth/twitch/callback",
+    passport.authenticate("twitch", {
+      failureRedirect: "/",
+      successRedirect: "/login",
+    }),
+    function (req, res) {
+      // Successful authentication, redirect home.
+      res.redirect("/");
+    }
+  );
 
   app.listen(port, () => {
-    winstonLogger.info(`Website running at http://localhost:${port}`);
+    logger.info(`Website running at http://localhost:${port}`);
   });
 }
 
 process.on("SIGINT", () => {
-  winstonLogger.info(`Twitch Webhook Subscription Cleanup`);
+  logger.info(`Twitch Webhook Subscription Cleanup`);
   subscription.stop();
   process.exit(0);
 });
 
 run().catch((error) => {
-  winstonLogger.error(error);
+  logger.error(error);
 });
