@@ -1,0 +1,28 @@
+{
+  "name": "DestroyerBot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.4.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "lodash": "^4.17.20",
+    "twitch": "^4.2.7",
+    "twitch-auth": "^4.2.7",
+    "twitch-webhooks": "^4.2.7",
+    "twitch-webhooks-ngrok": "^4.2.7",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.6"
+  }
+}

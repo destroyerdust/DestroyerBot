@@ -1,0 +1,15 @@
+{
+    "discordConfig": {
+        "botPrefix": "!db",
+        "botChannelId": "339828190383964160"
+    },
+    "twitchConfig": {
+        "twitchUser": "shroud"
+    },
+    "development": {
+        "web_port": 3000
+    },
+    "production": {
+        "web_port": 8080
+    }
+}
