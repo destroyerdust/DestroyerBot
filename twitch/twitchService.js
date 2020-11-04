@@ -57,6 +57,8 @@ class TwitchService {
       }
       prevStream = stream;
     });
+
+    return this.listener;
   }
 
   async start() {

@@ -48,8 +48,10 @@ async function run() {
 }
 
 process.on("SIGINT", () => {
+  logger.info(`Discord Bot Cleanup`);
+  discordBot.client.destroy();
   logger.info(`Twitch Webhook Subscription Cleanup`);
-  subscription.stop();
+  subscriptions.stop();
   process.exit(0);
 });
 
