@@ -7,18 +7,6 @@ const logger = require("./util/logger.js");
 const DiscordBot = require("./discord/discordBot.js");
 const TwitchService = require("./twitch/twitchService.js");
 
-const { ApiClient } = require("twitch");
-const {
-  ClientCredentialsAuthProvider,
-  RefreshableAuthProvider,
-  StaticAuthProvider,
-} = require("twitch-auth");
-const { SimpleAdapter, WebHookListener } = require("twitch-webhooks");
-const { NgrokAdapter } = require("twitch-webhooks-ngrok");
-const fs = require("fs");
-
-const path = require("path");
-
 // Env Variables
 process.env.NODE_ENV = "development";
 const config = require("./config/config.js");
