@@ -1,10 +1,5 @@
 const dotenv = require("dotenv").config();
 const express = require("express");
-var bodyParser = require("body-parser");
-var cookieParser = require("cookie-parser");
-var cookieSession = require("cookie-session");
-var passport = require("passport");
-var twitchStrategy = require("passport-twitch-new").Strategy;
 
 const morgan = require("morgan");
 const logger = require("./Util/logger.js");
@@ -12,9 +7,14 @@ const logger = require("./Util/logger.js");
 const DiscordBot = require("./Discord/discordBot.js");
 
 const { ApiClient } = require("twitch");
-const { ClientCredentialsAuthProvider } = require("twitch-auth");
+const {
+  ClientCredentialsAuthProvider,
+  RefreshableAuthProvider,
+  StaticAuthProvider,
+} = require("twitch-auth");
 const { SimpleAdapter, WebHookListener } = require("twitch-webhooks");
 const { NgrokAdapter } = require("twitch-webhooks-ngrok");
+const fs = require("fs");
 
 const path = require("path");
 
@@ -27,13 +27,14 @@ const discordBot = new DiscordBot();
 discordBot.start();
 
 // Twitch Initializaiton
+
 const authProvider = new ClientCredentialsAuthProvider(
   process.env.TWITCH_CLIENT_ID,
   process.env.TWITCH_SECRET
 );
 
 const webhookConfig = {
-  hostName: "a9514e78f8f6.ngrok.io",
+  hostName: "https://a9514e78f8f6.ngrok.io",
   port: 80,
   reverseProxy: { port: 443, ssl: true },
 };
@@ -54,8 +55,9 @@ async function getUserById(username) {
 // const listener = new WebHookListener(
 //   twitchApiClient,
 //   new SimpleAdapter({
-//     hostName: "a9514e78f8f6.ngrok.io",
+//     hostName: "https://6a25a9a51616.ngrok.io",
 //     listenerPort: 80,
+//     reverseProxy: { port: 443, ssl: true },
 //   })
 // );
 
@@ -98,11 +100,11 @@ async function getSubscriptions() {
     prevStream = stream;
   });
 
-  //   listener.subscribeToSubscriptionEvents(user.id, async (subscriptionEvent) => {
-  //     if (subscriptionEvent) {
-  //       console.log(subscriptionEvent.getUser());
-  //     }
-  //   });
+  // listener.subscribeToSubscriptionEvents(user.id, async (subscriptionEvent) => {
+  //   if (subscriptionEvent) {
+  //     console.log(subscriptionEvent.getUser());
+  //   }
+  // });
 
   return listener;
 }
@@ -115,55 +117,8 @@ async function run() {
   const port = global.gConfig.web_port || 3000;
 
   app.use(morgan("combined"));
-  app.use(bodyParser.urlencoded({ extended: true }));
-  app.use(cookieParser());
-  app.use(cookieSession({ secret: "somethingsecretelkjwrlsadkf" }));
-  app.use(passport.initialize());
 
-  passport.use(
-    new twitchStrategy(
-      {
-        clientID: process.env.TWITCH_CLIENT_ID,
-        clientSecret: process.env.TWITCH_SECRET,
-        callbackURL: "http://localhost:3000/auth/twitch/callback",
-        scope: "user_read",
-      },
-      function (accessToken, refreshToken, profile, done) {
-        console.log(accessToken);
-        console.log(refreshToken);
-        console.log(profile.id);
-      }
-    )
-  );
-
-  passport.serializeUser(function (user, done) {
-    done(null, user);
-  });
-
-  passport.deserializeUser(function (user, done) {
-    done(null, user);
-  });
-
-  // app.use(require("./routes"));
-  app.get("/", (req, res) => {
-    res.send("Hello World!");
-  });
-
-  app.get("/login", (req, res) => {
-    res.send("Logged In");
-  });
-
-  app.get("/auth/twitch", passport.authenticate("twitch"));
-  app.get(
-    "/auth/twitch/callback",
-    passport.authenticate("twitch", {
-      failureRedirect: "/",
-    }),
-    function (req, res) {
-      // Successful authentication, redirect home.
-      res.redirect("/");
-    }
-  );
+  require("./routes/index.js")(app);
 
   app.listen(port, () => {
     logger.info(`Website running at http://localhost:${port}`);

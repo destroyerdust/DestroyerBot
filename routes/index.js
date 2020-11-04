@@ -1,7 +1,9 @@
-var router = require("express").Router();
+module.exports = function (app) {
+  app.get("/", function (req, res) {
+    res.send(global.gConfig);
+  });
 
-router.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-module.exports = router;
+  app.get("/test", function (req, res) {
+    res.send("Hello Test!");
+  });
+};

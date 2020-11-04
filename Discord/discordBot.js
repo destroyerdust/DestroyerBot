@@ -1,9 +1,6 @@
 const discord = require("discord.js");
 const { CommandoClient } = require("discord.js-commando");
-
-// const winston = require("winston");
 const path = require("path");
-
 const logger = require("../Util/logger.js");
 
 class DiscordBot {
@@ -28,6 +25,7 @@ class DiscordBot {
     this.client
       .on("ready", () => {
         logger.info("Discord Setup");
+        this.client.user.setActivity("with Commando");
       })
       .on("reconnecting", () => {
         logger.info("Discord Bot Reconnecting");
@@ -37,6 +35,9 @@ class DiscordBot {
       })
       .on("disconnect", () => {
         logger.info("Discord Bot Disconnected");
+      })
+      .on("error", () => {
+        logger.error("Discord Error: " + console.error);
       });
   }
 
