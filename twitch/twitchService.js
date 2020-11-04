@@ -1,3 +1,4 @@
+const { NewsChannel } = require("discord.js");
 const { ApiClient } = require("twitch");
 const {
   ClientCredentialsAuthProvider,
@@ -5,17 +6,62 @@ const {
   StaticAuthProvider,
 } = require("twitch-auth");
 const { SimpleAdapter, WebHookListener } = require("twitch-webhooks");
-const { NgrokAdapter } = require("twitch-webhooks-ngrok/lib");
+const { NgrokAdapter } = require("twitch-webhooks-ngrok");
+const logger = require("../util/logger.js");
 
 class TwitchService {
-  constructor(id, secret) {
+  constructor() {
     this.authProvider = new ClientCredentialsAuthProvider(
       process.env.TWITCH_CLIENT_ID,
-      TWITCH_SECRET
+      process.env.TWITCH_SECRET
     );
-    this.client = new ApiClient(this.authProvider);
+    this.client = new ApiClient({ authProvider: this.authProvider });
+  }
+
+  async getUserById(username) {
+    return await this.client.helix.users.getUserByName(username);
+  }
+
+  async getSubscriptions() {
     this.listener = new WebHookListener(this.client, new NgrokAdapter(), {
       hookValidity: 60,
     });
+    this.listener.listen();
+
+    const user = await this.getUserById(global.gConfig.twitchUser);
+    logger.info(`${user.displayName} ID: ${user.id}`);
+
+    this.listener.subscribeToFollowsToUser(user, async (follow) => {
+      if (follow) {
+        console.info(
+          `${follow.userDisplayName} has followed ${user.displayName}`
+        );
+      }
+    });
+
+    let prevStream = await this.client.helix.streams.getStreamByUserId(user.id);
+
+    this.listener.subscribeToStreamChanges(user.id, async (stream) => {
+      if (stream) {
+        if (!prevStream) {
+          logger.info(
+            `${stream.userDisplayName} just went Live with Title: ${stream.title}`
+          );
+          console.log(
+            `${stream.userDisplayName} just went Live with Title: ${stream.title}`
+          );
+        }
+      } else {
+        logger.info(`${user.displayName} just went offline`);
+        console.log(`${user.displayName} just went offline`);
+      }
+      prevStream = stream;
+    });
+  }
+
+  async start() {
+    logger.debug(`Twitch Start`);
   }
 }
+
+module.exports = TwitchService;
