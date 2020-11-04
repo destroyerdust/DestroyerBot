@@ -26,7 +26,6 @@ class DiscordBot {
     this.client
       .on("ready", () => {
         logger.info("Discord Setup");
-        // this.client.user.setActivity("with Commando");
         this.client.user.setPresence({
           activity: {
             name: `in ${this.client.guilds.cache.size} servers | !db help`,
