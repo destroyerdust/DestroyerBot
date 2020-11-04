@@ -2,9 +2,9 @@ const dotenv = require("dotenv").config();
 const express = require("express");
 
 const morgan = require("morgan");
-const logger = require("./Util/logger.js");
+const logger = require("./util/logger.js");
 
-const DiscordBot = require("./Discord/discordBot.js");
+const DiscordBot = require("./discord/discordBot.js");
 
 const { ApiClient } = require("twitch");
 const {

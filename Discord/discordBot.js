@@ -1,7 +1,7 @@
 const discord = require("discord.js");
 const { CommandoClient } = require("discord.js-commando");
 const path = require("path");
-const logger = require("../Util/logger.js");
+const logger = require("../util/logger.js");
 
 class DiscordBot {
   constructor() {
