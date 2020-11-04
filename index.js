@@ -24,6 +24,7 @@ const config = require("./config/config.js");
 
 // Discord Initializaiton
 const discordBot = new DiscordBot();
+["event"].forEach((x) => require(`./discord/handlers/${x}`)(discordBot.client));
 discordBot.start();
 
 // Twitch Initializaiton

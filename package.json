@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "pm2 start index.js --name 'DestroyerBot'",
+    "stop": "pm2 stop 'DestroyerBot'",
+    "delete": "pm2 delete 'DestroyerBot'",
     "dev": "nodemon index.js"
   },
   "keywords": [],
