@@ -19,6 +19,7 @@ class DiscordBot {
       .registerDefaultGroups()
       .registerDefaultCommands({
         ping: false,
+        unknownCommand: false,
       })
       .registerCommandsIn(path.join(__dirname, "commands"));
 
@@ -37,13 +38,13 @@ class DiscordBot {
           `${this.client.user.username} loaded. Currently in ${this.client.guilds.cache.size} server(s) with ${this.client.users.cache.size} users.`
         );
       })
-      .on("reconnecting", () => {
-        logger.info("Discord Bot Reconnecting");
+      .on("shardReconnecting", (id) => {
+        logger.info(`Discord Bot Shard ${id} Reconnecting`);
       })
-      .on("resume", () => {
+      .on("shardResume", () => {
         logger.info("Discord Bot Reconnected");
       })
-      .on("disconnect", () => {
+      .on("shardDisconnect", () => {
         logger.info("Discord Bot Disconnected");
       })
       .on("error", () => {
