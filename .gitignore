@@ -2,6 +2,9 @@
 config/config.json
 tokens.json
 
+# Notes
+notes.txt
+
 # Logs
 log
 logs

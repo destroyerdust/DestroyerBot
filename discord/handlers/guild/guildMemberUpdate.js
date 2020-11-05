@@ -1,7 +1,3 @@
 module.exports = async (bot, oldMember, newMember) => {
-  try {
-    console.log(`${oldMember.displayName} New ${newMember.displayName}`);
-  } catch (err) {
-    console.log(err);
-  }
+  console.log(`${oldMember.displayName} to ${newMember.displayName}`);
 };

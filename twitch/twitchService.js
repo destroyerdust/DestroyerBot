@@ -22,7 +22,8 @@ class TwitchService {
     return await this.client.helix.users.getUserByName(username);
   }
 
-  async getSubscriptions() {
+  async getSubscriptions(discordBot) {
+    this.discordClient = discordBot.client;
     this.listener = new WebHookListener(this.client, new NgrokAdapter(), {
       hookValidity: 60,
     });
@@ -36,6 +37,10 @@ class TwitchService {
         console.info(
           `${follow.userDisplayName} has followed ${user.displayName}`
         );
+
+        // this.discordClient.channels.cache
+        //   .get("339828190383964160")
+        //   .send(`${follow.userDisplayName} has followed ${user.displayName}`);
       }
     });
 
@@ -53,7 +58,6 @@ class TwitchService {
         }
       } else {
         logger.info(`${user.displayName} just went offline`);
-        console.log(`${user.displayName} just went offline`);
       }
       prevStream = stream;
     });

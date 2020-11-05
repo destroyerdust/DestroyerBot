@@ -19,7 +19,18 @@ discordBot.start();
 // Twitch Initializaiton
 const twitchService = new TwitchService();
 twitchService.start();
-const subscriptions = twitchService.getSubscriptions();
+const subscriptions = twitchService.getSubscriptions(discordBot);
+
+// async function testAddAfterStart() {
+//   const testUser = await twitchService.client.helix.users.getUserByName("tfue");
+
+//   (await subscriptions).subscribeToFollowsToUser(testUser, (follow) => {
+//     console.log(`${follow.userDisplayName} followed ${testUser.displayName}`);
+//   });
+//   return testUser;
+// }
+
+// testAddAfterStart().then(console.log);
 
 // Website Initializaiton
 async function run() {
