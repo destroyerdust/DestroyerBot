@@ -18,7 +18,9 @@
     "discord.js-commando": "github:discordjs/Commando",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "helmet": "^4.2.0",
     "lodash": "^4.17.20",
+    "sqlite3": "^5.0.0",
     "twitch": "^4.2.7",
     "twitch-auth": "^4.2.7",
     "twitch-webhooks": "^4.2.7",
@@ -26,6 +28,7 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
+    "eslint": "^7.12.1",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.6"
   }

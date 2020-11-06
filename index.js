@@ -1,25 +1,35 @@
 const dotenv = require("dotenv").config();
-const express = require("express");
 
+const express = require("express");
+const helmet = require("helmet");
 const morgan = require("morgan");
+
 const logger = require("./util/logger.js");
 
 const DiscordBot = require("./discord/discordBot.js");
 const TwitchService = require("./twitch/twitchService.js");
+let twitchService, subscriptions;
 
 // Env Variables
 process.env.NODE_ENV = "development";
 const config = require("./config/config.js");
+const winston = require("winston/lib/winston/config");
 
 // Discord Initializaiton
 const discordBot = new DiscordBot();
 ["event"].forEach((x) => require(`./discord/handlers/${x}`)(discordBot.client));
-discordBot.start();
+discordBot.start().then(function () {
+  // Twitch Initializaiton
+  twitchService = new TwitchService();
+  twitchService.start();
+  subscriptions = twitchService.getSubscriptions(discordBot);
 
-// Twitch Initializaiton
-const twitchService = new TwitchService();
-twitchService.start();
-const subscriptions = twitchService.getSubscriptions(discordBot);
+  const channelNames = ["shroud", "tfue", "ninja"];
+
+  channelNames.forEach((channel) => {
+    twitchService.followToUser(channel);
+  });
+});
 
 // async function testAddAfterStart() {
 //   const testUser = await twitchService.client.helix.users.getUserByName("tfue");
@@ -38,6 +48,7 @@ async function run() {
   const port = global.gConfig.web_port || 3000;
 
   app.use(morgan("combined"));
+  app.use(helmet());
 
   require("./routes/index.js")(app);
 
@@ -51,6 +62,7 @@ process.on("SIGINT", () => {
   discordBot.client.destroy();
   logger.info(`Twitch Webhook Subscription Cleanup`);
   subscriptions.stop();
+
   process.exit(0);
 });
 

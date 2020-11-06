@@ -24,25 +24,21 @@ class TwitchService {
 
   async getSubscriptions(discordBot) {
     this.discordClient = discordBot.client;
-    this.listener = new WebHookListener(this.client, new NgrokAdapter(), {
-      hookValidity: 60,
-    });
-    this.listener.listen();
 
     const user = await this.getUserById(global.gConfig.twitchUser);
     logger.info(`${user.displayName} ID: ${user.id}`);
 
-    this.listener.subscribeToFollowsToUser(user, async (follow) => {
-      if (follow) {
-        console.info(
-          `${follow.userDisplayName} has followed ${user.displayName}`
-        );
+    // this.listener.subscribeToFollowsToUser(user, async (follow) => {
+    //   if (follow) {
+    //     console.info(
+    //       `${follow.userDisplayName} has followed ${user.displayName}`
+    //     );
 
-        // this.discordClient.channels.cache
-        //   .get("339828190383964160")
-        //   .send(`${follow.userDisplayName} has followed ${user.displayName}`);
-      }
-    });
+    //     // this.discordClient.channels.cache
+    //     //   .get("339828190383964160")
+    //     //   .send(`${follow.userDisplayName} has followed ${user.displayName}`);
+    //   }
+    // });
 
     let prevStream = await this.client.helix.streams.getStreamByUserId(user.id);
 
@@ -65,8 +61,26 @@ class TwitchService {
     return this.listener;
   }
 
+  async followToUser(channelName) {
+    const user = await this.getUserById(channelName);
+
+    this.listener.subscribeToFollowsToUser(user, (follow) => {
+      if (follow) {
+        console.log(
+          `${follow.userDisplayName} has just followed ${user.displayName}!`
+        );
+      }
+    });
+
+    logger.info(`Follow Subscription for Channel: ${channelName}`);
+  }
+
   async start() {
-    logger.debug(`Twitch Start`);
+    logger.info(`Twitch Webhook Start`);
+    this.listener = new WebHookListener(this.client, new NgrokAdapter(), {
+      hookValidity: 60,
+    });
+    this.listener.listen();
   }
 }
 
