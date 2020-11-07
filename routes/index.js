@@ -1,11 +1,18 @@
+const router = require('express').Router();
 const config = require('../config');
 
-module.exports = function (app) {
-  app.get('/', function (req, res) {
-    res.send(config.twitch.defaultUser);
+const discordRoutes = require('./discord');
+
+module.exports = function (discordBot) {
+  router.get('/', (req, res) => {
+    res.render('pages/index');
   });
 
-  app.get('/test', function (req, res) {
-    res.send('Hello Test!');
+  router.get('/test', (req, res) => {
+    res.send('Hello Test');
   });
+
+  router.use('/discord', discordRoutes(discordBot));
+
+  return router;
 };

@@ -15,6 +15,7 @@ let subscriptions;
 // Env Variables
 process.env.NODE_ENV = 'development';
 const config = require('./config');
+const routes = require('./routes');
 
 // Asyn Initalization Functions
 async function run() {
@@ -24,7 +25,9 @@ async function run() {
   app.use(morgan('combined'));
   app.use(helmet());
 
-  require('./routes/index.js')(app);
+  app.set('view engine', 'ejs');
+
+  app.use('/', routes(discordBot));
 
   app.listen(port, () => {
     logger.info(`Website running at http://localhost:${port}`);
@@ -33,21 +36,20 @@ async function run() {
 
 // DestroyerBot Initializaiton
 const discordBot = new DiscordBot();
-['event'].forEach((x) => require(`./discord/handlers/${x}`)(discordBot.client));
 discordBot
   .start()
-  .then(function () {
-    // Twitch Initializaiton
-    twitchService = new TwitchService();
-    twitchService.start();
-    subscriptions = twitchService.getSubscriptions(discordBot);
+  // .then(function () {
+  //   // Twitch Initializaiton
+  //   twitchService = new TwitchService();
+  //   twitchService.start();
+  //   subscriptions = twitchService.getSubscriptions(discordBot);
 
-    const channelNames = ['shroud', 'tfue', 'ninja'];
+  //   const channelNames = ['shroud', 'tfue', 'ninja'];
 
-    channelNames.forEach((channel) => {
-      twitchService.followToUser(channel);
-    });
-  })
+  //   channelNames.forEach((channel) => {
+  //     twitchService.followToUser(channel);
+  //   });
+  // })
   .then(
     run().catch((error) => {
       logger.error(`Web run error: ${error}`);
