@@ -29,18 +29,6 @@ class TwitchService {
     const user = await this.getUserById(config.twitch.defaultUser);
     logger.info(`${user.displayName} ID: ${user.id}`);
 
-    // this.listener.subscribeToFollowsToUser(user, async (follow) => {
-    //   if (follow) {
-    //     console.info(
-    //       `${follow.userDisplayName} has followed ${user.displayName}`
-    //     );
-
-    //     // this.discordClient.channels.cache
-    //     //   .get("339828190383964160")
-    //     //   .send(`${follow.userDisplayName} has followed ${user.displayName}`);
-    //   }
-    // });
-
     let prevStream = await this.client.helix.streams.getStreamByUserId(user.id);
 
     this.listener.subscribeToStreamChanges(user.id, async (stream) => {
