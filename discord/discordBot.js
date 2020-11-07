@@ -35,7 +35,7 @@ class DiscordBot {
         });
 
         logger.info(
-          `${this.client.user.username} loaded. Currently in ${this.client.guilds.cache.size} server(s) with ${this.client.users.cache.size} users.`
+          `${this.client.user.username} loaded. Currently in ${this.client.guilds.cache.size} server(s) with ${this.client.users.cache.size} users.`,
         );
       })
       .on('shardReconnecting', (id) => {

@@ -7,9 +7,7 @@
     "start": "pm2 start index.js --name 'DestroyerBot'",
     "stop": "pm2 stop 'DestroyerBot'",
     "delete": "pm2 delete 'DestroyerBot'",
-    "dev": "nodemon index.js",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
@@ -31,19 +29,12 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
-    "babel-eslint": "^10.1.0",
-    "eslint": "^7.8.1",
-    "eslint-config-airbnb": "^18.2.0",
-    "eslint-config-prettier": "^6.11.0",
-    "eslint-config-wesbos": "^1.0.1",
-    "eslint-plugin-html": "^6.1.0",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jsx-a11y": "^6.3.1",
+    "eslint": "^7.2.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-prettier": "^3.1.4",
-    "eslint-plugin-react": "^7.20.6",
-    "eslint-plugin-react-hooks": "^4.1.2",
     "morgan": "^1.10.0",
-    "nodemon": "^2.0.6",
-    "prettier": "^2.1.1"
+    "nodemon": "^2.0.6"
   }
 }

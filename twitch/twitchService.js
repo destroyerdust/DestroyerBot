@@ -14,7 +14,7 @@ class TwitchService {
   constructor() {
     this.authProvider = new ClientCredentialsAuthProvider(
       config.twitch.clientId,
-      config.twitch.secret
+      config.twitch.secret,
     );
     this.client = new ApiClient({ authProvider: this.authProvider });
   }
@@ -47,10 +47,10 @@ class TwitchService {
       if (stream) {
         if (!prevStream) {
           logger.info(
-            `${stream.userDisplayName} just went Live with Title: ${stream.title}`
+            `${stream.userDisplayName} just went Live with Title: ${stream.title}`,
           );
           console.log(
-            `${stream.userDisplayName} just went Live with Title: ${stream.title}`
+            `${stream.userDisplayName} just went Live with Title: ${stream.title}`,
           );
         }
       } else {
@@ -68,7 +68,7 @@ class TwitchService {
     this.listener.subscribeToFollowsToUser(user, (follow) => {
       if (follow) {
         console.log(
-          `${follow.userDisplayName} has just followed ${user.displayName}!`
+          `${follow.userDisplayName} has just followed ${user.displayName}!`,
         );
       }
     });
@@ -77,7 +77,7 @@ class TwitchService {
   }
 
   async start() {
-    logger.info(`Twitch Webhook Start`);
+    logger.info('Twitch Webhook Start');
     this.listener = new WebHookListener(this.client, new NgrokAdapter(), {
       hookValidity: 60,
     });
