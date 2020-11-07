@@ -1,19 +1,20 @@
-const { NewsChannel } = require("discord.js");
-const { ApiClient } = require("twitch");
+const { NewsChannel } = require('discord.js');
+const { ApiClient } = require('twitch');
 const {
   ClientCredentialsAuthProvider,
   RefreshableAuthProvider,
   StaticAuthProvider,
-} = require("twitch-auth");
-const { SimpleAdapter, WebHookListener } = require("twitch-webhooks");
-const { NgrokAdapter } = require("twitch-webhooks-ngrok");
-const logger = require("../util/logger.js");
+} = require('twitch-auth');
+const { SimpleAdapter, WebHookListener } = require('twitch-webhooks');
+const { NgrokAdapter } = require('twitch-webhooks-ngrok');
+const logger = require('../util/logger.js');
+const config = require('../config');
 
 class TwitchService {
   constructor() {
     this.authProvider = new ClientCredentialsAuthProvider(
-      process.env.TWITCH_CLIENT_ID,
-      process.env.TWITCH_SECRET
+      config.twitch.clientId,
+      config.twitch.secret
     );
     this.client = new ApiClient({ authProvider: this.authProvider });
   }
@@ -25,7 +26,7 @@ class TwitchService {
   async getSubscriptions(discordBot) {
     this.discordClient = discordBot.client;
 
-    const user = await this.getUserById(global.gConfig.twitchUser);
+    const user = await this.getUserById(config.twitch.defaultUser);
     logger.info(`${user.displayName} ID: ${user.id}`);
 
     // this.listener.subscribeToFollowsToUser(user, async (follow) => {

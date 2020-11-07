@@ -1,16 +1,16 @@
-const winston = require("winston");
-const path = require("path");
-const chalk = require("chalk");
+const winston = require('winston');
+const path = require('path');
+const chalk = require('chalk');
 
 const logLevelColors = {
-  emerg: "red",
-  alert: "red",
-  crit: "red",
-  error: "red",
-  warning: "yellow",
-  notice: "green",
-  info: "blue",
-  debug: "cyan",
+  emerg: 'red',
+  alert: 'red',
+  crit: 'red',
+  error: 'red',
+  warning: 'yellow',
+  notice: 'green',
+  info: 'blue',
+  debug: 'cyan',
 };
 
 const logger = winston.createLogger({
@@ -24,7 +24,7 @@ const logger = winston.createLogger({
       ),
     }),
     new winston.transports.File({
-      filename: path.resolve(__dirname, "../logs/server.log"),
+      filename: path.resolve(__dirname, '../logs/server.log'),
       format: winston.format.printf(
         (log) =>
           `[${new Date().toLocaleString()}] - [${log.level.toUpperCase()}] - ${
