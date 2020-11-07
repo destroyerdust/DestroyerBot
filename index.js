@@ -36,22 +36,22 @@ const discordBot = new DiscordBot();
 ['event'].forEach((x) => require(`./discord/handlers/${x}`)(discordBot.client));
 discordBot
   .start()
-  .then(function () {
-    // Twitch Initializaiton
-    twitchService = new TwitchService();
-    twitchService.start();
-    subscriptions = twitchService.getSubscriptions(discordBot);
+  // .then(function () {
+  //   // Twitch Initializaiton
+  //   twitchService = new TwitchService();
+  //   twitchService.start();
+  //   subscriptions = twitchService.getSubscriptions(discordBot);
 
-    const channelNames = ['shroud', 'tfue', 'ninja'];
+  //   const channelNames = ['shroud', 'tfue', 'ninja'];
 
-    channelNames.forEach((channel) => {
-      twitchService.followToUser(channel);
-    });
-  })
+  //   channelNames.forEach((channel) => {
+  //     twitchService.followToUser(channel);
+  //   });
+  // })
   .then(
     run().catch((error) => {
       logger.error(`Web run error: ${error}`);
-    })
+    }),
   );
 
 // async function testAddAfterStart() {
