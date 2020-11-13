@@ -17,7 +17,7 @@ process.env.NODE_ENV = 'development';
 const config = require('./config');
 const routes = require('./routes');
 
-// Asyn Initalization Functions
+// Async Initialization Functions
 async function run() {
   const app = express();
   const port = config.port || 3000;
@@ -34,7 +34,7 @@ async function run() {
   });
 }
 
-// DestroyerBot Initializaiton
+// DestroyerBot Initialization
 const discordBot = new DiscordBot();
 discordBot
   .start()
