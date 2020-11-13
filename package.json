@@ -21,7 +21,6 @@
     "helmet": "^4.2.0",
     "lodash": "^4.17.20",
     "mongodb": "^3.6.3",
-    "sqlite3": "^5.0.0",
     "twitch": "^4.2.7",
     "twitch-auth": "^4.2.7",
     "twitch-webhooks": "^4.2.7",
