@@ -21,7 +21,7 @@
     "helmet": "^4.2.0",
     "lodash": "^4.17.20",
     "mongodb": "^3.6.3",
-    "twitch": "^4.2.7",
+    "twitch": "^4.3.0",
     "twitch-auth": "^4.2.7",
     "twitch-webhooks": "^4.2.7",
     "twitch-webhooks-ngrok": "^4.2.7",
