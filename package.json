@@ -23,7 +23,7 @@
     "mongodb": "^3.6.3",
     "twitch": "^4.2.7",
     "twitch-auth": "^4.2.7",
-    "twitch-webhooks": "^4.2.7",
+    "twitch-webhooks": "^4.3.0",
     "twitch-webhooks-ngrok": "^4.2.7",
     "winston": "^3.3.3"
   },
