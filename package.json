@@ -20,7 +20,7 @@
     "express": "^4.17.1",
     "helmet": "^4.2.0",
     "lodash": "^4.17.21",
-    "mongodb": "^3.6.3",
+    "mongodb": "^3.7.3",
     "twitch": "^4.3.0",
     "twitch-auth": "^4.3.0",
     "twitch-webhooks": "^4.2.7",
