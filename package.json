@@ -22,7 +22,7 @@
     "lodash": "^4.17.21",
     "mongodb": "^3.7.3",
     "twitch": "^4.3.0",
-    "twitch-auth": "^4.3.0",
+    "twitch-auth": "^4.6.7",
     "twitch-webhooks": "^4.2.7",
     "twitch-webhooks-ngrok": "^4.6.7",
     "winston": "^3.3.3"
