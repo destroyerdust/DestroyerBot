@@ -24,6 +24,8 @@ class DiscordBot {
       })
       .registerCommandsIn(path.join(__dirname, 'commands'));
 
+    ['event'].forEach((x) => require(`./handlers/${x}`)(this.client));
+
     this.client
       .on('ready', () => {
         logger.info('Discord Setup');
@@ -53,8 +55,13 @@ class DiscordBot {
   }
 
   async start() {
-    logger.debug(`Discord Start - Token: ${config.discord.token}`);
+    logger.info(`Discord Start - Token: ${config.discord.token}`);
     await this.client.login(config.discord.token);
+  }
+
+  async stop() {
+    logger.info(`Discord Stop`);
+    await this.client.destroy();
   }
 }
 

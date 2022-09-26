@@ -13,8 +13,9 @@ let subscriptions;
 // Env Variables
 process.env.NODE_ENV = 'development';
 const config = require('./config');
+const routes = require('./routes');
 
-// Asyn Initalization Functions
+// Async Initialization Functions
 async function run() {
   const app = express();
   const port = config.port || 3000;
@@ -22,14 +23,16 @@ async function run() {
   app.use(morgan('combined'));
   app.use(helmet());
 
-  require('./routes/index.js')(app);
+  app.set('view engine', 'ejs');
+
+  app.use('/', routes(discordBot));
 
   app.listen(port, () => {
     logger.info(`Website running at http://localhost:${port}`);
   });
 }
 
-// DestroyerBot Initializaiton
+// DestroyerBot Initialization
 const discordBot = new DiscordBot();
 ['event'].forEach((x) => require(`./discord/handlers/${x}`)(discordBot.client));
 discordBot.start().then(
@@ -37,6 +40,7 @@ discordBot.start().then(
     logger.error(`Web run error: ${error}`);
   }),
 );
+
 
 process.on('SIGINT', () => {
   logger.info(`Discord Bot Cleanup`);
