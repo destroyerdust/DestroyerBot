@@ -26,7 +26,7 @@
     "twitch-auth": "^4.6.7",
     "twitch-webhooks": "^4.2.7",
     "twitch-webhooks-ngrok": "^4.6.7",
-    "winston": "^3.3.3"
+    "winston": "^3.8.1"
   },
   "devDependencies": {
     "eslint": "^7.2.0",
