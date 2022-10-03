@@ -1,52 +1,66 @@
-const dotenv = require('dotenv').config();
+const fs = require('node:fs');
+const path = require('node:path');
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const { token } = require('./config.json');
+const logger = require('./logger');
 
-const express = require('express');
-const helmet = require('helmet');
-const morgan = require('morgan');
+const client = new Client({
+	intents: [
+		GatewayIntentBits.Guilds,
+	],
+});
 
-const logger = require('./util/logger.js');
+client.commands = new Collection();
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-const DiscordBot = require('./discord/discordBot.js');
-
-let subscriptions;
-
-// Env Variables
-process.env.NODE_ENV = 'development';
-const config = require('./config');
-const routes = require('./routes');
-
-// Async Initialization Functions
-async function run() {
-  const app = express();
-  const port = config.port || 3000;
-
-  app.use(morgan('combined'));
-  app.use(helmet());
-
-  app.set('view engine', 'ejs');
-
-  app.use('/', routes(discordBot));
-
-  app.listen(port, () => {
-    logger.info(`Website running at http://localhost:${port}`);
-  });
+for (const file of commandFiles) {
+	const filePath = path.join(commandsPath, file);
+	const command = require(filePath);
+	client.commands.set(command.data.name, command);
 }
 
-// DestroyerBot Initialization
-const discordBot = new DiscordBot();
-['event'].forEach((x) => require(`./discord/handlers/${x}`)(discordBot.client));
-discordBot.start().then(
-  run().catch((error) => {
-    logger.error(`Web run error: ${error}`);
-  }),
-);
+const globalCommandsPath = path.join(__dirname, 'commands/global');
+const globalCommandFiles = fs.readdirSync(globalCommandsPath).filter(file => file.endsWith('.js'));
 
+for (const file of globalCommandFiles) {
+	const filePath = path.join(globalCommandsPath, file);
+	const command = require(filePath);
+	client.commands.set(command.data.name, command);
+}
 
-process.on('SIGINT', () => {
-  logger.info(`Discord Bot Cleanup`);
-  discordBot.client.destroy();
-  logger.info(`Twitch Webhook Subscription Cleanup`);
-  subscriptions.stop();
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
-  process.exit(0);
+for (const file of eventFiles) {
+	const filePath = path.join(eventsPath, file);
+	const event = require(filePath);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
+	}
+	else {
+		client.on(event.name, (...args) => event.execute(...args));
+	}
+}
+
+client.once('ready', () => {
+	logger.info('The bot is online');
 });
+
+client.on('interactionCreate', async interaction => {
+	if (!interaction.isChatInputCommand()) return;
+
+	const command = client.commands.get(interaction.commandName);
+
+	if (!command) return;
+
+	try {
+		await command.execute(interaction);
+	}
+	catch (error) {
+		console.error(error);
+		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+	}
+});
+
+client.login(token);
