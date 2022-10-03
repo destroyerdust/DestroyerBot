@@ -1,40 +1,33 @@
 {
-  "name": "DestroyerBot",
+  "name": "destroyerbot",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "pm2 start index.js --name 'DestroyerBot'",
-    "stop": "pm2 stop 'DestroyerBot'",
-    "delete": "pm2 delete 'DestroyerBot'",
-    "dev": "nodemon index.js"
+    "dev": "pm2 start index.js --watch",
+    "dev-win": "cmd.exe /c \"node . | pino-pretty\"",
+    "dev-unix": "node . | pino-pretty",
+    "start": "pm2 start index.js",
+    "stop": "pm2 stop index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/destroyerdust/DestroyerBot.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/destroyerdust/DestroyerBot/issues"
+  },
+  "homepage": "https://github.com/destroyerdust/DestroyerBot#readme",
   "dependencies": {
-    "chalk": "^4.1.0",
-    "discord.js": "^14.0.0",
-    "discord.js-commando": "github:discordjs/Commando",
-    "dotenv": "^8.2.0",
-    "ejs": "^3.1.5",
-    "express": "^4.17.1",
-    "helmet": "^4.2.0",
-    "lodash": "^4.17.21",
-    "mongodb": "^3.7.3",
-    "twitch": "^4.6.7",
-    "twitch-auth": "^4.6.7",
-    "twitch-webhooks": "^4.2.7",
-    "twitch-webhooks-ngrok": "^4.6.7",
-    "winston": "^3.3.3"
+    "discord.js": "^14.5.0",
+    "node-fetch": "^2.6.7",
+    "pino": "^7.0.0-rc.9"
   },
   "devDependencies": {
-    "eslint": "^7.2.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-config-prettier": "^6.15.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-prettier": "^3.1.4",
-    "morgan": "^1.10.0",
-    "nodemon": "^2.0.6"
+    "eslint": "^8.24.0"
   }
 }
