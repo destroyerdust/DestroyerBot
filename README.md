@@ -63,6 +63,11 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 ### Global Commands
 
 - `/3d-print-status` - Check 3D print status (global command accessible from all servers)
+- `/weather` - Get current weather for a location
+  - Required `location` option: City name (e.g., "New York" or "London,UK")
+  - Optional `units` option: Temperature units (Celsius (default), Fahrenheit, or Canadian)
+  - Uses Pirate Weather API (free, government weather data)
+  - Responses are private/ ephemeral (only visible to the command user)
 
 ## Development
 
@@ -93,6 +98,10 @@ For production deployment, ensure you have PM2 installed globally and set up you
 Environment variables (in `.env` file):
 
 - `BOT_TOKEN`: Your Discord bot token from the Discord Developer Portal
+
+For the weather command, add to `config.json`:
+
+- `pirateWeatherApiKey`: Free API key from [pirateweather.net](https://pirateweather.net/)
 
 ## Database
 
