@@ -2,13 +2,17 @@ const { SlashCommandBuilder, EmbedBuilder, ChannelType } = require('discord.js')
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('server')
+    .setName('server-info')
     .setDescription('Display info about this server.'),
   async execute(interaction) {
     const guild = interaction.guild
 
-    // Fetch owner if needed, but for simplicity, use ownerId
-    // const owner = await guild.members.fetch(guild.ownerId);
+    if (!guild) {
+      return interaction.reply({
+        content: 'This command can only be used in a server.',
+        ephemeral: true,
+      })
+    }
 
     const embed = new EmbedBuilder()
       .setTitle(`${guild.name} Server Info`)
@@ -60,6 +64,6 @@ module.exports = {
       embed.setDescription(guild.description)
     }
 
-    await interaction.reply({ embeds: [embed] })
+    await interaction.reply({ embeds: [embed], ephemeral: true })
   },
 }
