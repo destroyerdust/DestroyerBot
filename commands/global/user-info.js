@@ -5,10 +5,7 @@ module.exports = {
     .setName('user-info')
     .setDescription('Display user info')
     .addUserOption((option) =>
-      option
-        .setName('user')
-        .setDescription('The user to get info about')
-        .setRequired(false)
+      option.setName('user').setDescription('The user to get info about').setRequired(false)
     ),
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user
@@ -39,7 +36,7 @@ module.exports = {
 
     embed.setFooter({
       text: `Requested by ${interaction.user.username}`,
-      iconURL: interaction.user.displayAvatarURL({ size: 64 })
+      iconURL: interaction.user.displayAvatarURL({ size: 64 }),
     })
 
     await interaction.reply({ embeds: [embed], ephemeral: true })

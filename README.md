@@ -7,12 +7,14 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/destroyerdust/DestroyerBot.git
    cd DestroyerBot
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -25,11 +27,13 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 ## Usage
 
 1. Deploy slash commands:
+
    ```bash
    node deploy-commands.js
    ```
 
 2. Start the bot:
+
    ```bash
    npm run dev  # For development with PM2 watch
    npm start    # For production with PM2
@@ -41,24 +45,29 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 ## Commands
 
 ### Utility Commands
+
 - `/ping` - Replies with Pong!
 - `/user-info` - Display info about yourself
 - `/server` - Display comprehensive server information
 
 ### Gaming Commands
+
 - `/rio` - Raider IO World of Warcraft information
   - `character` subcommand with required `realm` option
   - `guild` subcommand with required `realm` option
 
 ### Moderation Commands
+
 - `/kick` - Select a member and kick them (note: this is a demo command)
 
 ### Global Commands
+
 - `/3d-print-status` - Check 3D print status (global command accessible from all servers)
 
 ## Development
 
 ### Scripts
+
 - `npm run dev` - Start the bot with PM2 watch mode
 - `npm run dev-win` / `npm run dev-unix` - Platform-specific development commands
 - `npm start` - Start the bot in production mode with PM2
@@ -68,6 +77,7 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 - `npm test` - Run tests (placeholder script)
 
 ### Tools
+
 - **ESLint**: Code linting with `.eslintrc.json` configuration
 - **Prettier**: Code formatting with `.prettierrc.json` configuration
 - **Pino**: Advanced logging library for better log management
@@ -81,6 +91,7 @@ For production deployment, ensure you have PM2 installed globally and set up you
 ## Config
 
 Environment variables (in `.env` file):
+
 - `BOT_TOKEN`: Your Discord bot token from the Discord Developer Portal
 
 ## Database

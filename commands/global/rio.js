@@ -16,7 +16,10 @@ module.exports = {
           option.setName('name').setDescription('Character Name').setRequired(true)
         )
         .addStringOption((option) =>
-          option.setName('region').setDescription('Region').setRequired(false)
+          option
+            .setName('region')
+            .setDescription('Region')
+            .setRequired(false)
             .addChoices(
               { name: 'US', value: 'us' },
               { name: 'EU', value: 'eu' },
@@ -37,7 +40,10 @@ module.exports = {
           option.setName('name').setDescription('Guild Name').setRequired(true)
         )
         .addStringOption((option) =>
-          option.setName('region').setDescription('Region').setRequired(false)
+          option
+            .setName('region')
+            .setDescription('Region')
+            .setRequired(false)
             .addChoices(
               { name: 'US', value: 'us' },
               { name: 'EU', value: 'eu' },
@@ -78,12 +84,16 @@ module.exports = {
         embed.addFields(
           { name: 'Race', value: data.race, inline: true },
           { name: 'Class/Spec', value: `${data.class} / ${data.active_spec_name}`, inline: true }
-        //   { name: 'Level', value: data.level.toString(), inline: true }
+          //   { name: 'Level', value: data.level.toString(), inline: true }
         )
 
         embed.addFields(
           { name: 'Guild', value: guild, inline: true },
-          { name: 'Faction', value: data.faction.charAt(0).toUpperCase() + data.faction.slice(1), inline: true },
+          {
+            name: 'Faction',
+            value: data.faction.charAt(0).toUpperCase() + data.faction.slice(1),
+            inline: true,
+          },
           { name: 'Mythic+ Score', value: mythicScore.toString(), inline: true }
         )
 
@@ -93,7 +103,6 @@ module.exports = {
         }
 
         await interaction.editReply({ embeds: [embed] })
-
       } else if (subcommand === 'guild') {
         url = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${encodeURIComponent(realm)}&name=${encodeURIComponent(name)}&fields=raid_progression:current-tier,raid_rankings:current-tier`
         const response = await fetch(url)
@@ -108,7 +117,9 @@ module.exports = {
           .setURL(data.profile_url)
           .setColor(0x0099ff)
 
-        const faction = data.faction ? data.faction.charAt(0).toUpperCase() + data.faction.slice(1) : 'N/A'
+        const faction = data.faction
+          ? data.faction.charAt(0).toUpperCase() + data.faction.slice(1)
+          : 'N/A'
         const raidProgression = data.raid_progression?.['manaforge-omega']?.summary || 'N/A'
 
         embed.addFields(
