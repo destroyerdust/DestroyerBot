@@ -9,6 +9,8 @@
     "dev-unix": "node . | pino-pretty",
     "start": "pm2 start index.js",
     "stop": "pm2 stop index.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,11 +25,12 @@
   },
   "homepage": "https://github.com/destroyerdust/DestroyerBot#readme",
   "dependencies": {
-    "discord.js": "^14.5.0",
-    "node-fetch": "^2.6.7",
-    "pino": "^7.0.0-rc.9"
+    "discord.js": "^14.11.0",
+    "node-fetch": "^2.6.11",
+    "pino": "^7.11.0"
   },
   "devDependencies": {
-    "eslint": "^8.24.0"
+    "eslint": "^8.40.0",
+    "prettier": "^3.6.2"
   }
 }
