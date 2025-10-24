@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const fetch = require('node-fetch')
+const logger = require('../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -59,18 +60,57 @@ module.exports = {
     const name = interaction.options.getString('name')
     const region = interaction.options.getString('region') || 'us'
 
+    logger.info(
+      {
+        requestedBy: interaction.user.id,
+        requestedByName: interaction.user.username,
+        subcommand,
+        realm,
+        name,
+        region,
+      },
+      `${interaction.user.username} (#${interaction.user.id}) requested RaiderIO ${subcommand} info`
+    )
+
     await interaction.deferReply()
 
     try {
-      let url, data
+      let url, data, entityType
       if (subcommand === 'character') {
+        entityType = 'character'
         url = `https://raider.io/api/v1/characters/profile?region=${region}&realm=${encodeURIComponent(realm)}&name=${encodeURIComponent(name)}&fields=guild,gear,talents,talents:categorized,mythic_plus_scores_by_season:current`
+
+        logger.debug(`Fetching character data: ${region}/${realm}/${name}`)
+
         const response = await fetch(url)
         data = await response.json()
 
         if (!response.ok) {
+          logger.warn(`RaiderIO character API error: ${response.status} ${response.statusText}`, {
+            status: response.status,
+            statusText: response.statusText,
+            region,
+            realm,
+            name,
+            apiUrl: url,
+          })
           return interaction.editReply('Character not found or API error.')
         }
+
+        logger.info(
+          {
+            characterName: data.name,
+            realm: data.realm,
+            region: data.region,
+            race: data.race,
+            class: data.class,
+            spec: data.active_spec_name,
+            guild: data.guild?.name,
+            mythicScore: data.mythic_plus_scores_by_season?.[0]?.segments?.all?.score || 0,
+            itemLevel: data.gear?.item_level_equipped,
+          },
+          'Character data retrieved successfully'
+        )
 
         const embed = new EmbedBuilder()
           .setTitle(`WoW Character: ${data.name} (${data.realm}-${data.region.toUpperCase()})`)
@@ -103,14 +143,44 @@ module.exports = {
         }
 
         await interaction.editReply({ embeds: [embed] })
+        logger.info(
+          {
+            character: `${data.name}-${data.realm}-${data.region}`,
+            requester: interaction.user.username,
+          },
+          'Character info embed sent'
+        )
       } else if (subcommand === 'guild') {
+        entityType = 'guild'
         url = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${encodeURIComponent(realm)}&name=${encodeURIComponent(name)}&fields=raid_progression:current-tier,raid_rankings:current-tier`
+
+        logger.debug(`Fetching guild data: ${region}/${realm}/${name}`)
+
         const response = await fetch(url)
         data = await response.json()
 
         if (!response.ok) {
+          logger.warn(`RaiderIO guild API error: ${response.status} ${response.statusText}`, {
+            status: response.status,
+            statusText: response.statusText,
+            region,
+            realm,
+            name,
+            apiUrl: url,
+          })
           return interaction.editReply('Guild not found or API error.')
         }
+
+        logger.info(
+          {
+            guildName: data.name,
+            realm: data.realm,
+            region: data.region,
+            faction: data.faction,
+            raidProgression: data.raid_progression?.['manaforge-omega']?.summary,
+          },
+          'Guild data retrieved successfully'
+        )
 
         const embed = new EmbedBuilder()
           .setTitle(`WoW Guild: ${data.name} (${data.realm}-${data.region.toUpperCase()})`)
@@ -128,9 +198,24 @@ module.exports = {
         )
 
         await interaction.editReply({ embeds: [embed] })
+        logger.info(
+          {
+            guild: `${data.name}-${data.realm}-${data.region}`,
+            requester: interaction.user.username,
+          },
+          'Guild info embed sent'
+        )
       }
     } catch (error) {
-      console.error(error)
+      logger.error('RaiderIO command error', {
+        error: error.message,
+        stack: error.stack,
+        subcommand,
+        region,
+        realm,
+        name,
+        user: interaction.user.id,
+      })
       await interaction.editReply('An error occurred while fetching data.')
     }
   },
