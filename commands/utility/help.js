@@ -35,6 +35,7 @@ module.exports = {
       weather: 'Weather',
       rio: 'Games',
       '3d-print-status': 'Hardware',
+      pokemon: 'Pokemon',
     }
 
     // Group commands by category

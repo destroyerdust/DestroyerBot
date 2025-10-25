@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/destroyerdust/DestroyerBot#readme",
   "dependencies": {
+    "@tcgdex/sdk": "^2.7.1",
     "discord.js": "^14.24.0",
     "dotenv": "^17.2.3",
     "node-fetch": "^3.3.2",

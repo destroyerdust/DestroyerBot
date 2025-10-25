@@ -29,10 +29,14 @@ for (const file of commandFiles) {
   logger.debug(`Loading command from ${file}`)
   const command = require(file)
   if ('data' in command && 'execute' in command) {
-    const isGlobal = command.data.contexts?.includes(InteractionContextType.BotDM)
+    const isGlobal = command.data.contexts?.includes(1)
     const commandName = command.data.name
     logger.debug(`Command ${commandName}, isGlobal: ${isGlobal}`)
-    ;(isGlobal ? globalCommands : commands).push(command.data.toJSON())
+    const commandData = command.data.toJSON()
+    commands.push(commandData) // Add to guild commands
+    if (isGlobal) {
+      globalCommands.push(commandData) // Also add to global if it should be global
+    }
   } else {
     logger.warn(`The command at ${file} is missing a required "data" or "execute" property.`)
   }
