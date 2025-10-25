@@ -18,15 +18,6 @@ for (const file of commandFiles) {
   client.commands.set(command.data.name, command)
 }
 
-const globalCommandsPath = path.join(__dirname, 'commands/global')
-const globalCommandFiles = fs.readdirSync(globalCommandsPath).filter((file) => file.endsWith('.js'))
-
-for (const file of globalCommandFiles) {
-  const filePath = path.join(globalCommandsPath, file)
-  const command = require(filePath)
-  client.commands.set(command.data.name, command)
-}
-
 const eventsPath = path.join(__dirname, 'events')
 const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'))
 
@@ -40,7 +31,7 @@ for (const file of eventFiles) {
   }
 }
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   logger.info('The bot is online')
 })
 
