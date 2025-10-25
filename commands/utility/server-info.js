@@ -1,10 +1,17 @@
-const { SlashCommandBuilder, EmbedBuilder, ChannelType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ChannelType,
+  MessageFlags,
+  InteractionContextType,
+} = require('discord.js')
 const logger = require('../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('server-info')
-    .setDescription('Display info about this server.'),
+    .setDescription('Display info about this server.')
+    .setContexts(InteractionContextType.Guild),
   async execute(interaction) {
     const guild = interaction.guild
 

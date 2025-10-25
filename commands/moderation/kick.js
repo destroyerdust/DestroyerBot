@@ -1,10 +1,11 @@
-const { SlashCommandBuilder, MessageFlags } = require('discord.js')
+const { SlashCommandBuilder, MessageFlags, InteractionContextType } = require('discord.js')
 const logger = require('../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('kick')
     .setDescription('Select a member and kick them (but not really).')
+    .setContexts(InteractionContextType.Guild)
     .addUserOption((option) => option.setName('target').setDescription('The member to kick')),
   async execute(interaction) {
     const member = interaction.options.getMember('target')

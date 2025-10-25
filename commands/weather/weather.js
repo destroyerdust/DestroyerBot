@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const logger = require('../../logger')
 const { pirateWeatherApiKey } = require('../../config.json')
 
@@ -6,7 +11,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('weather')
     .setDescription('Get current weather for a location')
-    .setContexts(InteractionContextType.Guild | InteractionContextType.DM)
+    .setContexts(
+      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
+    )
     .addStringOption((option) =>
       option
         .setName('location')

@@ -7,7 +7,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('3d-print-status')
     .setDescription('Replies with 3D Print Status!')
-    .setContexts(InteractionContextType.Guild | InteractionContextType.DM),
+    .setContexts(
+      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
+    ),
   async execute(interaction) {
     // const data = await testGet();
     // console.log(data);

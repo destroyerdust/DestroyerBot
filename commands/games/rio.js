@@ -6,7 +6,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('rio')
     .setDescription('Raider IO Information!')
-    .setContexts(InteractionContextType.Guild | InteractionContextType.DM)
+    .setContexts(
+      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
+    )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('character')

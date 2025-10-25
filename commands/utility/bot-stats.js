@@ -1,10 +1,18 @@
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  MessageFlags,
+  InteractionContextType,
+} = require('discord.js')
 const logger = require('../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('bot-stats')
-    .setDescription('Display bot statistics and status'),
+    .setDescription('Display bot statistics and status')
+    .setContexts(
+      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
+    ),
   async execute(interaction) {
     const client = interaction.client
     const uptime = Date.now() - client.startTime
@@ -50,11 +58,9 @@ module.exports = {
 
     // Library version
     const { version } = require('discord.js')
-    embed.addFields(
-      { name: 'Discord.js Version', value: version, inline: true }
-    )
+    embed.addFields({ name: 'Discord.js Version', value: version, inline: true })
 
-    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral})
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
     logger.info('Bot stats response sent', {
       uptime: uptimeStr,
       servers: client.guilds.cache.size,

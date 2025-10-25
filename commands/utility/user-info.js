@@ -1,11 +1,18 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const logger = require('../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('user-info')
     .setDescription('Display user info')
-    .setContexts(InteractionContextType.Guild | InteractionContextType.DM)
+    .setContexts(
+      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
+    )
     .addUserOption((option) =>
       option.setName('user').setDescription('The user to get info about').setRequired(false)
     ),
