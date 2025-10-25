@@ -1,4 +1,4 @@
-const { REST, Routes } = require('discord.js')
+const { REST, Routes, InteractionContextType } = require('discord.js')
 const { clientId, guildId, token } = require('./config.json')
 const fs = require('node:fs')
 const path = require('node:path')
@@ -29,7 +29,7 @@ for (const file of commandFiles) {
   logger.debug(`Loading command from ${file}`)
   const command = require(file)
   if ('data' in command && 'execute' in command) {
-    const isGlobal = command.data.contexts?.includes(1)
+    const isGlobal = command.data.contexts?.includes(InteractionContextType.BotDM)
     const commandName = command.data.name
     logger.debug(`Command ${commandName}, isGlobal: ${isGlobal}`)
     ;(isGlobal ? globalCommands : commands).push(command.data.toJSON())
