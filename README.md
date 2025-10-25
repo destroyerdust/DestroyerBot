@@ -107,6 +107,18 @@ The bot uses `config.json` for configuration. Required parameters:
 - `token`: Your Discord bot token from the Discord Developer Portal
 - `pirateWeatherApiKey`: Free API key obtained from [pirateweather.net](https://pirateweather.net/) (required for weather command)
 
+## Environment Variables
+
+Create a `.env` file in the root directory (automatically ignored by .gitignore):
+
+```
+LOG_LEVEL=debug
+```
+
+- `LOG_LEVEL`: Set the logging level (default: info, options: trace, debug, info, warn, error, fatal)
+
+This controls the verbosity of Pino logging throughout the application.
+
 ## Database
 
 Currently, no database is configured. Commands operate with in-memory data or external API calls.

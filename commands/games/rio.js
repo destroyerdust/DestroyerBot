@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
 const fetch = require('node-fetch')
 const logger = require('../../logger')
 
@@ -6,6 +6,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('rio')
     .setDescription('Raider IO Information!')
+    .setContexts(InteractionContextType.Guild | InteractionContextType.DM)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('character')

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
 const fetch = require('node-fetch')
 const { miniAPI } = require('../../config.json')
 const logger = require('../../logger')
@@ -6,7 +6,8 @@ const logger = require('../../logger')
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('3d-print-status')
-    .setDescription('Replies with 3D Print Status!'),
+    .setDescription('Replies with 3D Print Status!')
+    .setContexts(InteractionContextType.Guild | InteractionContextType.DM),
   async execute(interaction) {
     // const data = await testGet();
     // console.log(data);
