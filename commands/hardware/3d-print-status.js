@@ -54,7 +54,7 @@ module.exports = {
         .setThumbnail('https://cdn.prusa3d.com/content/images/product/original/2280.jpg')
     }
     await interaction
-      .reply({ embeds: [statusEmbed], ephemeral: true })
+      .reply({ embeds: [statusEmbed], flags: MessageFlags.Ephemeral })
       .then(() => logger.info('Reply sent.'))
   },
 }

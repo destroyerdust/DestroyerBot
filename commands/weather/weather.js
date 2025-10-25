@@ -1,5 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
-const fetch = require('node-fetch')
+const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js')
 const logger = require('../../logger')
 const { pirateWeatherApiKey } = require('../../config.json')
 
@@ -65,7 +64,7 @@ module.exports = {
         )
         return interaction.editReply({
           content: 'Failed to geocode the location. Please try a different city name.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       }
 
@@ -81,7 +80,7 @@ module.exports = {
         )
         return interaction.editReply({
           content: `Could not find coordinates for "${location}". Please check the city name and try again.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       }
 
@@ -102,7 +101,7 @@ module.exports = {
         )
         return interaction.editReply({
           content: 'Invalid coordinates received from geocoding service.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       }
 
@@ -138,12 +137,12 @@ module.exports = {
           return interaction.editReply({
             content:
               'Pirate Weather API key is invalid or missing. Please configure your key in config.json.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           })
         }
         return interaction.editReply({
           content: `Could not fetch weather data for "${location}". The location might be unsupported.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       }
 
@@ -211,7 +210,7 @@ module.exports = {
         embed.setDescription('Current weather data not available for this location.')
       }
 
-      await interaction.editReply({ embeds: [embed], ephemeral: true })
+      await interaction.editReply({ embeds: [embed], flags: MessageFlags.Ephemeral })
       logger.info(
         {
           location: display_name,
@@ -234,7 +233,7 @@ module.exports = {
       )
       await interaction.editReply({
         content: 'An error occurred while fetching weather data. Please try again later.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
     }
   },

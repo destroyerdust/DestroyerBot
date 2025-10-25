@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ChannelType } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder, ChannelType, MessageFlags } = require('discord.js')
 const logger = require('../../logger')
 
 module.exports = {
@@ -24,7 +24,7 @@ module.exports = {
       })
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
     }
 
@@ -99,7 +99,7 @@ module.exports = {
       )
     }
 
-    await interaction.reply({ embeds: [embed], ephemeral: true })
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
     logger.info('Server info response sent', {
       serverId: guild.id,
       serverName: guild.name,

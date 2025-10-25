@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js')
 const logger = require('../../logger')
 
 module.exports = {
@@ -67,7 +67,7 @@ module.exports = {
       iconURL: interaction.user.displayAvatarURL({ size: 64 }),
     })
 
-    await interaction.reply({ embeds: [embed], ephemeral: true })
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
     logger.info(
       {
         targetUser: user.username,
