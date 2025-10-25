@@ -1,8 +1,8 @@
-const { REST, Routes } = require('discord.js');
-const { clientId, guildId, token } = require('./config.json');
-const fs = require('node:fs');
-const path = require('node:path');
-const logger = require('./logger');
+const { REST, Routes } = require('discord.js')
+const { clientId, guildId, token } = require('./config.json')
+const fs = require('node:fs')
+const path = require('node:path')
+const logger = require('./logger')
 
 const commands = []
 const globalCommands = []
@@ -39,22 +39,28 @@ for (const file of commandFiles) {
 }
 
 // Construct and prepare an instance of the REST module
-const rest = new REST().setToken(token);
+const rest = new REST().setToken(token)
 
 // and deploy your commands!
-(async () => {
-	try {
-		logger.info(`Started refreshing ${commands.length} guild commands and ${globalCommands.length} global commands.`);
+;(async () => {
+  try {
+    logger.info(
+      `Started refreshing ${commands.length} guild commands and ${globalCommands.length} global commands.`
+    )
 
-		// Deploy guild commands
-		const guildData = await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
-		logger.info(`Successfully reloaded ${guildData.length} guild (/) commands.`);
+    // Deploy guild commands
+    const guildData = await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+      body: commands,
+    })
+    logger.info(`Successfully reloaded ${guildData.length} guild (/) commands.`)
 
-		// Deploy global commands
-		const globalData = await rest.put(Routes.applicationCommands(clientId), { body: globalCommands });
-		logger.info(`Successfully reloaded ${globalData.length} global (/) commands.`);
-	} catch (error) {
-		// And of course, make sure you catch and log any errors!
-		logger.error('Deploy commands error:', error.message, error.stack);
-	}
-})();
+    // Deploy global commands
+    const globalData = await rest.put(Routes.applicationCommands(clientId), {
+      body: globalCommands,
+    })
+    logger.info(`Successfully reloaded ${globalData.length} global (/) commands.`)
+  } catch (error) {
+    // And of course, make sure you catch and log any errors!
+    logger.error('Deploy commands error:', error.message, error.stack)
+  }
+})()

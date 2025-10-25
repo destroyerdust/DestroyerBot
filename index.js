@@ -4,6 +4,8 @@ const { Client, Collection, GatewayIntentBits } = require('discord.js')
 const { token } = require('./config.json')
 const logger = require('./logger')
 
+logger.info('Starting DestroyerBot...')
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
 })
@@ -18,6 +20,8 @@ for (const file of commandFiles) {
   client.commands.set(command.data.name, command)
 }
 
+logger.info(`Loaded ${client.commands.size} commands.`)
+
 const eventsPath = path.join(__dirname, 'events')
 const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'))
 
@@ -30,6 +34,8 @@ for (const file of eventFiles) {
     client.on(event.name, (...args) => event.execute(...args))
   }
 }
+
+logger.info(`Loaded ${eventFiles.length} events.`)
 
 client.once('clientReady', () => {
   logger.info('The bot is online')
@@ -45,7 +51,7 @@ client.on('interactionCreate', async (interaction) => {
   try {
     await command.execute(interaction)
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     await interaction.reply({
       content: 'There was an error while executing this command!',
       ephemeral: true,
@@ -53,4 +59,5 @@ client.on('interactionCreate', async (interaction) => {
   }
 })
 
+logger.info('Attempting to log in with the provided token...')
 client.login(token)

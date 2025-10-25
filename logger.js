@@ -1,4 +1,4 @@
-require('dotenv').config({quiet: true})
+require('dotenv').config({ quiet: true })
 const pino = require('pino')
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
