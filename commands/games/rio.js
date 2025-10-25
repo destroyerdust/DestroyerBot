@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
-const fetch = require('node-fetch')
 const logger = require('../../logger')
 
 module.exports = {
@@ -210,15 +209,18 @@ module.exports = {
         )
       }
     } catch (error) {
-      logger.error('RaiderIO command error', {
-        error: error.message,
-        stack: error.stack,
-        subcommand,
-        region,
-        realm,
-        name,
-        user: interaction.user.id,
-      })
+      logger.error(
+        {
+          error: error.message,
+          stack: error.stack,
+          subcommand,
+          region,
+          realm,
+          name,
+          user: interaction.user.id,
+        },
+        'RaiderIO command error'
+      )
       await interaction.editReply('An error occurred while fetching data.')
     }
   },
