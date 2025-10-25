@@ -12,7 +12,23 @@ const client = new Client({
 
 client.commands = new Collection()
 const commandsPath = path.join(__dirname, 'commands')
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'))
+
+const getAllJsFiles = (dirPath, relativePath = '') => {
+  let files = []
+  const items = fs.readdirSync(dirPath, { withFileTypes: true })
+  for (const item of items) {
+    const fullPath = path.join(dirPath, item.name)
+    const relPath = path.join(relativePath, item.name)
+    if (item.isDirectory()) {
+      files = files.concat(getAllJsFiles(fullPath, relPath))
+    } else if (item.name.endsWith('.js')) {
+      files.push(relPath)
+    }
+  }
+  return files
+}
+
+const commandFiles = getAllJsFiles(commandsPath)
 
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file)
