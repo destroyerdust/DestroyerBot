@@ -19,16 +19,7 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
    npm install
    ```
 
-3. Edit `config.json` in the root directory with your Discord bot details:
-   ```json
-   {
-     "clientId": "your_discord_client_id",
-     "guildId": "your_guild_id_for_testing",
-     "token": "your_discord_bot_token",
-     "pirateWeatherApiKey": "your_pirate_weather_api_key",
-     "pokemonApiKey": "your_pokemon_tcg_api_key"
-   }
-   ```
+3. Edit `config.json` in the root directory with your Discord bot details and API keys. See the [Config](#config) section below for all required parameters.
 
 ## Usage
 
@@ -68,7 +59,7 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 
 ### Global Commands
 
-- `/3d-print-status` - Check 3D print status (global command accessible from all servers)
+- `/3d-print-status` - Check 3D print status (private command, only accessible by bot owner)
 - `/weather` - Get current weather for a location
   - Required `location` option: City name (e.g., "New York" or "London,UK")
   - Optional `units` option: Temperature units (Celsius (default), Fahrenheit, or Canadian)
@@ -109,11 +100,27 @@ For production deployment, ensure you have PM2 installed globally and set up you
 
 ## Config
 
-The bot uses `config.json` for configuration. Required parameters:
+Edit `config.json` in the root directory with your Discord bot details and API keys. Full configuration example:
+
+```json
+{
+  "clientId": "your_discord_client_id",
+  "guildId": "your_guild_id_for_testing",
+  "token": "your_discord_bot_token",
+  "ownerId": "your_discord_user_id",
+  "miniAPI": "your_3d_printer_api_endpoint_url",
+  "pirateWeatherApiKey": "your_pirate_weather_api_key",
+  "pokemonApiKey": "your_pokemon_tcg_api_key"
+}
+```
+
+### Configuration Parameters:
 
 - `clientId`: Your Discord application client ID
 - `guildId`: Your server/guild ID (used for testing command deployment)
 - `token`: Your Discord bot token from the Discord Developer Portal
+- `ownerId`: Your Discord user ID (required for private commands like 3d-print-status)
+- `miniAPI`: URL for your 3D printer's telemetry API (required for 3d-print-status command)
 - `pirateWeatherApiKey`: Free API key obtained from [pirateweather.net](https://pirateweather.net/) (required for weather command)
 - `pokemonApiKey`: Free API key obtained from [pokemontcg.io](https://pokemontcg.io/) (required for pokemon command)
 
