@@ -1,12 +1,14 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
-const fetch = require('node-fetch')
+const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
 const { miniAPI } = require('../../config.json')
 const logger = require('../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('3d-print-status')
-    .setDescription('Replies with 3D Print Status!'),
+    .setDescription('Replies with 3D Print Status!')
+    .setContexts(
+      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
+    ),
   async execute(interaction) {
     // const data = await testGet();
     // console.log(data);
@@ -53,7 +55,7 @@ module.exports = {
         .setThumbnail('https://cdn.prusa3d.com/content/images/product/original/2280.jpg')
     }
     await interaction
-      .reply({ embeds: [statusEmbed], ephemeral: true })
+      .reply({ embeds: [statusEmbed], flags: MessageFlags.Ephemeral })
       .then(() => logger.info('Reply sent.'))
   },
 }

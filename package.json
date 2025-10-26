@@ -25,12 +25,13 @@
   },
   "homepage": "https://github.com/destroyerdust/DestroyerBot#readme",
   "dependencies": {
-    "discord.js": "^14.11.0",
-    "node-fetch": "^2.6.11",
-    "pino": "^7.11.0"
+    "@tcgdex/sdk": "^2.7.1",
+    "discord.js": "^14.24.0",
+  "dotenv": "^17.2.3",
+  "pino": "^10.1.0"
   },
   "devDependencies": {
-    "eslint": "^8.40.0",
+    "eslint": "^9.38.0",
     "prettier": "^3.6.2"
   }
 }

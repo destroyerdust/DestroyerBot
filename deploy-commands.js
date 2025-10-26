@@ -1,40 +1,70 @@
+const { REST, Routes, InteractionContextType } = require('discord.js')
+const { clientId, guildId, token } = require('./config.json')
 const fs = require('node:fs')
 const path = require('node:path')
-const { REST } = require('@discordjs/rest')
-const { Routes } = require('discord.js')
-const { clientId, guildId, token } = require('./config.json')
 const logger = require('./logger')
 
 const commands = []
-const commandsPath = path.join(__dirname, 'commands')
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'))
-
 const globalCommands = []
-const globalCommandsPath = path.join(__dirname, 'commands/global')
-const globalCommandFiles = fs.readdirSync(globalCommandsPath).filter((file) => file.endsWith('.js'))
+
+function getCommandFiles(dir) {
+  const files = []
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name)
+    logger.debug(`Scanning ${entry.isDirectory() ? 'directory' : 'file'}: ${fullPath}`)
+    if (entry.isDirectory()) {
+      files.push(...getCommandFiles(fullPath))
+    } else if (entry.name.endsWith('.js')) {
+      files.push(fullPath)
+    }
+  }
+  return files
+}
+
+const commandFiles = getCommandFiles(path.join(__dirname, 'commands'))
+logger.info('Found command files:', commandFiles.length)
 
 for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file)
-  const command = require(filePath)
-  commands.push(command.data.toJSON())
+  logger.debug(`Loading command from ${file}`)
+  const command = require(file)
+  if ('data' in command && 'execute' in command) {
+    const isGlobal = command.data.contexts?.includes(1)
+    const commandName = command.data.name
+    logger.debug(`Command ${commandName}, isGlobal: ${isGlobal}`)
+    const commandData = command.data.toJSON()
+    commands.push(commandData) // Add to guild commands
+    if (isGlobal) {
+      globalCommands.push(commandData) // Also add to global if it should be global
+    }
+  } else {
+    logger.warn(`The command at ${file} is missing a required "data" or "execute" property.`)
+  }
 }
-logger.info(commands)
 
-for (const file of globalCommandFiles) {
-  const filePath = path.join(globalCommandsPath, file)
-  const command = require(filePath)
-  globalCommands.push(command.data.toJSON())
-}
-logger.info(globalCommands)
+// Construct and prepare an instance of the REST module
+const rest = new REST().setToken(token)
 
-const rest = new REST({ version: '10' }).setToken(token)
+// and deploy your commands!
+;(async () => {
+  try {
+    logger.info(
+      `Started refreshing ${commands.length} guild commands and ${globalCommands.length} global commands.`
+    )
 
-rest
-  .put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
-  .then(() => logger.info('Successfully registered application commands.'))
-  .catch(console.error)
+    // Deploy guild commands
+    const guildData = await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+      body: commands,
+    })
+    logger.info(`Successfully reloaded ${guildData.length} guild (/) commands.`)
 
-rest
-  .put(Routes.applicationCommands(clientId), { body: globalCommands })
-  .then(() => logger.info('Successfully registered global commands.'))
-  .catch(console.error)
+    // Deploy global commands
+    const globalData = await rest.put(Routes.applicationCommands(clientId), {
+      body: globalCommands,
+    })
+    logger.info(`Successfully reloaded ${globalData.length} global (/) commands.`)
+  } catch (error) {
+    // And of course, make sure you catch and log any errors!
+    logger.error('Deploy commands error:', error.message, error.stack)
+  }
+})()

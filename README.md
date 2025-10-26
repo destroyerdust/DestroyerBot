@@ -19,9 +19,15 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
    npm install
    ```
 
-3. Create a `.env` file in the root directory and add your Discord bot token:
-   ```
-   BOT_TOKEN=your_discord_bot_token_here
+3. Edit `config.json` in the root directory with your Discord bot details:
+   ```json
+   {
+     "clientId": "your_discord_client_id",
+     "guildId": "your_guild_id_for_testing",
+     "token": "your_discord_bot_token",
+     "pirateWeatherApiKey": "your_pirate_weather_api_key",
+     "pokemonApiKey": "your_pokemon_tcg_api_key"
+   }
    ```
 
 ## Usage
@@ -69,6 +75,14 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
   - Uses Pirate Weather API (free, government weather data)
   - Responses are private/ ephemeral (only visible to the command user)
 
+### Pokemon Commands
+
+- `/pokemon` - Pokemon TCG card information
+  - `search` subcommand with required `query` option: Search cards by name (e.g., "charizard")
+  - `random` subcommand: Get a random Pokemon card
+  - Uses Pokemon TCG API (free with API key)
+  - Shows card images, stats, types, prices, and more
+
 ## Development
 
 ### Scripts
@@ -95,13 +109,25 @@ For production deployment, ensure you have PM2 installed globally and set up you
 
 ## Config
 
-Environment variables (in `.env` file):
+The bot uses `config.json` for configuration. Required parameters:
 
-- `BOT_TOKEN`: Your Discord bot token from the Discord Developer Portal
+- `clientId`: Your Discord application client ID
+- `guildId`: Your server/guild ID (used for testing command deployment)
+- `token`: Your Discord bot token from the Discord Developer Portal
+- `pirateWeatherApiKey`: Free API key obtained from [pirateweather.net](https://pirateweather.net/) (required for weather command)
+- `pokemonApiKey`: Free API key obtained from [pokemontcg.io](https://pokemontcg.io/) (required for pokemon command)
 
-For the weather command, add to `config.json`:
+## Environment Variables
 
-- `pirateWeatherApiKey`: Free API key from [pirateweather.net](https://pirateweather.net/)
+Create a `.env` file in the root directory (automatically ignored by .gitignore):
+
+```
+LOG_LEVEL=debug
+```
+
+- `LOG_LEVEL`: Set the logging level (default: info, options: trace, debug, info, warn, error, fatal)
+
+This controls the verbosity of Pino logging throughout the application.
 
 ## Database
 

@@ -4,13 +4,31 @@ const { Client, Collection, GatewayIntentBits } = require('discord.js')
 const { token } = require('./config.json')
 const logger = require('./logger')
 
+logger.info('Starting DestroyerBot...')
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
 })
 
 client.commands = new Collection()
 const commandsPath = path.join(__dirname, 'commands')
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'))
+
+const getAllJsFiles = (dirPath, relativePath = '') => {
+  let files = []
+  const items = fs.readdirSync(dirPath, { withFileTypes: true })
+  for (const item of items) {
+    const fullPath = path.join(dirPath, item.name)
+    const relPath = path.join(relativePath, item.name)
+    if (item.isDirectory()) {
+      files = files.concat(getAllJsFiles(fullPath, relPath))
+    } else if (item.name.endsWith('.js')) {
+      files.push(relPath)
+    }
+  }
+  return files
+}
+
+const commandFiles = getAllJsFiles(commandsPath)
 
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file)
@@ -18,14 +36,7 @@ for (const file of commandFiles) {
   client.commands.set(command.data.name, command)
 }
 
-const globalCommandsPath = path.join(__dirname, 'commands/global')
-const globalCommandFiles = fs.readdirSync(globalCommandsPath).filter((file) => file.endsWith('.js'))
-
-for (const file of globalCommandFiles) {
-  const filePath = path.join(globalCommandsPath, file)
-  const command = require(filePath)
-  client.commands.set(command.data.name, command)
-}
+logger.info(`Loaded ${client.commands.size} commands.`)
 
 const eventsPath = path.join(__dirname, 'events')
 const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'))
@@ -40,7 +51,9 @@ for (const file of eventFiles) {
   }
 }
 
-client.once('ready', () => {
+logger.info(`Loaded ${eventFiles.length} events.`)
+
+client.once('clientReady', () => {
   logger.info('The bot is online')
 })
 
@@ -54,12 +67,13 @@ client.on('interactionCreate', async (interaction) => {
   try {
     await command.execute(interaction)
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     await interaction.reply({
       content: 'There was an error while executing this command!',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 })
 
+logger.info('Attempting to log in with the provided token...')
 client.login(token)
