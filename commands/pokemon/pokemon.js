@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const logger = require('../../logger')
 const { pokemonApiKey } = require('../../config.json')
 
@@ -8,7 +13,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('pokemon')
     .setDescription('Pokemon TCG card information')
-    .setContexts(InteractionContextType.Guild | InteractionContextType.BotDM | InteractionContextType.DM)
+    .setContexts(
+      InteractionContextType.Guild | InteractionContextType.BotDM | InteractionContextType.DM
+    )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('search')
@@ -118,9 +125,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle(`${card.name}${card.supertype === 'Pokémon' ? ` (HP: ${card.hp || 'N/A'})` : ''}`)
         .setDescription(card.flavorText || 'No flavor text available.')
-        .setColor(
-          card.types && card.types.length > 0 ? getTypeColor(card.types[0]) : 0x00ff00
-        )
+        .setColor(card.types && card.types.length > 0 ? getTypeColor(card.types[0]) : 0x00ff00)
         .addFields(
           {
             name: 'Set',

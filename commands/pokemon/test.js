@@ -1,6 +1,12 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const logger = require('../../logger')
 const TCGDex = require('@tcgdex/sdk').default
+const { Query } = require('@tcgdex/sdk')
 
 // Using TCGDex SDK instead of direct API calls
 const sdk = new TCGDex('en')
@@ -17,10 +23,7 @@ module.exports = {
         .setName('search')
         .setDescription('Search for something')
         .addStringOption((option) =>
-          option
-            .setName('query')
-            .setDescription('Search query')
-            .setRequired(true)
+          option.setName('query').setDescription('Search query').setRequired(true)
         )
     )
     .addSubcommand((subcommand) =>
@@ -53,7 +56,8 @@ module.exports = {
           },
           'Starting card search'
         )
-        const results = await sdk.card.where({ name: query })
+        // const results = await sdk.card.where({ name: query })
+        const results = await sdk.card.list(new Query().equal('name', query))
         logger.debug(
           {
             query,
@@ -76,7 +80,7 @@ module.exports = {
             flags: MessageFlags.Ephemeral,
           })
         }
-        item = results[0]
+        item = await sdk.card.get(results[0].id)
         logger.debug(
           {
             selectedCardId: item.id,
