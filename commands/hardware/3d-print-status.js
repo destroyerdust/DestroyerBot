@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
-const fetch = require('node-fetch')
 const { miniAPI } = require('../../config.json')
 const logger = require('../../logger')
 
