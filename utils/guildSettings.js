@@ -8,6 +8,7 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'guildSettings.json')
 // Commands that are restricted to server owner by default (unless specific roles are assigned)
 const DEFAULT_RESTRICTED_COMMANDS = new Set([
   'kick',
+  'clean',
 ])
 
 // Ensure data directory exists

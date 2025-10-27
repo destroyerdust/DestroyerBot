@@ -325,6 +325,7 @@ You have two options for removing role restrictions:
 
 **Currently default-restricted commands:**
 - `kick` - Member management command
+- `clean` - Message cleanup command
 
 ---
 
