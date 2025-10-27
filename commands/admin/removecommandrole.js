@@ -1,11 +1,11 @@
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
-const { setCommandRole } = require('../../utils/guildSettings')
+const { removeCommandRole } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('setcommandrole')
-    .setDescription('Set which role can use a specific command')
+    .setName('removecommandrole')
+    .setDescription('Remove a role from a specific command')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .setContexts(InteractionContextType.Guild)
     .addStringOption((option) =>
@@ -18,7 +18,7 @@ module.exports = {
     .addRoleOption((option) =>
       option
         .setName('role')
-        .setDescription('The role that should have access to this command')
+        .setDescription('The role to remove from this command')
         .setRequired(true)
     ),
   async autocomplete(interaction) {
@@ -51,14 +51,14 @@ module.exports = {
         roleName: role.name,
         executedBy: interaction.user.tag,
       },
-      'Setting command role permission'
+      'Removing command role permission'
     )
 
     try {
-      setCommandRole(interaction.guild.id, commandName, role.id)
+      removeCommandRole(interaction.guild.id, commandName, role.id)
 
       await interaction.reply({
-        content: `✅ Role ${role} can now use the \`/${commandName}\` command.`,
+        content: `✅ Role ${role} has been removed from the \`/${commandName}\` command.`,
         ephemeral: true,
       })
 
@@ -69,7 +69,7 @@ module.exports = {
           roleId: role.id,
           success: true,
         },
-        'Command role permission set successfully'
+        'Command role permission removed successfully'
       )
     } catch (error) {
       logger.error(
@@ -80,10 +80,10 @@ module.exports = {
           commandName,
           roleId: role.id,
         },
-        'Error setting command role permission'
+        'Error removing command role permission'
       )
       await interaction.reply({
-        content: '❌ An error occurred while setting the permission.',
+        content: '❌ An error occurred while removing the permission.',
         ephemeral: true,
       })
     }
