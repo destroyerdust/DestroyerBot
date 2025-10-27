@@ -1,8 +1,9 @@
 const fs = require('node:fs')
 const path = require('node:path')
-const { Client, Collection, GatewayIntentBits } = require('discord.js')
+const { Client, Collection, GatewayIntentBits, MessageFlags } = require('discord.js')
 const { token } = require('./config.json')
 const logger = require('./logger')
+const { hasCommandPermission } = require('./utils/guildSettings')
 
 logger.info('Starting DestroyerBot...')
 
@@ -63,6 +64,31 @@ client.on('interactionCreate', async (interaction) => {
   const command = client.commands.get(interaction.commandName)
 
   if (!command) return
+
+  // Check permissions for guild commands (skip for DMs)
+  if (interaction.guild && interaction.member) {
+    const hasPermission = hasCommandPermission(
+      interaction.guild.id,
+      interaction.commandName,
+      interaction.member
+    )
+
+    if (!hasPermission) {
+      logger.warn(
+        {
+          guildId: interaction.guild.id,
+          userId: interaction.user.id,
+          username: interaction.user.tag,
+          commandName: interaction.commandName,
+        },
+        'User blocked from using command due to role restrictions'
+      )
+      return interaction.reply({
+        content: "⛔ You don't have permission to use this command.",
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+  }
 
   try {
     await command.execute(interaction)
