@@ -175,6 +175,7 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 Both `/setcommandrole` and `/removecommandrole` commands feature **intelligent autocomplete** for command selection:
 
 ### How It Works
+
 - Start typing in the `command` field
 - Discord shows a filtered dropdown list of available commands
 - Select from the list instead of typing the full name
@@ -182,7 +183,9 @@ Both `/setcommandrole` and `/removecommandrole` commands feature **intelligent a
 - Maximum 25 suggestions shown
 
 ### What's Excluded
+
 Admin commands are automatically excluded from autocomplete:
+
 - `setcommandrole`
 - `removecommandrole`
 - `listpermissions`
@@ -191,6 +194,7 @@ Admin commands are automatically excluded from autocomplete:
 This prevents circular permission scenarios and keeps the list focused on manageable commands.
 
 ### Benefits
+
 - ✅ No typos - select from a dropdown
 - ✅ See all available commands at a glance
 - ✅ Faster command selection
@@ -299,7 +303,6 @@ You have two options for removing role restrictions:
 1. **Targeted removal:** Use `/removecommandrole` to remove a specific role from a specific command
    - Only affects one role-command pair
    - Other roles and commands remain unchanged
-   
 2. **Complete reset:** Use `/resetpermissions` to clear ALL role restrictions
    - Removes all permissions for the entire server
    - Use when you want to start fresh
@@ -342,12 +345,12 @@ You have two options for removing role restrictions:
 
 The permission system includes **4 admin commands**, all requiring `Manage Server` permission:
 
-| Command | Purpose | Guild-Only |
-|---------|---------|------------|
-| `/setcommandrole` | Add a role to a command | ✅ Yes |
-| `/removecommandrole` | Remove a role from a command | ✅ Yes |
-| `/listpermissions` | View all permissions | ✅ Yes |
-| `/resetpermissions` | Clear all permissions | ✅ Yes |
+| Command              | Purpose                      | Guild-Only |
+| -------------------- | ---------------------------- | ---------- |
+| `/setcommandrole`    | Add a role to a command      | ✅ Yes     |
+| `/removecommandrole` | Remove a role from a command | ✅ Yes     |
+| `/listpermissions`   | View all permissions         | ✅ Yes     |
+| `/resetpermissions`  | Clear all permissions        | ✅ Yes     |
 
 **Note:** All admin commands are restricted to servers only and cannot be used in DMs. This is intentional since permissions are server-specific.
 

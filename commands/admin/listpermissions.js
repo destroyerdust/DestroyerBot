@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  PermissionFlagsBits,
+  InteractionContextType,
+} = require('discord.js')
 const { getGuildSettings } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
