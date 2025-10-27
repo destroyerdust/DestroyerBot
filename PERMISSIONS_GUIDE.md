@@ -11,9 +11,11 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 ✅ **Per-Guild Configuration** - Each server can have its own permission settings  
 ✅ **Role-Based Access Control** - Restrict commands to specific roles  
 ✅ **Default Open Access** - Commands with no roles configured are available to everyone  
-✅ **Admin Commands** - Manage permissions via slash commands  
+✅ **Admin Commands** - Manage permissions via slash commands (4 commands available)  
+✅ **Autocomplete Support** - Dynamic command selection with smart filtering  
 ✅ **Persistent Storage** - Settings saved locally in JSON format  
-✅ **Automatic Initialization** - Data directory and file created automatically
+✅ **Automatic Initialization** - Data directory and file created automatically  
+✅ **Guild-Only Admin Commands** - Permission commands restricted to servers only
 
 ---
 
@@ -23,9 +25,10 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 1. **`utils/guildSettings.js`** - Core permission system utilities
 2. **`commands/admin/setcommandrole.js`** - Set role permissions
-3. **`commands/admin/listpermissions.js`** - View current permissions
-4. **`commands/admin/resetpermissions.js`** - Clear all permissions
-5. **`data/guildSettings.json`** - Stores guild configurations (auto-generated)
+3. **`commands/admin/removecommandrole.js`** - Remove role permissions
+4. **`commands/admin/listpermissions.js`** - View current permissions
+5. **`commands/admin/resetpermissions.js`** - Clear all permissions
+6. **`data/guildSettings.json`** - Stores guild configurations (auto-generated)
 
 ### Modified Files
 
@@ -85,8 +88,36 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 **Notes:**
 
 - You can add multiple roles to the same command by running the command multiple times
-- Command names should match exactly (e.g., `ping`, `kick`, `weather`)
+- Command names are selected from an autocomplete dropdown (no typing required)
+- Admin commands are excluded from the autocomplete list
 - The role must exist in the server
+
+---
+
+### `/removecommandrole`
+
+**Required Permission:** `Manage Server`  
+**Description:** Remove a specific role from a command's permission list
+
+**Usage:**
+
+```
+/removecommandrole command:kick role:@Moderator
+/removecommandrole command:weather role:@VIP
+```
+
+**Example Output:**
+
+```
+✅ Role @Moderator has been removed from the `/kick` command.
+```
+
+**Notes:**
+
+- Only removes the specified role, other roles remain
+- Command names are selected from an autocomplete dropdown
+- Admin commands are excluded from the autocomplete list
+- If the last role is removed, the command becomes available to everyone
 
 ---
 
@@ -139,6 +170,34 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 ---
 
+## Autocomplete Feature
+
+Both `/setcommandrole` and `/removecommandrole` commands feature **intelligent autocomplete** for command selection:
+
+### How It Works
+- Start typing in the `command` field
+- Discord shows a filtered dropdown list of available commands
+- Select from the list instead of typing the full name
+- Filters as you type (case-insensitive)
+- Maximum 25 suggestions shown
+
+### What's Excluded
+Admin commands are automatically excluded from autocomplete:
+- `setcommandrole`
+- `removecommandrole`
+- `listpermissions`
+- `resetpermissions`
+
+This prevents circular permission scenarios and keeps the list focused on manageable commands.
+
+### Benefits
+- ✅ No typos - select from a dropdown
+- ✅ See all available commands at a glance
+- ✅ Faster command selection
+- ✅ Dynamic list updates as bot commands change
+
+---
+
 ## Usage Examples
 
 ### Example 1: Restrict Moderation Commands
@@ -147,6 +206,9 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 # Only @Moderator and @Admin can kick members
 /setcommandrole command:kick role:@Moderator
 /setcommandrole command:kick role:@Admin
+
+# Remove a role if needed
+/removecommandrole command:kick role:@Moderator
 
 # Only @Admin can use ban commands
 /setcommandrole command:ban role:@Admin
@@ -158,17 +220,23 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 # Only @VIP members can check weather
 /setcommandrole command:weather role:@VIP
 
+# Change your mind? Remove the restriction
+/removecommandrole command:weather role:@VIP
+
 # Only @Premium members can use pokemon commands
 /setcommandrole command:pokemon role:@Premium
 ```
 
-### Example 3: View and Reset
+### Example 3: View and Manage Permissions
 
 ```bash
 # Check current permissions
 /listpermissions
 
-# If you want to start fresh
+# Remove a specific role from a command
+/removecommandrole command:ping role:@Member
+
+# Or start fresh and clear everything
 /resetpermissions
 ```
 
@@ -226,8 +294,15 @@ if (interaction.guild && interaction.member) {
 
 ### Removing Roles
 
-- Currently, roles can only be removed by using `/resetpermissions` (clears all)
-- To modify: Reset, then re-add the roles you want
+You have two options for removing role restrictions:
+
+1. **Targeted removal:** Use `/removecommandrole` to remove a specific role from a specific command
+   - Only affects one role-command pair
+   - Other roles and commands remain unchanged
+   
+2. **Complete reset:** Use `/resetpermissions` to clear ALL role restrictions
+   - Removes all permissions for the entire server
+   - Use when you want to start fresh
 
 ### Default Behavior
 
@@ -263,16 +338,32 @@ if (interaction.guild && interaction.member) {
 
 ---
 
+## Admin Command Overview
+
+The permission system includes **4 admin commands**, all requiring `Manage Server` permission:
+
+| Command | Purpose | Guild-Only |
+|---------|---------|------------|
+| `/setcommandrole` | Add a role to a command | ✅ Yes |
+| `/removecommandrole` | Remove a role from a command | ✅ Yes |
+| `/listpermissions` | View all permissions | ✅ Yes |
+| `/resetpermissions` | Clear all permissions | ✅ Yes |
+
+**Note:** All admin commands are restricted to servers only and cannot be used in DMs. This is intentional since permissions are server-specific.
+
+---
+
 ## Future Enhancements (Optional)
 
 Potential improvements you could add:
 
-- `/removecommandrole` - Remove specific role from a command
-- `/clearcommandrole` - Clear all roles from one command
+- `/clearcommandrole` - Clear all roles from one specific command (without affecting others)
 - Permission inheritance (role hierarchy)
-- User-specific permissions
-- Permission export/import
+- User-specific permissions (bypass role requirements)
+- Permission export/import (backup and transfer settings)
+- Permission templates (quick setup for common scenarios)
 - Web dashboard for management
+- Audit log for permission changes
 
 ---
 
