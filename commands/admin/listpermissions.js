@@ -7,6 +7,11 @@ const {
 const { getGuildSettings } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
+// Import the default restricted commands (should match utils/guildSettings.js)
+const DEFAULT_RESTRICTED_COMMANDS = new Set([
+  'kick',
+])
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('listpermissions')
@@ -32,11 +37,33 @@ module.exports = {
         .setColor(0x5865f2)
         .setTimestamp()
 
-      if (Object.keys(permissions).length === 0) {
-        embed.setDescription('No command permissions have been configured yet.')
+      // Collect all commands with permissions or that are default-restricted
+      const allCommands = new Map()
+
+      // Add configured commands
+      for (const [commandName, roleIds] of Object.entries(permissions)) {
+        allCommands.set(commandName, roleIds)
+      }
+
+      // Add default-restricted commands that aren't already configured
+      for (const commandName of DEFAULT_RESTRICTED_COMMANDS) {
+        if (!allCommands.has(commandName)) {
+          allCommands.set(commandName, null) // null means default-restricted, no roles
+        }
+      }
+
+      if (allCommands.size === 0) {
+        embed.setDescription('No command permissions have been configured yet. Default-restricted commands (like `/kick`) are owner-only.')
       } else {
-        for (const [commandName, roleIds] of Object.entries(permissions)) {
-          if (roleIds.length === 0) {
+        for (const [commandName, roleIds] of allCommands.entries()) {
+          if (roleIds === null) {
+            // Default-restricted command with no specific roles
+            embed.addFields({
+              name: `/${commandName}`,
+              value: '🔒 Server owner only (default restriction)',
+              inline: false,
+            })
+          } else if (roleIds.length === 0) {
             embed.addFields({
               name: `/${commandName}`,
               value: '✅ Everyone can use this command',

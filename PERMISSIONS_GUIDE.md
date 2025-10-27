@@ -8,13 +8,14 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 ## Features
 
-✅ **Per-Guild Configuration** - Each server can have its own permission settings  
-✅ **Role-Based Access Control** - Restrict commands to specific roles  
-✅ **Default Open Access** - Commands with no roles configured are available to everyone  
-✅ **Admin Commands** - Manage permissions via slash commands (4 commands available)  
-✅ **Autocomplete Support** - Dynamic command selection with smart filtering  
-✅ **Persistent Storage** - Settings saved locally in JSON format  
-✅ **Automatic Initialization** - Data directory and file created automatically  
+✅ **Per-Guild Configuration** - Each server can have its own permission settings
+✅ **Role-Based Access Control** - Restrict commands to specific roles
+✅ **Server Owner Privilege** - Server owners always have access to all commands
+✅ **Default-Restricted Commands** - Certain sensitive commands (e.g., kick) are owner-only by default
+✅ **Admin Commands** - Manage permissions via slash commands (4 commands available)
+✅ **Autocomplete Support** - Dynamic command selection with smart filtering
+✅ **Persistent Storage** - Settings saved locally in JSON format
+✅ **Automatic Initialization** - Data directory and file created automatically
 ✅ **Guild-Only Admin Commands** - Permission commands restricted to servers only
 
 ---
@@ -42,10 +43,13 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 ### Permission Flow
 
 1. User executes a slash command
-2. Bot checks if command has role restrictions for that guild
-3. If **no roles** are configured → ✅ Allow everyone
-4. If **roles are configured** → Check if user has any of those roles
-5. If user doesn't have required role → ❌ Block with ephemeral message
+2. **Server owner check**: Owner always has access to all commands
+3. **Default-restricted commands**: If command needs owner-only access by default
+   - If no specific roles configured → Only owner can use (or assigned roles)
+   - If roles configured → Users with those roles can use + owner bypasses restrictions
+4. **Regular commands**: If no roles configured → ✅ Allow everyone
+5. **Role requirements**: If roles are configured → Check if user has any of those roles
+6. If user doesn't have required access → ❌ Block with ephemeral message
 
 ### Data Structure
 
@@ -309,8 +313,18 @@ You have two options for removing role restrictions:
 
 ### Default Behavior
 
+#### Regular Commands
 - **No roles configured = Everyone can use the command**
 - This is by design to maintain backward compatibility
+
+#### Default-Restricted Commands (e.g., `/kick`)
+- **No roles configured = Only server owner can use**
+- **With roles configured = Users with those roles can use**
+- **Server owner = Always has access** (owner bypass)
+- Add roles using `/setcommandrole` to allow non-owner access
+
+**Currently default-restricted commands:**
+- `kick` - Member management command
 
 ---
 

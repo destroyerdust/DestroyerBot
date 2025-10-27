@@ -5,6 +5,11 @@ const logger = require('../logger')
 const DATA_DIR = path.join(__dirname, '../data')
 const SETTINGS_FILE = path.join(DATA_DIR, 'guildSettings.json')
 
+// Commands that are restricted to server owner by default (unless specific roles are assigned)
+const DEFAULT_RESTRICTED_COMMANDS = new Set([
+  'kick',
+])
+
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true })
@@ -110,10 +115,21 @@ function removeCommandRole(guildId, commandName, roleId) {
  * @returns {boolean} True if member has permission
  */
 function hasCommandPermission(guildId, commandName, member) {
+  // Server owner always has permission to use any command
+  if (member.id === member.guild.ownerId) {
+    return true
+  }
+
   const guildSettings = getGuildSettings(guildId)
   const allowedRoles = guildSettings.commandPermissions[commandName]
 
-  // If no roles are configured, allow everyone
+  // If command is in default-restricted list AND no specific roles are configured,
+  // deny access (only owner can use, but we already checked that above)
+  if (DEFAULT_RESTRICTED_COMMANDS.has(commandName) && (!allowedRoles || allowedRoles.length === 0)) {
+    return false
+  }
+
+  // If no roles are configured (and command is not default-restricted), allow everyone
   if (!allowedRoles || allowedRoles.length === 0) {
     return true
   }
