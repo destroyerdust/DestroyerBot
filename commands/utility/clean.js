@@ -49,6 +49,17 @@ module.exports = {
 
     const count = interaction.options.getInteger('count') || 10
 
+    logger.info(
+      {
+        guildId: interaction.guild.id,
+        channelId: interaction.channel.id,
+        requestedCount: count,
+        executedBy: interaction.user.tag,
+        userId: interaction.user.id,
+      },
+      'Executing clean command'
+    )
+
     try {
       // Defer reply since this might take time
       await interaction.deferReply({ flags: MessageFlags.Ephemeral })
