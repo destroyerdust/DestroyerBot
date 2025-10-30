@@ -314,16 +314,19 @@ You have two options for removing role restrictions:
 ### Default Behavior
 
 #### Regular Commands
+
 - **No roles configured = Everyone can use the command**
 - This is by design to maintain backward compatibility
 
 #### Default-Restricted Commands (e.g., `/kick`)
+
 - **No roles configured = Only server owner can use**
 - **With roles configured = Users with those roles can use**
 - **Server owner = Always has access** (owner bypass)
 - Add roles using `/setcommandrole` to allow non-owner access
 
 **Currently default-restricted commands:**
+
 - `kick` - Member management command
 - `clean` - Message cleanup command
 

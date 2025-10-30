@@ -8,10 +8,7 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'guildSettings.json')
 // Commands that are restricted to server owner by default (unless specific roles are assigned)
 // NOTE: If you add/remove items here, update any admin commands that reference the same set
 // (for example `commands/admin/listpermissions.js`) so the UI/reporting stays consistent.
-const DEFAULT_RESTRICTED_COMMANDS = new Set([
-  'kick',
-  'clean',
-])
+const DEFAULT_RESTRICTED_COMMANDS = new Set(['kick', 'clean'])
 
 // Ensure data directory exists. This module creates `data/guildSettings.json` on first run.
 // Keep this behavior — other parts of the code assume the file exists.
@@ -129,7 +126,10 @@ function hasCommandPermission(guildId, commandName, member) {
 
   // If command is in default-restricted list AND no specific roles are configured,
   // deny access (only owner can use, but we already checked that above)
-  if (DEFAULT_RESTRICTED_COMMANDS.has(commandName) && (!allowedRoles || allowedRoles.length === 0)) {
+  if (
+    DEFAULT_RESTRICTED_COMMANDS.has(commandName) &&
+    (!allowedRoles || allowedRoles.length === 0)
+  ) {
     return false
   }
 

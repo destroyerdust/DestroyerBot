@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const { hasCommandPermission } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
@@ -17,7 +22,11 @@ module.exports = {
     ),
   async execute(interaction) {
     // Check bot permissions
-    if (!interaction.guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageMessages)) {
+    if (
+      !interaction.guild.members.me
+        .permissionsIn(interaction.channel)
+        .has(PermissionFlagsBits.ManageMessages)
+    ) {
       return interaction.reply({
         content: '❌ I need `Manage Messages` permission to delete messages in this channel.',
         flags: MessageFlags.Ephemeral,
@@ -68,7 +77,9 @@ module.exports = {
       const messages = await interaction.channel.messages.fetch({ limit: 100 })
 
       // Filter to only bot messages
-      const botMessages = messages.filter(msg => msg.author.id === interaction.guild.members.me.id)
+      const botMessages = messages.filter(
+        (msg) => msg.author.id === interaction.guild.members.me.id
+      )
 
       // Take the specified number
       const messagesToDelete = botMessages.first(count)
@@ -79,8 +90,8 @@ module.exports = {
 
       // Bulk delete if possible (Discord allows bulk delete for messages less than 2 weeks old)
       const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000
-      const recentMessages = messagesToDelete.filter(msg => msg.createdTimestamp > twoWeeksAgo)
-      const oldMessages = messagesToDelete.filter(msg => msg.createdTimestamp <= twoWeeksAgo)
+      const recentMessages = messagesToDelete.filter((msg) => msg.createdTimestamp > twoWeeksAgo)
+      const oldMessages = messagesToDelete.filter((msg) => msg.createdTimestamp <= twoWeeksAgo)
 
       let deletedCount = 0
 
@@ -129,7 +140,7 @@ module.exports = {
       }
 
       // Delete remaining recent messages individually (if bulk failed or single message)
-      const remainingRecent = recentMessages.filter(msg => !msg.deleted)
+      const remainingRecent = recentMessages.filter((msg) => !msg.deleted)
       for (const message of remainingRecent) {
         try {
           await message.delete()
@@ -162,7 +173,6 @@ module.exports = {
       )
 
       await interaction.editReply(responseMessage)
-
     } catch (error) {
       logger.error(
         {

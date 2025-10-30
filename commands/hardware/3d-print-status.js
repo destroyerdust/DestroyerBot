@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const { miniAPI, ownerId } = require('../../config.json')
 const logger = require('../../logger')
 

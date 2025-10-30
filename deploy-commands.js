@@ -31,9 +31,9 @@ for (const file of commandFiles) {
   logger.debug(`Loading command from ${file}`)
   const command = require(file)
   if ('data' in command && 'execute' in command) {
-  // `InteractionContextType.Guild` is 1 — commands that include context 1 are considered global here
-  // (this project encodes the global decision via `data.contexts?.includes(1)`).
-  const isGlobal = command.data.contexts?.includes(1)
+    // `InteractionContextType.Guild` is 1 — commands that include context 1 are considered global here
+    // (this project encodes the global decision via `data.contexts?.includes(1)`).
+    const isGlobal = command.data.contexts?.includes(1)
     const commandName = command.data.name
     logger.debug(`Command ${commandName}, isGlobal: ${isGlobal}`)
     const commandData = command.data.toJSON()

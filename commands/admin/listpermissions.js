@@ -8,10 +8,7 @@ const { getGuildSettings } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
 // Import the default restricted commands (should match utils/guildSettings.js)
-const DEFAULT_RESTRICTED_COMMANDS = new Set([
-  'kick',
-  'clean',
-])
+const DEFAULT_RESTRICTED_COMMANDS = new Set(['kick', 'clean'])
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -54,7 +51,9 @@ module.exports = {
       }
 
       if (allCommands.size === 0) {
-        embed.setDescription('No command permissions have been configured yet. Default-restricted commands (like `/kick` and `/clean`) are owner-only.')
+        embed.setDescription(
+          'No command permissions have been configured yet. Default-restricted commands (like `/kick` and `/clean`) are owner-only.'
+        )
       } else {
         for (const [commandName, roleIds] of allCommands.entries()) {
           if (roleIds === null) {

@@ -3,6 +3,7 @@
 This repo is a Discord bot (Discord.js v14) that loads slash-command modules from `./commands/` and event handlers from `./events/`. Commands must export an object with `data` (a `SlashCommandBuilder`) and an `execute(interaction)` function. See `index.js` for the command/event loader and `deploy-commands.js` for how slash commands are deployed to Discord.
 
 Key files to inspect when implementing or changing behavior:
+
 - `index.js` — command & event bootstrap, runtime permission checks via `utils/guildSettings.js`.
 - `deploy-commands.js` — how commands are discovered and deployed (guild vs global detection).
 - `utils/guildSettings.js` — JSON-backed role-based command permission system (`data/guildSettings.json`).
@@ -17,6 +18,7 @@ Key files to inspect when implementing or changing behavior:
 - Permissions are stored in `data/guildSettings.json`; `utils/guildSettings.js` provides read/write helpers and enforces a small set of default-restricted commands (e.g. `kick`, `clean`).
 
 Why this matters to an AI agent:
+
 - Changing command names or `data.name` must be reflected wherever the command is referenced — loader uses `command.data.name` as the key.
 - Deploying commands requires running `node deploy-commands.js` — see `deploy-commands.js` to understand how guild vs global commands are detected (it checks `command.data.contexts?.includes(1)`).
 
