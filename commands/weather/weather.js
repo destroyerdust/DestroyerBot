@@ -52,7 +52,7 @@ module.exports = {
       logger.debug(`Geocoding location: ${location}`)
 
       const geoResponse = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1&accept-language=en-US`,
         {
           headers: {
             'User-Agent': 'DestroyerBot WeatherCommand/1.0 (discord-bot@example.com)',
@@ -126,7 +126,7 @@ module.exports = {
       logger.debug(`Fetching weather data: ${latNum},${lonNum} (${units})`)
 
       const weatherResponse = await fetch(
-        `https://api.pirateweather.net/forecast/${pirateWeatherApiKey}/${latNum},${lonNum}?exclude=minutely,hourly,daily,alerts,flags&units=${units}`
+        `https://api.pirateweather.net/forecast/${pirateWeatherApiKey}/${latNum},${lonNum}?exclude=minutely,hourly,daily,alerts,flags&units=${units}&lang=en`
       )
 
       if (!weatherResponse.ok) {

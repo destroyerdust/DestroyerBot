@@ -1,3 +1,5 @@
+// Script to collect local command modules and push their definitions to Discord
+// Run with: `node deploy-commands.js` (see README.md). This updates guild and global slash commands.
 const { REST, Routes, InteractionContextType } = require('discord.js')
 const { clientId, guildId, token } = require('./config.json')
 const fs = require('node:fs')
@@ -29,6 +31,8 @@ for (const file of commandFiles) {
   logger.debug(`Loading command from ${file}`)
   const command = require(file)
   if ('data' in command && 'execute' in command) {
+    // `InteractionContextType.Guild` is 1 — commands that include context 1 are considered global here
+    // (this project encodes the global decision via `data.contexts?.includes(1)`).
     const isGlobal = command.data.contexts?.includes(1)
     const commandName = command.data.name
     logger.debug(`Command ${commandName}, isGlobal: ${isGlobal}`)

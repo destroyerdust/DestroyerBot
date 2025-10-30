@@ -44,6 +44,7 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 DestroyerBot includes a comprehensive role-based permission system that allows server administrators to control which roles can use specific commands.
 
 **Features:**
+
 - Per-guild configuration with local JSON storage
 - Role-based access control for any command
 - 4 admin commands for managing permissions (requires `Manage Server`)
@@ -51,6 +52,7 @@ DestroyerBot includes a comprehensive role-based permission system that allows s
 - Guild-only admin commands (cannot be used in DMs)
 
 **Admin Commands:**
+
 - `/setcommandrole` - Assign a role to a command
 - `/removecommandrole` - Remove a role from a command
 - `/listpermissions` - View all command permissions for the server

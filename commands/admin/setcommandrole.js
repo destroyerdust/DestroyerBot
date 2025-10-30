@@ -23,20 +23,23 @@ module.exports = {
     ),
   async autocomplete(interaction) {
     const focusedValue = interaction.options.getFocused().toLowerCase()
-    
+
     // Get all command names from the bot, excluding admin commands
     const commands = interaction.client.commands
-    const adminCommands = ['setcommandrole', 'removecommandrole', 'listpermissions', 'resetpermissions']
-    const commandNames = Array.from(commands.keys()).filter(
-      (name) => !adminCommands.includes(name)
-    )
-    
+    const adminCommands = [
+      'setcommandrole',
+      'removecommandrole',
+      'listpermissions',
+      'resetpermissions',
+    ]
+    const commandNames = Array.from(commands.keys()).filter((name) => !adminCommands.includes(name))
+
     // Filter commands based on user input
     const filtered = commandNames
       .filter((name) => name.toLowerCase().includes(focusedValue))
       .slice(0, 25) // Discord limits to 25 choices
       .map((name) => ({ name: name, value: name }))
-    
+
     await interaction.respond(filtered)
   },
   async execute(interaction) {

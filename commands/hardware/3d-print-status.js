@@ -1,5 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
-const { miniAPI } = require('../../config.json')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
+const { miniAPI, ownerId } = require('../../config.json')
 const logger = require('../../logger')
 
 module.exports = {
@@ -10,6 +15,14 @@ module.exports = {
       InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
     ),
   async execute(interaction) {
+    // Check if the user is authorized
+    if (interaction.user.id !== ownerId) {
+      return interaction.reply({
+        content: 'This command is private and only available to the bot owner.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+
     // const data = await testGet();
     // console.log(data);
     // console.log(data.material);
