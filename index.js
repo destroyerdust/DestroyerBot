@@ -8,7 +8,11 @@ const { hasCommandPermission } = require('./utils/guildSettings')
 logger.info('Starting DestroyerBot...')
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
 })
 
 client.commands = new Collection()
@@ -46,8 +50,10 @@ for (const file of eventFiles) {
   const filePath = path.join(eventsPath, file)
   const event = require(filePath)
   if (event.once) {
+    logger.debug({ eventName: event.name, eventFile: file }, 'Loading event as once')
     client.once(event.name, (...args) => event.execute(...args))
   } else {
+    logger.debug({ eventName: event.name, eventFile: file }, 'Loading event as on')
     client.on(event.name, (...args) => event.execute(...args))
   }
 }
