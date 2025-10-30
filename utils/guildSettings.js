@@ -6,12 +6,15 @@ const DATA_DIR = path.join(__dirname, '../data')
 const SETTINGS_FILE = path.join(DATA_DIR, 'guildSettings.json')
 
 // Commands that are restricted to server owner by default (unless specific roles are assigned)
+// NOTE: If you add/remove items here, update any admin commands that reference the same set
+// (for example `commands/admin/listpermissions.js`) so the UI/reporting stays consistent.
 const DEFAULT_RESTRICTED_COMMANDS = new Set([
   'kick',
   'clean',
 ])
 
-// Ensure data directory exists
+// Ensure data directory exists. This module creates `data/guildSettings.json` on first run.
+// Keep this behavior — other parts of the code assume the file exists.
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true })
   logger.info('Created data directory')
