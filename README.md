@@ -39,7 +39,9 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 
 3. Invite the bot to your server with the required permissions.
 
-## Permission System
+## Features
+
+### Permission System
 
 DestroyerBot includes a comprehensive role-based permission system that allows server administrators to control which roles can use specific commands.
 
@@ -47,7 +49,7 @@ DestroyerBot includes a comprehensive role-based permission system that allows s
 
 - Per-guild configuration with local JSON storage
 - Role-based access control for any command
-- 4 admin commands for managing permissions (requires `Manage Server`)
+- 6 admin commands for managing permissions and logging (requires `Manage Server`)
 - Autocomplete support for easy command selection
 - Guild-only admin commands (cannot be used in DMs)
 
@@ -57,8 +59,42 @@ DestroyerBot includes a comprehensive role-based permission system that allows s
 - `/removecommandrole` - Remove a role from a command
 - `/listpermissions` - View all command permissions for the server
 - `/resetpermissions` - Clear all command permissions
+- `/setlogchannel` - Set the channel for message logging
+- `/logsettings` - Enable or disable message create/delete logging
 
 📖 **[View Complete Permission System Documentation](PERMISSIONS_GUIDE.md)**
+
+### Message Logging System
+
+An automated moderation logging system that tracks message activities in Discord servers.
+
+**Features:**
+
+- Automatic logging of message creation and deletion events
+- Detailed embeds showing author, channel, timestamp, and content (when available)
+- Audit log integration to identify who deleted messages
+- Per-guild configuration with enable/disable toggles
+- Extensive debugging support for troubleshooting
+- Human-readable embed format with clear information
+
+**Requirements:**
+
+- Bot needs `View Audit Logs` permission for deletion details
+- Bot needs `Message Content Intent` enabled in Developer Portal (privileged intent)
+- Guild members need appropriate permissions for admin commands
+
+**What Gets Logged:**
+
+- **Message Creations**: Who posted, where, when, and the message content (if bot has proper intents)
+- **Message Deletions**: Who deleted, which message was removed, original author, and content (when cached)
+- **Filtering**: Bot messages and DMs are automatically excluded
+
+**Setup Steps:**
+
+1. Set the log channel: `/setlogchannel channel:#logs`
+2. Enable features: `/logsettings create enable` and `/logsettings delete enable`
+3. Enable Message Content Intent in [Discord Developer Portal](https://discord.com/developers/applications) under Bot settings
+4. Restart bot and test by creating/deleting messages
 
 ---
 

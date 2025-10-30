@@ -174,6 +174,65 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 ---
 
+### `/setlogchannel`
+
+**Required Permission:** `Manage Server`  
+**Description:** Set the channel where message logging events will be sent
+
+**Usage:**
+
+```
+/setlogchannel channel:#logs
+/setlogchannel channel:#moderation
+```
+
+**Example Output:**
+
+```
+✅ Log channel set to #logs. Moderation actions will be logged here.
+```
+
+**Notes:**
+
+- Must be a text channel the bot can access
+- Events will only log if both a channel is set and logging is enabled for specific events
+- Each guild can have only one log channel
+- Unset the channel by not specifying any (though currently not supported in command)
+
+---
+
+### `/logsettings`
+
+**Required Permission:** `Manage Server`  
+**Description:** Enable or disable automatic logging for message creation and deletion events
+
+**Usage:**
+
+```
+/logsettings create enable    # Enable message creation logging
+/logsettings create disable   # Disable message creation logging
+/logsettings delete enable    # Enable message deletion logging
+/logsettings delete disable   # Disable message deletion logging
+```
+
+**Example Output:**
+
+```
+✅ Message create logging enabled.
+
+**Message Create Logging:** ✅ Enabled
+**Message Delete Logging:** ✅ Enabled
+```
+
+**Notes:**
+
+- Both creation and deletion logging are enabled by default
+- You can enable/disable them independently
+- Logging only occurs if a log channel is also set with `/setlogchannel`
+- The command shows the status of both settings after each change
+
+---
+
 ## Autocomplete Feature
 
 Both `/setcommandrole` and `/removecommandrole` commands feature **intelligent autocomplete** for command selection:
@@ -361,14 +420,16 @@ You have two options for removing role restrictions:
 
 ## Admin Command Overview
 
-The permission system includes **4 admin commands**, all requiring `Manage Server` permission:
+The permission system includes **6 admin commands**, all requiring `Manage Server` permission:
 
-| Command              | Purpose                      | Guild-Only |
-| -------------------- | ---------------------------- | ---------- |
-| `/setcommandrole`    | Add a role to a command      | ✅ Yes     |
-| `/removecommandrole` | Remove a role from a command | ✅ Yes     |
-| `/listpermissions`   | View all permissions         | ✅ Yes     |
-| `/resetpermissions`  | Clear all permissions        | ✅ Yes     |
+| Command              | Purpose                                         | Guild-Only |
+| -------------------- | ----------------------------------------------- | ---------- |
+| `/setcommandrole`    | Add a role to a command                         | ✅ Yes     |
+| `/removecommandrole` | Remove a role from a command                    | ✅ Yes     |
+| `/listpermissions`   | View all permissions                            | ✅ Yes     |
+| `/resetpermissions`  | Clear all permissions                           | ✅ Yes     |
+| `/setlogchannel`     | Set the channel for message logging             | ✅ Yes     |
+| `/logsettings`       | Enable or disable message create/delete logging | ✅ Yes     |
 
 **Note:** All admin commands are restricted to servers only and cannot be used in DMs. This is intentional since permissions are server-specific.
 
