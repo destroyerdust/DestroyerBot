@@ -370,14 +370,40 @@ module.exports = {
           }
         }
 
-        // Guild Rankings
+        // Guild Rankings - Show all difficulty rankings
         const rankings = data.raid_rankings?.[currentRaidTier]
-        if (rankings?.realm && rankings.region) {
-          embed.addFields(
-            { name: '📊 Realm Rank', value: `#${rankings.realm}`, inline: true },
-            { name: '🌍 Region Rank', value: `#${rankings.region}`, inline: true },
-            { name: '🌎 World Rank', value: `#${rankings.world}`, inline: true }
-          )
+        if (rankings) {
+          const rankingFields = []
+
+          // Mythic rankings (most prestigious)
+          if (rankings.mythic) {
+            rankingFields.push(
+              { name: '🐉 Mythic Realm Rank', value: `#${rankings.mythic.realm}`, inline: true },
+              { name: '🐉 Mythic Region Rank', value: `#${rankings.mythic.region}`, inline: true },
+              { name: '🐉 Mythic World Rank', value: `#${rankings.mythic.world}`, inline: true }
+            )
+          }
+
+          // Heroic rankings
+          if (rankings.heroic) {
+            rankingFields.push(
+              { name: '💪 Heroic Realm Rank', value: `#${rankings.heroic.realm}`, inline: true },
+              { name: '💪 Heroic Region Rank', value: `#${rankings.heroic.region}`, inline: true },
+              { name: '💪 Heroic World Rank', value: `#${rankings.heroic.world}`, inline: true }
+            )
+          }
+
+          // Normal rankings (if space allows)
+          if (rankings.normal && rankingFields.length < 6) {
+            rankingFields.push(
+              { name: '⚔️ Normal Realm Rank', value: `#${rankings.normal.realm}`, inline: true },
+              { name: '⚔️ Normal Region Rank', value: `#${rankings.normal.region}`, inline: true },
+              { name: '⚔️ Normal World Rank', value: `#${rankings.normal.world}`, inline: true }
+            )
+          }
+
+          // Add ranking fields to embed (limit to prevent embed overflow)
+          embed.addFields(...rankingFields.slice(0, 9)) // Max 9 fields to stay under embed limits
         }
 
         await interaction.editReply({ embeds: [embed] })
