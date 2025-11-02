@@ -65,9 +65,9 @@ module.exports = {
       const joinedRelative = `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`
 
       const roles = member.roles.cache
-        .filter(role => role.id !== interaction.guild.id) // Exclude @everyone
+        .filter((role) => role.id !== interaction.guild.id) // Exclude @everyone
         .sort((a, b) => b.position - a.position)
-        .map(role => role.toString())
+        .map((role) => role.toString())
         .slice(0, 10) // Limit to first 10 roles
 
       const roleText = roles.length > 0 ? roles.join(', ') : 'None'
@@ -83,18 +83,25 @@ module.exports = {
         embed.addFields({
           name: `👥 Roles (${member.roles.cache.size - 1})`,
           value: roleText.length > 1024 ? roleText.substring(0, 1021) + '...' : roleText,
-          inline: false
+          inline: false,
         })
       }
 
       // Member permissions (key permissions only)
-      const keyPermissions = ['Administrator', 'ManageGuild', 'ManageRoles', 'ManageChannels', 'KickMembers', 'BanMembers']
-      const memberPerms = keyPermissions.filter(perm => member.permissions.has(perm))
+      const keyPermissions = [
+        'Administrator',
+        'ManageGuild',
+        'ManageRoles',
+        'ManageChannels',
+        'KickMembers',
+        'BanMembers',
+      ]
+      const memberPerms = keyPermissions.filter((perm) => member.permissions.has(perm))
       if (memberPerms.length > 0) {
         embed.addFields({
           name: '🔑 Key Permissions',
           value: memberPerms.join(', '),
-          inline: false
+          inline: false,
         })
       }
     }
@@ -116,14 +123,14 @@ module.exports = {
         VerifiedDeveloper: '🔧',
         CertifiedModerator: '🛡️',
         BotHTTPInteractions: '🌐',
-        ActiveDeveloper: '💻'
+        ActiveDeveloper: '💻',
       }
 
-      const flagText = flags.map(flag => `${flagEmojis[flag] || '🏷️'} ${flag}`).join('\n')
+      const flagText = flags.map((flag) => `${flagEmojis[flag] || '🏷️'} ${flag}`).join('\n')
       embed.addFields({
         name: '🏷️ Badges',
         value: flagText,
-        inline: false
+        inline: false,
       })
     }
 
