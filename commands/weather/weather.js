@@ -1,6 +1,7 @@
 const {
   SlashCommandBuilder,
   EmbedBuilder,
+  ApplicationIntegrationType,
   InteractionContextType,
   MessageFlags,
 } = require('discord.js')
@@ -11,7 +12,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('weather')
     .setDescription('Get current weather for a location')
-    .setContexts([InteractionContextType.Guild, InteractionContextType.PrivateChannel]) // Modern context array syntax (Discord.js v14+)
+    .setIntegrationTypes([
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ])
+    .setContexts(InteractionContextType.Guild | InteractionContextType.BotDM)
     .addStringOption((option) =>
       option
         .setName('location')
@@ -47,7 +52,7 @@ module.exports = {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
-      // First, geocode the location to get lat/lon
+      // Geocode the location to get lat/lon
       logger.debug(`Geocoding location: ${location}`)
 
       const geoResponse = await fetch(
@@ -121,7 +126,7 @@ module.exports = {
         'Location geocoded successfully'
       )
 
-      // Now fetch weather from Pirate Weather
+      // Fetch weather from Pirate Weather
       logger.debug(`Fetching weather data: ${latNum},${lonNum} (${units})`)
 
       const weatherResponse = await fetch(
@@ -169,51 +174,95 @@ module.exports = {
         'Weather data retrieved successfully'
       )
 
-      const embed = new EmbedBuilder().setTitle(`Weather in ${display_name}`).setColor(0x00aaff)
+      // Determine weather icon and color based on conditions
+      const summary = data.currently?.summary?.toLowerCase() || ''
+      let weatherIcon = '🌤️'
+      let embedColor = 0x00aaff // Default blue
+
+      if (summary.includes('clear') || summary.includes('sunny')) {
+        weatherIcon = '☀️'
+        embedColor = 0xffd700 // Gold
+      } else if (summary.includes('rain') || summary.includes('drizzle')) {
+        weatherIcon = '🌧️'
+        embedColor = 0x4682b4 // Steel blue
+      } else if (summary.includes('snow') || summary.includes('flurr')) {
+        weatherIcon = '❄️'
+        embedColor = 0xe6f3ff // Light blue
+      } else if (summary.includes('cloud') || summary.includes('overcast')) {
+        weatherIcon = '☁️'
+        embedColor = 0x808080 // Gray
+      } else if (summary.includes('fog') || summary.includes('mist')) {
+        weatherIcon = '🌫️'
+        embedColor = 0xd3d3d3 // Light gray
+      } else if (summary.includes('thunder') || summary.includes('storm')) {
+        weatherIcon = '⛈️'
+        embedColor = 0x2f4f4f // Dark slate gray
+      } else if (summary.includes('wind')) {
+        weatherIcon = '💨'
+        embedColor = 0x87ceeb // Sky blue
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle(`${weatherIcon} Weather in ${display_name}`)
+        .setColor(embedColor)
+        .setTimestamp()
+        .setFooter({
+          text: 'Powered by Pirate Weather',
+          iconURL: 'https://i.imgur.com/placeholder.png', // Could add a weather API icon
+        })
 
       if (data.currently) {
         const currently = data.currently
         embed.addFields(
           {
-            name: 'Description',
-            value: currently.summary || 'No description available',
+            name: '🌡️ Temperature',
+            value: `**${Math.round(currently.temperature)}${tempUnit}**\nFeels like ${Math.round(currently.apparentTemperature)}${tempUnit}`,
             inline: true,
           },
           {
-            name: 'Temperature',
-            value: `${Math.round(currently.temperature)}${tempUnit}`,
+            name: '💧 Humidity',
+            value: `${Math.round((currently.humidity || 0) * 100)}%`,
             inline: true,
           },
           {
-            name: 'Feels Like',
-            value: `${Math.round(currently.apparentTemperature)}${tempUnit}`,
+            name: '💨 Wind Speed',
+            value: `${(currently.windSpeed || 0).toFixed(1)} ${speedUnit}`,
             inline: true,
           }
         )
         embed.addFields(
           {
-            name: 'Humidity',
-            value: `${Math.round((currently.humidity || 0) * 100)}%`,
+            name: '📊 Pressure',
+            value: `${Math.round(currently.pressure || 0)} hPa`,
             inline: true,
           },
           {
-            name: 'Wind Speed',
-            value: `${(currently.windSpeed || 0).toFixed(1)} ${speedUnit}`,
-            inline: true,
-          },
-          { name: 'Pressure', value: `${Math.round(currently.pressure || 0)} hPa`, inline: true }
-        )
-        embed.addFields(
-          {
-            name: 'Cloud Cover',
+            name: '☁️ Cloud Cover',
             value: `${Math.round((currently.cloudCover || 0) * 100)}%`,
             inline: true,
           },
-          { name: 'UV Index', value: `${currently.uvIndex || 'N/A'}`, inline: true },
-          { name: 'Visibility', value: `${Math.round(currently.visibility || 0)} km`, inline: true }
+          {
+            name: '👁️ Visibility',
+            value: `${Math.round(currently.visibility || 0)} km`,
+            inline: true,
+          }
         )
+
+        // Add UV index if available and relevant
+        if (currently.uvIndex !== undefined && currently.uvIndex > 0) {
+          embed.addFields({
+            name: '🕶️ UV Index',
+            value: `${currently.uvIndex} ${currently.uvIndex <= 2 ? '(Low)' : currently.uvIndex <= 5 ? '(Moderate)' : currently.uvIndex <= 7 ? '(High)' : currently.uvIndex <= 10 ? '(Very High)' : '(Extreme)'}`,
+            inline: true,
+          })
+        }
+
+        // Add description as embed description for better visual hierarchy
+        if (currently.summary) {
+          embed.setDescription(`**${currently.summary}**`)
+        }
       } else {
-        embed.setDescription('Current weather data not available for this location.')
+        embed.setDescription('❌ Current weather data not available for this location.')
       }
 
       await interaction.editReply({ embeds: [embed], flags: MessageFlags.Ephemeral })
