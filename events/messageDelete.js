@@ -1,5 +1,5 @@
 const { EmbedBuilder, AuditLogEvent } = require('discord.js')
-const { getLogChannel, getLogMessageDelete } = require('../utils/guildSettings')
+const { getLogChannelAsync, getLogMessageDeleteAsync } = require('../utils/guildSettings')
 const logger = require('../logger')
 
 module.exports = {
@@ -18,7 +18,7 @@ module.exports = {
 
     logger.info({ guildId: message.guild.id }, 'Handling message delete in guild')
 
-    const logChannelId = getLogChannel(message.guild.id)
+    const logChannelId = await getLogChannelAsync(message.guild.id)
     logger.debug({ guildId: message.guild.id, logChannelId }, 'Retrieved log channel ID')
 
     if (!logChannelId) {
@@ -32,7 +32,8 @@ module.exports = {
       return
     }
 
-    if (!getLogMessageDelete(message.guild.id)) {
+    const shouldLog = await getLogMessageDeleteAsync(message.guild.id)
+    if (!shouldLog) {
       logger.debug({ guildId: message.guild.id }, 'Message delete logging disabled, skipping')
       return
     }
