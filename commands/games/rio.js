@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const logger = require('../../logger')
 
 module.exports = {
@@ -13,10 +18,13 @@ module.exports = {
         .setName('character')
         .setDescription('📊 Get detailed character information and Mythic+ scores')
         .addStringOption((option) =>
-          option.setName('realm').setDescription('The character\'s realm (e.g., "Area 52", "Illidan")').setRequired(true)
+          option
+            .setName('realm')
+            .setDescription('The character\'s realm (e.g., "Area 52", "Illidan")')
+            .setRequired(true)
         )
         .addStringOption((option) =>
-          option.setName('name').setDescription('The character\'s name').setRequired(true)
+          option.setName('name').setDescription("The character's name").setRequired(true)
         )
         .addStringOption((option) =>
           option
@@ -37,10 +45,13 @@ module.exports = {
         .setName('guild')
         .setDescription('🏰 Get guild progression and ranking information')
         .addStringOption((option) =>
-          option.setName('realm').setDescription('The guild\'s realm (e.g., "Area 52", "Illidan")').setRequired(true)
+          option
+            .setName('realm')
+            .setDescription('The guild\'s realm (e.g., "Area 52", "Illidan")')
+            .setRequired(true)
         )
         .addStringOption((option) =>
-          option.setName('name').setDescription('The guild\'s name').setRequired(true)
+          option.setName('name').setDescription("The guild's name").setRequired(true)
         )
         .addStringOption((option) =>
           option
@@ -78,14 +89,14 @@ module.exports = {
     if (!realm || realm.trim().length === 0) {
       return interaction.reply({
         content: '❌ Please provide a valid realm name.',
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       })
     }
 
     if (!name || name.trim().length === 0) {
       return interaction.reply({
         content: '❌ Please provide a valid character/guild name.',
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       })
     }
 
@@ -105,8 +116,8 @@ module.exports = {
 
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)'
-          }
+            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
+          },
         })
 
         if (!response.ok) {
@@ -118,7 +129,7 @@ module.exports = {
             realm: cleanRealm,
             name: cleanName,
             apiUrl: url,
-            errorData
+            errorData,
           })
 
           let errorMessage = '❌ Character not found or API error.'
@@ -127,7 +138,8 @@ module.exports = {
           } else if (response.status === 429) {
             errorMessage = '⚠️ Raider.IO API rate limit exceeded. Please try again later.'
           } else if (response.status >= 500) {
-            errorMessage = '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
+            errorMessage =
+              '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
           }
 
           return interaction.editReply(errorMessage)
@@ -152,19 +164,19 @@ module.exports = {
 
         // Get class color or use default
         const classColors = {
-          'Death Knight': 0xC41E3A,
-          'Demon Hunter': 0xA330C9,
-          'Druid': 0xFF7C0A,
-          'Hunter': 0xAAD372,
-          'Mage': 0x3FC7EB,
-          'Monk': 0x00FF98,
-          'Paladin': 0xF48CBA,
-          'Priest': 0xFFFFFF,
-          'Rogue': 0xFFF468,
-          'Shaman': 0x0070DD,
-          'Warlock': 0x8788EE,
-          'Warrior': 0xC69B6D,
-          'Evoker': 0x33937F
+          'Death Knight': 0xc41e3a,
+          'Demon Hunter': 0xa330c9,
+          Druid: 0xff7c0a,
+          Hunter: 0xaad372,
+          Mage: 0x3fc7eb,
+          Monk: 0x00ff98,
+          Paladin: 0xf48cba,
+          Priest: 0xffffff,
+          Rogue: 0xfff468,
+          Shaman: 0x0070dd,
+          Warlock: 0x8788ee,
+          Warrior: 0xc69b6d,
+          Evoker: 0x33937f,
         }
 
         const embedColor = classColors[data.class] || 0x0099ff
@@ -192,13 +204,26 @@ module.exports = {
         const healerScore = data.mythic_plus_scores_by_season?.[0]?.segments?.healer?.score || 0
         const tankScore = data.mythic_plus_scores_by_season?.[0]?.segments?.tank?.score || 0
 
+        // Determine if character can tank based on class/spec
+        const tankingSpecs = {
+          'Warrior': ['Protection'],
+          'Paladin': ['Protection'],
+          'Death Knight': ['Blood'],
+          'Monk': ['Brewmaster'],
+          'Druid': ['Guardian'],
+          'Demon Hunter': ['Vengeance']
+        }
+
+        const canTank = tankingSpecs[data.class]?.includes(data.active_spec_name) || false
+
         embed.addFields(
           { name: '⭐ Overall Score', value: mythicScore.toFixed(0), inline: true },
           { name: '⚔️ DPS Score', value: dpsScore.toFixed(0), inline: true },
           { name: '💚 Healer Score', value: healerScore.toFixed(0), inline: true }
         )
 
-        if (tankScore > 0) {
+        // Show tank score if character can tank or has tank score > 0
+        if (canTank || tankScore > 0) {
           embed.addFields({ name: '🛡️ Tank Score', value: tankScore.toFixed(0), inline: true })
         }
 
@@ -209,7 +234,7 @@ module.exports = {
           embed.addFields({
             name: '🎒 Item Level',
             value: `**${ilvl}** equipped\n${equippedIlvl} total`,
-            inline: true
+            inline: true,
           })
         }
 
@@ -218,7 +243,7 @@ module.exports = {
           embed.addFields({
             name: '🏆 Achievement Points',
             value: data.achievement_points.toLocaleString(),
-            inline: true
+            inline: true,
           })
         }
 
@@ -227,7 +252,7 @@ module.exports = {
           embed.addFields({
             name: '🔮 Covenant',
             value: `${data.covenant.name} (Renown ${data.renown_level || 0})`,
-            inline: true
+            inline: true,
           })
         }
 
@@ -247,8 +272,8 @@ module.exports = {
 
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)'
-          }
+            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
+          },
         })
 
         if (!response.ok) {
@@ -260,7 +285,7 @@ module.exports = {
             realm: cleanRealm,
             name: cleanName,
             apiUrl: url,
-            errorData
+            errorData,
           })
 
           let errorMessage = '❌ Guild not found or API error.'
@@ -269,7 +294,8 @@ module.exports = {
           } else if (response.status === 429) {
             errorMessage = '⚠️ Raider.IO API rate limit exceeded. Please try again later.'
           } else if (response.status >= 500) {
-            errorMessage = '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
+            errorMessage =
+              '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
           }
 
           return interaction.editReply(errorMessage)
@@ -291,7 +317,7 @@ module.exports = {
         )
 
         // Faction-based colors
-        const factionColor = data.faction === 'alliance' ? 0x004A93 : 0x8B0000
+        const factionColor = data.faction === 'alliance' ? 0x004a93 : 0x8b0000
 
         const embed = new EmbedBuilder()
           .setTitle(`🏰 ${data.name} - ${data.realm} (${data.region.toUpperCase()})`)
@@ -306,7 +332,11 @@ module.exports = {
         embed.addFields(
           { name: `⚔️ Faction`, value: `${factionEmoji} ${faction}`, inline: true },
           { name: '👥 Members', value: (data.member_count || 'Unknown').toString(), inline: true },
-          { name: '🏆 Achievement Points', value: (data.achievement_points || 0).toLocaleString(), inline: true }
+          {
+            name: '🏆 Achievement Points',
+            value: (data.achievement_points || 0).toLocaleString(),
+            inline: true,
+          }
         )
 
         // Raid Progression
@@ -315,22 +345,22 @@ module.exports = {
           embed.addFields({
             name: '🐉 Current Raid Progress',
             value: raidProgression.summary,
-            inline: false
+            inline: false,
           })
 
           // Detailed boss progression if available
           if (raidProgression.encounters) {
-            const bossKills = raidProgression.encounters.filter(enc => enc.completed_count > 0)
+            const bossKills = raidProgression.encounters.filter((enc) => enc.completed_count > 0)
             if (bossKills.length > 0) {
               const bossList = bossKills
                 .slice(0, 8) // Limit to 8 bosses to avoid embed limits
-                .map(enc => `${enc.completed_count === 1 ? '✅' : '✅✅'} ${enc.encounter_name}`)
+                .map((enc) => `${enc.completed_count === 1 ? '✅' : '✅✅'} ${enc.encounter_name}`)
                 .join('\n')
 
               embed.addFields({
                 name: '👹 Boss Kills',
                 value: bossList,
-                inline: false
+                inline: false,
               })
             }
           }
