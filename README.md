@@ -108,6 +108,8 @@ An automated moderation logging system that tracks message activities in Discord
 - `/ping` - Replies with Pong!
 - `/user-info` - Display info about yourself
 - `/server` - Display comprehensive server information
+- `/role-info <role>` - Display detailed information about a server role (ID, color, permissions, member count, etc.)
+- `/channel-info [channel]` - Display detailed information about a channel (defaults to current channel, supports all channel types)
 
 ### Gaming Commands
 
