@@ -1,7 +1,8 @@
 // Script to collect local command modules and push their definitions to Discord
 // Run with: `node deploy-commands.js` (see README.md). This updates guild and global slash commands.
+// Deploys guild commands to all guilds specified in config.json guildIds array, and global commands application-wide.
 const { REST, Routes, InteractionContextType } = require('discord.js')
-const { clientId, guildId, token } = require('./config.json')
+const { clientId, guildIds, token } = require('./config.json')
 const fs = require('node:fs')
 const path = require('node:path')
 const logger = require('./logger')
@@ -56,11 +57,19 @@ const rest = new REST().setToken(token)
       `Started refreshing ${commands.length} guild commands and ${globalCommands.length} global commands.`
     )
 
-    // Deploy guild commands
-    const guildData = await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
-      body: commands,
-    })
-    logger.info(`Successfully reloaded ${guildData.length} guild (/) commands.`)
+    // Deploy guild commands to each guild
+    for (const guildId of guildIds) {
+      try {
+        const guildData = await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+          body: commands,
+        })
+        logger.info(
+          `Successfully reloaded ${guildData.length} guild (/) commands for guild ${guildId}.`
+        )
+      } catch (error) {
+        logger.error(`Failed to deploy guild commands for guild ${guildId}:`, error.message)
+      }
+    }
 
     // Deploy global commands
     const globalData = await rest.put(Routes.applicationCommands(clientId), {
