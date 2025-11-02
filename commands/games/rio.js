@@ -1,58 +1,70 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const logger = require('../../logger')
+const { raiderIOApiKey } = require('../../config.json')
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('rio')
-    .setDescription('Raider IO Information!')
+    .setDescription('🗡️ Get World of Warcraft character and guild information from Raider.IO')
     .setContexts(
       InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('character')
-        .setDescription('Character Info')
+        .setDescription('📊 Get detailed character information and Mythic+ scores')
         .addStringOption((option) =>
-          option.setName('realm').setDescription('Realm Input').setRequired(true)
+          option
+            .setName('realm')
+            .setDescription('The character\'s realm (e.g., "Area 52", "Illidan")')
+            .setRequired(true)
         )
         .addStringOption((option) =>
-          option.setName('name').setDescription('Character Name').setRequired(true)
+          option.setName('name').setDescription("The character's name").setRequired(true)
         )
         .addStringOption((option) =>
           option
             .setName('region')
-            .setDescription('Region')
+            .setDescription('The region the character is on')
             .setRequired(false)
             .addChoices(
-              { name: 'US', value: 'us' },
-              { name: 'EU', value: 'eu' },
-              { name: 'KR', value: 'kr' },
-              { name: 'TW', value: 'tw' },
-              { name: 'CN', value: 'cn' }
+              { name: '🇺🇸 US', value: 'us' },
+              { name: '🇪🇺 EU', value: 'eu' },
+              { name: '🇰🇷 KR', value: 'kr' },
+              { name: '🇹🇼 TW', value: 'tw' },
+              { name: '🇨🇳 CN', value: 'cn' }
             )
         )
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('guild')
-        .setDescription('Guild Info')
+        .setDescription('🏰 Get guild progression and ranking information')
         .addStringOption((option) =>
-          option.setName('realm').setDescription('Realm Input').setRequired(true)
+          option
+            .setName('realm')
+            .setDescription('The guild\'s realm (e.g., "Area 52", "Illidan")')
+            .setRequired(true)
         )
         .addStringOption((option) =>
-          option.setName('name').setDescription('Guild Name').setRequired(true)
+          option.setName('name').setDescription("The guild's name").setRequired(true)
         )
         .addStringOption((option) =>
           option
             .setName('region')
-            .setDescription('Region')
+            .setDescription('The region the guild is on')
             .setRequired(false)
             .addChoices(
-              { name: 'US', value: 'us' },
-              { name: 'EU', value: 'eu' },
-              { name: 'KR', value: 'kr' },
-              { name: 'TW', value: 'tw' },
-              { name: 'CN', value: 'cn' }
+              { name: '🇺🇸 US', value: 'us' },
+              { name: '🇪🇺 EU', value: 'eu' },
+              { name: '🇰🇷 KR', value: 'kr' },
+              { name: '🇹🇼 TW', value: 'tw' },
+              { name: '🇨🇳 CN', value: 'cn' }
             )
         )
     ),
@@ -74,30 +86,72 @@ module.exports = {
       `${interaction.user.username} (#${interaction.user.id}) requested RaiderIO ${subcommand} info`
     )
 
+    // Input validation
+    if (!realm || realm.trim().length === 0) {
+      return interaction.reply({
+        content: '❌ Please provide a valid realm name.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+
+    if (!name || name.trim().length === 0) {
+      return interaction.reply({
+        content: '❌ Please provide a valid character/guild name.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+
+    // Sanitize inputs
+    const cleanRealm = realm.trim()
+    const cleanName = name.trim()
+
     await interaction.deferReply()
 
     try {
       let url, data, entityType
       if (subcommand === 'character') {
         entityType = 'character'
-        url = `https://raider.io/api/v1/characters/profile?region=${region}&realm=${encodeURIComponent(realm)}&name=${encodeURIComponent(name)}&fields=guild,gear,talents,talents:categorized,mythic_plus_scores_by_season:current`
+        const baseUrl = `https://raider.io/api/v1/characters/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=guild,gear,talents,talents:categorized,mythic_plus_scores_by_season:current`
+        const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
-        logger.debug(`Fetching character data: ${region}/${realm}/${name}`)
+        logger.debug(`Fetching character data: ${region}/${cleanRealm}/${cleanName}`)
+        logger.debug(`API Key configured: ${!!raiderIOApiKey}`)
+        logger.debug(
+          `Final API URL: ${raiderIOApiKey ? apiUrl.replace(raiderIOApiKey, '[REDACTED]') : apiUrl}`
+        )
 
-        const response = await fetch(url)
-        data = await response.json()
+        const response = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
+          },
+        })
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
           logger.warn(`RaiderIO character API error: ${response.status} ${response.statusText}`, {
             status: response.status,
             statusText: response.statusText,
             region,
-            realm,
-            name,
-            apiUrl: url,
+            realm: cleanRealm,
+            name: cleanName,
+            apiUrl,
+            errorData,
           })
-          return interaction.editReply('Character not found or API error.')
+
+          let errorMessage = '❌ Character not found or API error.'
+          if (response.status === 404) {
+            errorMessage = `❌ Character "${cleanName}" not found on realm "${cleanRealm}" in region ${region.toUpperCase()}.`
+          } else if (response.status === 429) {
+            errorMessage = '⚠️ Raider.IO API rate limit exceeded. Please try again later.'
+          } else if (response.status >= 500) {
+            errorMessage =
+              '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
+          }
+
+          return interaction.editReply(errorMessage)
         }
+
+        data = await response.json()
 
         logger.info(
           {
@@ -114,34 +168,98 @@ module.exports = {
           'Character data retrieved successfully'
         )
 
+        // Get class color or use default
+        const classColors = {
+          'Death Knight': 0xc41e3a,
+          'Demon Hunter': 0xa330c9,
+          Druid: 0xff7c0a,
+          Hunter: 0xaad372,
+          Mage: 0x3fc7eb,
+          Monk: 0x00ff98,
+          Paladin: 0xf48cba,
+          Priest: 0xffffff,
+          Rogue: 0xfff468,
+          Shaman: 0x0070dd,
+          Warlock: 0x8788ee,
+          Warrior: 0xc69b6d,
+          Evoker: 0x33937f,
+        }
+
+        const embedColor = classColors[data.class] || 0x0099ff
+
         const embed = new EmbedBuilder()
-          .setTitle(`WoW Character: ${data.name} (${data.realm}-${data.region.toUpperCase()})`)
+          .setTitle(`🗡️ ${data.name} - ${data.realm} (${data.region.toUpperCase()})`)
           .setURL(`https://raider.io/characters/${data.region}/${data.realm}/${data.name}`)
-          .setColor(0x0099ff)
+          .setColor(embedColor)
           .setThumbnail(data.thumbnail_url)
+          .setDescription(`*${data.race} ${data.class} - ${data.active_spec_name}*`)
 
-        const guild = data.guild?.name || 'None'
+        // Basic Character Info
+        const guild = data.guild?.name || 'No Guild'
+        const faction = data.faction.charAt(0).toUpperCase() + data.faction.slice(1)
+        const factionEmoji = data.faction === 'alliance' ? '🔵' : '🔴'
+
+        embed.addFields(
+          { name: '🏰 Guild', value: guild, inline: true },
+          { name: `⚔️ Faction`, value: `${factionEmoji} ${faction}`, inline: true }
+        )
+
+        // Mythic+ Scores
         const mythicScore = data.mythic_plus_scores_by_season?.[0]?.segments?.all?.score || 0
+        const dpsScore = data.mythic_plus_scores_by_season?.[0]?.segments?.dps?.score || 0
+        const healerScore = data.mythic_plus_scores_by_season?.[0]?.segments?.healer?.score || 0
+        const tankScore = data.mythic_plus_scores_by_season?.[0]?.segments?.tank?.score || 0
+
+        // Determine if character can tank based on class (any class with tanking specs)
+        const tankingClasses = [
+          'Warrior',
+          'Paladin',
+          'Death Knight',
+          'Monk',
+          'Druid',
+          'Demon Hunter',
+        ]
+
+        const canTank = tankingClasses.includes(data.class)
 
         embed.addFields(
-          { name: 'Race', value: data.race, inline: true },
-          { name: 'Class/Spec', value: `${data.class} / ${data.active_spec_name}`, inline: true }
-          //   { name: 'Level', value: data.level.toString(), inline: true }
+          { name: '⭐ Overall Score', value: mythicScore.toFixed(0), inline: true },
+          { name: '⚔️ DPS Score', value: dpsScore.toFixed(0), inline: true },
+          { name: '💚 Healer Score', value: healerScore.toFixed(0), inline: true }
         )
 
-        embed.addFields(
-          { name: 'Guild', value: guild, inline: true },
-          {
-            name: 'Faction',
-            value: data.faction.charAt(0).toUpperCase() + data.faction.slice(1),
+        // Show tank score if character can tank or has tank score > 0
+        if (canTank || tankScore > 0) {
+          embed.addFields({ name: '🛡️ Tank Score', value: tankScore.toFixed(0), inline: true })
+        }
+
+        // Gear Information
+        if (data.gear?.item_level_equipped) {
+          const ilvl = data.gear.item_level_equipped
+          const equippedIlvl = data.gear.item_level_total || ilvl
+          embed.addFields({
+            name: '🎒 Item Level',
+            value: `**${ilvl}** equipped\n${equippedIlvl} total`,
             inline: true,
-          },
-          { name: 'Mythic+ Score', value: mythicScore.toString(), inline: true }
-        )
+          })
+        }
 
-        if (data.gear?.items) {
-          const ilvl = data.gear.item_level_equipped || 'N/A'
-          embed.addFields({ name: 'Item Level', value: ilvl.toString(), inline: true })
+        // Achievement Points
+        if (data.achievement_points) {
+          embed.addFields({
+            name: '🏆 Achievement Points',
+            value: data.achievement_points.toLocaleString(),
+            inline: true,
+          })
+        }
+
+        // Covenant & Renown (if available)
+        if (data.covenant) {
+          embed.addFields({
+            name: '🔮 Covenant',
+            value: `${data.covenant.name} (Renown ${data.renown_level || 0})`,
+            inline: true,
+          })
         }
 
         await interaction.editReply({ embeds: [embed] })
@@ -154,24 +272,50 @@ module.exports = {
         )
       } else if (subcommand === 'guild') {
         entityType = 'guild'
-        url = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${encodeURIComponent(realm)}&name=${encodeURIComponent(name)}&fields=raid_progression:current-tier,raid_rankings:current-tier`
+        const baseUrl = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=raid_progression:current-tier,raid_rankings:current-tier`
+        const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
-        logger.debug(`Fetching guild data: ${region}/${realm}/${name}`)
+        logger.debug(`Fetching guild data: ${region}/${cleanRealm}/${cleanName}`)
+        logger.debug(`API Key configured: ${!!raiderIOApiKey}`)
+        logger.debug(
+          `Final API URL: ${raiderIOApiKey ? apiUrl.replace(raiderIOApiKey, '[REDACTED]') : apiUrl}`
+        )
 
-        const response = await fetch(url)
-        data = await response.json()
+        const response = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
+          },
+        })
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
           logger.warn(`RaiderIO guild API error: ${response.status} ${response.statusText}`, {
             status: response.status,
             statusText: response.statusText,
             region,
-            realm,
-            name,
-            apiUrl: url,
+            realm: cleanRealm,
+            name: cleanName,
+            apiUrl,
+            errorData,
           })
-          return interaction.editReply('Guild not found or API error.')
+
+          let errorMessage = '❌ Guild not found or API error.'
+          if (response.status === 404) {
+            errorMessage = `❌ Guild "${cleanName}" not found on realm "${cleanRealm}" in region ${region.toUpperCase()}.`
+          } else if (response.status === 429) {
+            errorMessage = '⚠️ Raider.IO API rate limit exceeded. Please try again later.'
+          } else if (response.status >= 500) {
+            errorMessage =
+              '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
+          }
+
+          return interaction.editReply(errorMessage)
         }
+
+        data = await response.json()
+
+        // Get the current raid tier (first key in raid_progression object)
+        const currentRaidTier = data.raid_progression ? Object.keys(data.raid_progression)[0] : null
 
         logger.info(
           {
@@ -179,25 +323,93 @@ module.exports = {
             realm: data.realm,
             region: data.region,
             faction: data.faction,
-            raidProgression: data.raid_progression?.['manaforge-omega']?.summary,
+            raidProgression: data.raid_progression?.[currentRaidTier]?.summary,
+            memberCount: data.member_count,
+            achievementPoints: data.achievement_points,
+            currentRaidTier,
           },
           'Guild data retrieved successfully'
         )
 
-        const embed = new EmbedBuilder()
-          .setTitle(`WoW Guild: ${data.name} (${data.realm}-${data.region.toUpperCase()})`)
-          .setURL(data.profile_url)
-          .setColor(0x0099ff)
+        // Faction-based colors
+        const factionColor = data.faction === 'alliance' ? 0x004a93 : 0x8b0000
 
-        const faction = data.faction
-          ? data.faction.charAt(0).toUpperCase() + data.faction.slice(1)
-          : 'N/A'
-        const raidProgression = data.raid_progression?.['manaforge-omega']?.summary || 'N/A'
+        const embed = new EmbedBuilder()
+          .setTitle(`🏰 ${data.name} - ${data.realm} (${data.region.toUpperCase()})`)
+          .setURL(data.profile_url)
+          .setColor(factionColor)
+          .setDescription(`*${data.faction.charAt(0).toUpperCase() + data.faction.slice(1)} Guild*`)
+
+        // Basic Guild Info
+        const faction = data.faction.charAt(0).toUpperCase() + data.faction.slice(1)
+        const factionEmoji = data.faction === 'alliance' ? '🔵' : '🔴'
 
         embed.addFields(
-          { name: 'Faction', value: faction, inline: true },
-          { name: 'Raid Progression', value: raidProgression, inline: true }
+          { name: `⚔️ Faction`, value: `${factionEmoji} ${faction}`, inline: true },
+          { name: '👥 Members', value: (data.member_count || 'Unknown').toString(), inline: true }
         )
+
+        // Raid Progression
+        const raidProgression = data.raid_progression?.[currentRaidTier]
+        if (raidProgression?.summary) {
+          embed.addFields({
+            name: '🐉 Current Raid Progress',
+            value: raidProgression.summary,
+            inline: false,
+          })
+
+          // Detailed boss progression if available
+          if (raidProgression.encounters) {
+            const bossKills = raidProgression.encounters.filter((enc) => enc.completed_count > 0)
+            if (bossKills.length > 0) {
+              const bossList = bossKills
+                .slice(0, 8) // Limit to 8 bosses to avoid embed limits
+                .map((enc) => `${enc.completed_count === 1 ? '✅' : '✅✅'} ${enc.encounter_name}`)
+                .join('\n')
+
+              embed.addFields({
+                name: '👹 Boss Kills',
+                value: bossList,
+                inline: false,
+              })
+            }
+          }
+        }
+
+        // Guild Rankings - Hierarchical display based on progression
+        const rankings = data.raid_rankings?.[currentRaidTier]
+        if (rankings) {
+          const rankingFields = []
+
+          // Priority: Mythic > Heroic > Normal
+          if (rankings.mythic) {
+            // Show only Mythic rankings for top guilds
+            rankingFields.push(
+              { name: '🐉 Mythic World Rank', value: `#${rankings.mythic.world}`, inline: true },
+              { name: '🐉 Mythic Region Rank', value: `#${rankings.mythic.region}`, inline: true },
+              { name: '🐉 Mythic Realm Rank', value: `#${rankings.mythic.realm}`, inline: true }
+            )
+          } else if (rankings.heroic) {
+            // Show only Heroic rankings if no Mythic
+            rankingFields.push(
+              { name: '💪 Heroic World Rank', value: `#${rankings.heroic.world}`, inline: true },
+              { name: '💪 Heroic Region Rank', value: `#${rankings.heroic.region}`, inline: true },
+              { name: '💪 Heroic Realm Rank', value: `#${rankings.heroic.realm}`, inline: true }
+            )
+          } else if (rankings.normal) {
+            // Show Normal rankings if no Mythic or Heroic
+            rankingFields.push(
+              { name: '⚔️ Normal World Rank', value: `#${rankings.normal.world}`, inline: true },
+              { name: '⚔️ Normal Region Rank', value: `#${rankings.normal.region}`, inline: true },
+              { name: '⚔️ Normal Realm Rank', value: `#${rankings.normal.realm}`, inline: true }
+            )
+          }
+
+          // Add ranking fields to embed
+          if (rankingFields.length > 0) {
+            embed.addFields(...rankingFields)
+          }
+        }
 
         await interaction.editReply({ embeds: [embed] })
         logger.info(

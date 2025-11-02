@@ -169,7 +169,8 @@ Edit `config.json` in the root directory with your Discord bot details and API k
   "ownerId": "your_discord_user_id",
   "miniAPI": "your_3d_printer_api_endpoint_url",
   "pirateWeatherApiKey": "your_pirate_weather_api_key",
-  "pokemonApiKey": "your_pokemon_tcg_api_key"
+  "pokemonApiKey": "your_pokemon_tcg_api_key",
+  "raiderIOApiKey": "your_raider_io_api_key"
 }
 ```
 
@@ -182,6 +183,7 @@ Edit `config.json` in the root directory with your Discord bot details and API k
 - `miniAPI`: URL for your 3D printer's telemetry API (required for 3d-print-status command)
 - `pirateWeatherApiKey`: Free API key obtained from [pirateweather.net](https://pirateweather.net/) (required for weather command)
 - `pokemonApiKey`: Free API key obtained from [pokemontcg.io](https://pokemontcg.io/) (required for pokemon command)
+- `raiderIOApiKey`: Optional API key obtained from [raider.io](https://raider.io/) (provides higher rate limits for WoW character/guild lookups)
 
 ## Environment Variables
 
