@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require('discord.js')
 const logger = require('../../logger')
+const { raiderIOApiKey } = require('../../config.json')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -110,11 +111,12 @@ module.exports = {
       let url, data, entityType
       if (subcommand === 'character') {
         entityType = 'character'
-        url = `https://raider.io/api/v1/characters/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=guild,gear,talents,talents:categorized,mythic_plus_scores_by_season:current`
+        const baseUrl = `https://raider.io/api/v1/characters/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=guild,gear,talents,talents:categorized,mythic_plus_scores_by_season:current`
+        const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
         logger.debug(`Fetching character data: ${region}/${cleanRealm}/${cleanName}`)
 
-        const response = await fetch(url, {
+        const response = await fetch(apiUrl, {
           headers: {
             'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
           },
@@ -128,7 +130,7 @@ module.exports = {
             region,
             realm: cleanRealm,
             name: cleanName,
-            apiUrl: url,
+            apiUrl,
             errorData,
           })
 
@@ -266,11 +268,12 @@ module.exports = {
         )
       } else if (subcommand === 'guild') {
         entityType = 'guild'
-        url = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=raid_progression:current-tier,raid_rankings:current-tier`
+        const baseUrl = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=raid_progression:current-tier,raid_rankings:current-tier`
+        const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
         logger.debug(`Fetching guild data: ${region}/${cleanRealm}/${cleanName}`)
 
-        const response = await fetch(url, {
+        const response = await fetch(apiUrl, {
           headers: {
             'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
           },
@@ -284,7 +287,7 @@ module.exports = {
             region,
             realm: cleanRealm,
             name: cleanName,
-            apiUrl: url,
+            apiUrl,
             errorData,
           })
 
