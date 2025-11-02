@@ -11,29 +11,31 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('weather')
     .setDescription('Get current weather for a location')
-    .setContexts(
-      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
-    )
+    .setContexts([
+      InteractionContextType.Guild,
+      InteractionContextType.PrivateChannel
+    ]) // Modern context array syntax (Discord.js v14+)
     .addStringOption((option) =>
       option
         .setName('location')
-        .setDescription('City name (e.g., "New York" or "London,UK")')
+        .setDescription('City name (e.g., "New York" or "London, UK")')
         .setRequired(true)
+        .setMaxLength(100)
     )
     .addStringOption((option) =>
       option
         .setName('units')
-        .setDescription('Temperature units')
+        .setDescription('Temperature units (defaults to Fahrenheit)')
         .setRequired(false)
         .addChoices(
-          { name: 'Celsius', value: 'si' },
-          { name: 'Fahrenheit', value: 'us' },
-          { name: 'Canadian (Celsius with km/h)', value: 'ca' }
+          { name: 'Celsius (°C)', value: 'si' },
+          { name: 'Fahrenheit (°F) - Default', value: 'us' },
+          { name: 'Canadian (Celsius + km/h)', value: 'ca' }
         )
     ),
   async execute(interaction) {
     const location = interaction.options.getString('location')
-    const units = interaction.options.getString('units') || 'si'
+    const units = interaction.options.getString('units') || 'us' // Default to Fahrenheit
 
     logger.info(
       {
@@ -45,7 +47,7 @@ module.exports = {
       `${interaction.user.username} (#${interaction.user.id}) requested weather info`
     )
 
-    await interaction.deferReply()
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
       // First, geocode the location to get lat/lon
