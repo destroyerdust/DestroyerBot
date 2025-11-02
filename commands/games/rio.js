@@ -67,6 +67,24 @@ module.exports = {
               { name: '🇨🇳 CN', value: 'cn' }
             )
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('affixes')
+        .setDescription("🎯 Get this week's Mythic+ dungeon affixes")
+        .addStringOption((option) =>
+          option
+            .setName('region')
+            .setDescription('Region for affix data')
+            .setRequired(false)
+            .addChoices(
+              { name: '🇺🇸 US', value: 'us' },
+              { name: '🇪🇺 EU', value: 'eu' },
+              { name: '🇰🇷 KR', value: 'kr' },
+              { name: '🇹🇼 TW', value: 'tw' },
+              { name: '🇨🇳 CN', value: 'cn' }
+            )
+        )
     ),
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
@@ -86,24 +104,27 @@ module.exports = {
       `${interaction.user.username} (#${interaction.user.id}) requested RaiderIO ${subcommand} info`
     )
 
-    // Input validation
-    if (!realm || realm.trim().length === 0) {
-      return interaction.reply({
-        content: '❌ Please provide a valid realm name.',
-        flags: MessageFlags.Ephemeral,
-      })
-    }
+    // Input validation (skip for affixes subcommand)
+    let cleanRealm, cleanName
+    if (subcommand !== 'affixes') {
+      if (!realm || realm.trim().length === 0) {
+        return interaction.reply({
+          content: '❌ Please provide a valid realm name.',
+          flags: MessageFlags.Ephemeral,
+        })
+      }
 
-    if (!name || name.trim().length === 0) {
-      return interaction.reply({
-        content: '❌ Please provide a valid character/guild name.',
-        flags: MessageFlags.Ephemeral,
-      })
-    }
+      if (!name || name.trim().length === 0) {
+        return interaction.reply({
+          content: '❌ Please provide a valid character/guild name.',
+          flags: MessageFlags.Ephemeral,
+        })
+      }
 
-    // Sanitize inputs
-    const cleanRealm = realm.trim()
-    const cleanName = name.trim()
+      // Sanitize inputs
+      cleanRealm = realm.trim()
+      cleanName = name.trim()
+    }
 
     await interaction.deferReply()
 
@@ -418,6 +439,91 @@ module.exports = {
             requester: interaction.user.username,
           },
           'Guild info embed sent'
+        )
+      } else if (subcommand === 'affixes') {
+        entityType = 'affixes'
+        const baseUrl = `https://raider.io/api/v1/mythic-plus/affixes?region=${region}&locale=en`
+        const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
+
+        logger.debug(`Fetching affixes data: ${region}`)
+        logger.debug(`API Key configured: ${!!raiderIOApiKey}`)
+        logger.debug(
+          `Final API URL: ${raiderIOApiKey ? apiUrl.replace(raiderIOApiKey, '[REDACTED]') : apiUrl}`
+        )
+
+        const response = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
+          },
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          logger.warn(`RaiderIO affixes API error: ${response.status} ${response.statusText}`, {
+            status: response.status,
+            statusText: response.statusText,
+            region,
+            apiUrl,
+            errorData,
+          })
+
+          let errorMessage = '❌ Unable to fetch affix data.'
+          if (response.status === 429) {
+            errorMessage = '⚠️ Raider.IO API rate limit exceeded. Please try again later.'
+          } else if (response.status >= 500) {
+            errorMessage =
+              '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
+          }
+
+          return interaction.editReply(errorMessage)
+        }
+
+        data = await response.json()
+
+        logger.info(
+          {
+            title: data.title,
+            affixCount: data.affix_details?.length || 0,
+            region: data.region,
+          },
+          'Affixes data retrieved successfully'
+        )
+
+        const embed = new EmbedBuilder()
+          .setTitle("🎯 This Week's Mythic+ Affixes")
+          .setURL(data.leaderboard_url || 'https://raider.io/mythic-plus/affixes')
+          .setColor(0xff6b35)
+          .setDescription(`*${data.title}*`)
+
+        if (data.affix_details && data.affix_details.length > 0) {
+          // Display all affixes with their descriptions
+          const affixList = data.affix_details
+            .map((affix, index) => {
+              const emoji = ['🌟', '🔄', '⚡', '💀'][index] || '🎯'
+              return `${emoji} **${affix.name}**\n${affix.description}`
+            })
+            .join('\n\n')
+
+          embed.addFields({
+            name: '📋 Affix Details',
+            value: affixList,
+            inline: false,
+          })
+
+          // Add thumbnail from first affix icon
+          if (data.affix_details[0]?.icon_url) {
+            embed.setThumbnail(data.affix_details[0].icon_url)
+          }
+        }
+
+        await interaction.editReply({ embeds: [embed] })
+        logger.info(
+          {
+            title: data.title,
+            region: data.region,
+            requester: interaction.user.username,
+          },
+          'Affixes info embed sent'
         )
       }
     } catch (error) {
