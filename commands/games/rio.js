@@ -370,31 +370,28 @@ module.exports = {
           }
         }
 
-        // Guild Rankings - Show all difficulty rankings
+        // Guild Rankings - Hierarchical display based on progression
         const rankings = data.raid_rankings?.[currentRaidTier]
         if (rankings) {
           const rankingFields = []
 
-          // Mythic rankings (most prestigious)
+          // Priority: Mythic > Heroic > Normal
           if (rankings.mythic) {
+            // Show only Mythic rankings for top guilds
             rankingFields.push(
               { name: '🐉 Mythic Realm Rank', value: `#${rankings.mythic.realm}`, inline: true },
               { name: '🐉 Mythic Region Rank', value: `#${rankings.mythic.region}`, inline: true },
               { name: '🐉 Mythic World Rank', value: `#${rankings.mythic.world}`, inline: true }
             )
-          }
-
-          // Heroic rankings
-          if (rankings.heroic) {
+          } else if (rankings.heroic) {
+            // Show only Heroic rankings if no Mythic
             rankingFields.push(
               { name: '💪 Heroic Realm Rank', value: `#${rankings.heroic.realm}`, inline: true },
               { name: '💪 Heroic Region Rank', value: `#${rankings.heroic.region}`, inline: true },
               { name: '💪 Heroic World Rank', value: `#${rankings.heroic.world}`, inline: true }
             )
-          }
-
-          // Normal rankings (if space allows)
-          if (rankings.normal && rankingFields.length < 6) {
+          } else if (rankings.normal) {
+            // Show Normal rankings if no Mythic or Heroic
             rankingFields.push(
               { name: '⚔️ Normal Realm Rank', value: `#${rankings.normal.realm}`, inline: true },
               { name: '⚔️ Normal Region Rank', value: `#${rankings.normal.region}`, inline: true },
@@ -402,8 +399,10 @@ module.exports = {
             )
           }
 
-          // Add ranking fields to embed (limit to prevent embed overflow)
-          embed.addFields(...rankingFields.slice(0, 9)) // Max 9 fields to stay under embed limits
+          // Add ranking fields to embed
+          if (rankingFields.length > 0) {
+            embed.addFields(...rankingFields)
+          }
         }
 
         await interaction.editReply({ embeds: [embed] })
