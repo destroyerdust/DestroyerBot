@@ -115,6 +115,10 @@ module.exports = {
         const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
         logger.debug(`Fetching character data: ${region}/${cleanRealm}/${cleanName}`)
+        logger.debug(`API Key configured: ${!!raiderIOApiKey}`)
+        logger.debug(
+          `Final API URL: ${raiderIOApiKey ? apiUrl.replace(raiderIOApiKey, '[REDACTED]') : apiUrl}`
+        )
 
         const response = await fetch(apiUrl, {
           headers: {
@@ -272,6 +276,10 @@ module.exports = {
         const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
         logger.debug(`Fetching guild data: ${region}/${cleanRealm}/${cleanName}`)
+        logger.debug(`API Key configured: ${!!raiderIOApiKey}`)
+        logger.debug(
+          `Final API URL: ${raiderIOApiKey ? apiUrl.replace(raiderIOApiKey, '[REDACTED]') : apiUrl}`
+        )
 
         const response = await fetch(apiUrl, {
           headers: {
