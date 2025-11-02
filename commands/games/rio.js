@@ -205,7 +205,14 @@ module.exports = {
         const tankScore = data.mythic_plus_scores_by_season?.[0]?.segments?.tank?.score || 0
 
         // Determine if character can tank based on class (any class with tanking specs)
-        const tankingClasses = ['Warrior', 'Paladin', 'Death Knight', 'Monk', 'Druid', 'Demon Hunter']
+        const tankingClasses = [
+          'Warrior',
+          'Paladin',
+          'Death Knight',
+          'Monk',
+          'Druid',
+          'Demon Hunter',
+        ]
 
         const canTank = tankingClasses.includes(data.class)
 
