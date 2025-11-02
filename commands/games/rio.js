@@ -183,8 +183,7 @@ module.exports = {
 
         embed.addFields(
           { name: '🏰 Guild', value: guild, inline: true },
-          { name: `⚔️ Faction`, value: `${factionEmoji} ${faction}`, inline: true },
-          { name: '📊 Level', value: data.level?.toString() || '60', inline: true }
+          { name: `⚔️ Faction`, value: `${factionEmoji} ${faction}`, inline: true }
         )
 
         // Mythic+ Scores
