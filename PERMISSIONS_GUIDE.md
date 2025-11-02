@@ -209,10 +209,10 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 **Usage:**
 
 ```
-/logsettings create enable    # Enable message creation logging
-/logsettings create disable   # Disable message creation logging
-/logsettings delete enable    # Enable message deletion logging
-/logsettings delete disable   # Disable message deletion logging
+/logsettings messagecreate enable    # Enable message creation logging
+/logsettings messagecreate disable   # Disable message creation logging
+/logsettings messagedelete enable    # Enable message deletion logging
+/logsettings messagedelete disable   # Disable message deletion logging
 ```
 
 **Example Output:**

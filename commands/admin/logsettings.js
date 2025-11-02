@@ -15,7 +15,7 @@ module.exports = {
     .setContexts(InteractionContextType.Guild)
     .addSubcommandGroup((group) =>
       group
-        .setName('create')
+        .setName('messagecreate')
         .setDescription('Settings for message creation logging')
         .addSubcommand((subcommand) =>
           subcommand.setName('enable').setDescription('Enable logging of new messages')
@@ -26,7 +26,7 @@ module.exports = {
     )
     .addSubcommandGroup((group) =>
       group
-        .setName('delete')
+        .setName('messagedelete')
         .setDescription('Settings for message deletion logging')
         .addSubcommand((subcommand) =>
           subcommand.setName('enable').setDescription('Enable logging of deleted messages')
@@ -53,7 +53,7 @@ module.exports = {
     let enable = null
     let type = ''
 
-    if (subcommandGroup === 'create') {
+    if (subcommandGroup === 'messagecreate') {
       type = 'message create'
       if (subcommand === 'enable') {
         enable = true
@@ -62,7 +62,7 @@ module.exports = {
         enable = false
         await setLogMessageCreateAsync(guildId, false)
       }
-    } else if (subcommandGroup === 'delete') {
+    } else if (subcommandGroup === 'messagedelete') {
       type = 'message delete'
       if (subcommand === 'enable') {
         enable = true
