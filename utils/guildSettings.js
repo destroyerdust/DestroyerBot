@@ -61,8 +61,18 @@ function getGuildSettings(guildId) {
     settings[guildId] = {
       guildId: guildId,
       commandPermissions: {},
+      logChannel: null,
     }
     saveSettings(settings)
+  }
+  if (!settings[guildId].logChannel) {
+    settings[guildId].logChannel = null
+  }
+  if (typeof settings[guildId].logMessageCreate !== 'boolean') {
+    settings[guildId].logMessageCreate = true
+  }
+  if (typeof settings[guildId].logMessageDelete !== 'boolean') {
+    settings[guildId].logMessageDelete = true
   }
   return settings[guildId]
 }
@@ -156,6 +166,97 @@ function resetGuildPermissions(guildId) {
   }
 }
 
+/**
+ * Set the log channel for a guild
+ * @param {string} guildId - Guild ID
+ * @param {string} channelId - Channel ID to set as log channel
+ */
+function setLogChannel(guildId, channelId) {
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+    }
+  }
+  settings[guildId].logChannel = channelId
+  saveSettings(settings)
+  logger.info({ guildId, channelId }, 'Log channel set')
+}
+
+/**
+ * Get the log channel for a guild
+ * @param {string} guildId - Guild ID
+ * @returns {string|null} Log channel ID or null if not set
+ */
+function getLogChannel(guildId) {
+  const guildSettings = getGuildSettings(guildId)
+  return guildSettings.logChannel
+}
+
+/**
+ * Set whether to log message creates for a guild
+ * @param {string} guildId - Guild ID
+ * @param {boolean} enable - True to enable, false to disable
+ */
+function setLogMessageCreate(guildId, enable) {
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+      logMessageCreate: true,
+      logMessageDelete: true,
+    }
+  }
+  settings[guildId].logMessageCreate = enable
+  saveSettings(settings)
+  logger.info({ guildId, enable }, 'Log message create setting updated')
+}
+
+/**
+ * Get whether to log message creates for a guild
+ * @param {string} guildId - Guild ID
+ * @returns {boolean} True if enabled
+ */
+function getLogMessageCreate(guildId) {
+  const guildSettings = getGuildSettings(guildId)
+  return guildSettings.logMessageCreate
+}
+
+/**
+ * Set whether to log message deletes for a guild
+ * @param {string} guildId - Guild ID
+ * @param {boolean} enable - True to enable, false to disable
+ */
+function setLogMessageDelete(guildId, enable) {
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+      logMessageCreate: true,
+      logMessageDelete: true,
+    }
+  }
+  settings[guildId].logMessageDelete = enable
+  saveSettings(settings)
+  logger.info({ guildId, enable }, 'Log message delete setting updated')
+}
+
+/**
+ * Get whether to log message deletes for a guild
+ * @param {string} guildId - Guild ID
+ * @returns {boolean} True if enabled
+ */
+function getLogMessageDelete(guildId) {
+  const guildSettings = getGuildSettings(guildId)
+  return guildSettings.logMessageDelete
+}
+
 module.exports = {
   loadSettings,
   saveSettings,
@@ -164,4 +265,10 @@ module.exports = {
   removeCommandRole,
   hasCommandPermission,
   resetGuildPermissions,
+  setLogChannel,
+  getLogChannel,
+  setLogMessageCreate,
+  getLogMessageCreate,
+  setLogMessageDelete,
+  getLogMessageDelete,
 }
