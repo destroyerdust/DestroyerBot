@@ -204,17 +204,10 @@ module.exports = {
         const healerScore = data.mythic_plus_scores_by_season?.[0]?.segments?.healer?.score || 0
         const tankScore = data.mythic_plus_scores_by_season?.[0]?.segments?.tank?.score || 0
 
-        // Determine if character can tank based on class/spec
-        const tankingSpecs = {
-          'Warrior': ['Protection'],
-          'Paladin': ['Protection'],
-          'Death Knight': ['Blood'],
-          'Monk': ['Brewmaster'],
-          'Druid': ['Guardian'],
-          'Demon Hunter': ['Vengeance']
-        }
+        // Determine if character can tank based on class (any class with tanking specs)
+        const tankingClasses = ['Warrior', 'Paladin', 'Death Knight', 'Monk', 'Druid', 'Demon Hunter']
 
-        const canTank = tankingSpecs[data.class]?.includes(data.active_spec_name) || false
+        const canTank = tankingClasses.includes(data.class)
 
         embed.addFields(
           { name: '⭐ Overall Score', value: mythicScore.toFixed(0), inline: true },
