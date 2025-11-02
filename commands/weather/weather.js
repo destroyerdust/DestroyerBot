@@ -11,10 +11,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('weather')
     .setDescription('Get current weather for a location')
-    .setContexts([
-      InteractionContextType.Guild,
-      InteractionContextType.PrivateChannel
-    ]) // Modern context array syntax (Discord.js v14+)
+    .setContexts([InteractionContextType.Guild, InteractionContextType.PrivateChannel]) // Modern context array syntax (Discord.js v14+)
     .addStringOption((option) =>
       option
         .setName('location')
