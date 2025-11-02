@@ -303,15 +303,19 @@ module.exports = {
 
         data = await response.json()
 
+        // Get the current raid tier (first key in raid_progression object)
+        const currentRaidTier = data.raid_progression ? Object.keys(data.raid_progression)[0] : null
+
         logger.info(
           {
             guildName: data.name,
             realm: data.realm,
             region: data.region,
             faction: data.faction,
-            raidProgression: data.raid_progression?.['manaforge-omega']?.summary,
+            raidProgression: data.raid_progression?.[currentRaidTier]?.summary,
             memberCount: data.member_count,
             achievementPoints: data.achievement_points,
+            currentRaidTier,
           },
           'Guild data retrieved successfully'
         )
@@ -340,7 +344,7 @@ module.exports = {
         )
 
         // Raid Progression
-        const raidProgression = data.raid_progression?.['manaforge-omega']
+        const raidProgression = data.raid_progression?.[currentRaidTier]
         if (raidProgression?.summary) {
           embed.addFields({
             name: '🐉 Current Raid Progress',
@@ -367,7 +371,7 @@ module.exports = {
         }
 
         // Guild Rankings
-        const rankings = data.raid_rankings?.['manaforge-omega']
+        const rankings = data.raid_rankings?.[currentRaidTier]
         if (rankings?.realm && rankings.region) {
           embed.addFields(
             { name: '📊 Realm Rank', value: `#${rankings.realm}`, inline: true },
