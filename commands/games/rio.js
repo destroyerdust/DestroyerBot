@@ -335,12 +335,7 @@ module.exports = {
 
         embed.addFields(
           { name: `⚔️ Faction`, value: `${factionEmoji} ${faction}`, inline: true },
-          { name: '👥 Members', value: (data.member_count || 'Unknown').toString(), inline: true },
-          {
-            name: '🏆 Achievement Points',
-            value: (data.achievement_points || 0).toLocaleString(),
-            inline: true,
-          }
+          { name: '👥 Members', value: (data.member_count || 'Unknown').toString(), inline: true }
         )
 
         // Raid Progression
@@ -379,23 +374,23 @@ module.exports = {
           if (rankings.mythic) {
             // Show only Mythic rankings for top guilds
             rankingFields.push(
-              { name: '🐉 Mythic Realm Rank', value: `#${rankings.mythic.realm}`, inline: true },
+              { name: '🐉 Mythic World Rank', value: `#${rankings.mythic.world}`, inline: true },
               { name: '🐉 Mythic Region Rank', value: `#${rankings.mythic.region}`, inline: true },
-              { name: '🐉 Mythic World Rank', value: `#${rankings.mythic.world}`, inline: true }
+              { name: '🐉 Mythic Realm Rank', value: `#${rankings.mythic.realm}`, inline: true }
             )
           } else if (rankings.heroic) {
             // Show only Heroic rankings if no Mythic
             rankingFields.push(
-              { name: '💪 Heroic Realm Rank', value: `#${rankings.heroic.realm}`, inline: true },
+              { name: '💪 Heroic World Rank', value: `#${rankings.heroic.world}`, inline: true },
               { name: '💪 Heroic Region Rank', value: `#${rankings.heroic.region}`, inline: true },
-              { name: '💪 Heroic World Rank', value: `#${rankings.heroic.world}`, inline: true }
+              { name: '💪 Heroic Realm Rank', value: `#${rankings.heroic.realm}`, inline: true }
             )
           } else if (rankings.normal) {
             // Show Normal rankings if no Mythic or Heroic
             rankingFields.push(
-              { name: '⚔️ Normal Realm Rank', value: `#${rankings.normal.realm}`, inline: true },
+              { name: '⚔️ Normal World Rank', value: `#${rankings.normal.world}`, inline: true },
               { name: '⚔️ Normal Region Rank', value: `#${rankings.normal.region}`, inline: true },
-              { name: '⚔️ Normal World Rank', value: `#${rankings.normal.world}`, inline: true }
+              { name: '⚔️ Normal Realm Rank', value: `#${rankings.normal.realm}`, inline: true }
             )
           }
 
