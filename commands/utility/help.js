@@ -10,6 +10,7 @@ const {
   MessageFlags,
   InteractionContextType,
 } = require('discord.js')
+const { ownerId: BOT_OWNER_ID } = require('../../config.json')
 const logger = require('../../logger')
 
 /**
@@ -63,7 +64,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('help')
     .setDescription('Display comprehensive information about all available bot commands')
-    .setContexts([InteractionContextType.Guild, InteractionContextType.PrivateChannel]), // Modern context array syntax (Discord.js v14+)
+    .setContexts([
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel,
+    ]), // Modern context array syntax (Discord.js v14+)
 
   /**
    * Execute the help command
@@ -134,8 +139,16 @@ module.exports = {
       const categories = {}
       let totalCommands = 0
 
+      // Check if user is bot owner for restricted commands
+      const isBotOwner = interaction.user.id === BOT_OWNER_ID
+
       // Process registered commands
       client.commands.forEach((command, name) => {
+        // Skip 3d-print-status command for non-owners
+        if (name === '3d-print-status' && !isBotOwner) {
+          return
+        }
+
         totalCommands++
         const category = commandCategories[name] || 'Other'
 

@@ -29,6 +29,8 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
    node deploy-commands.js
    ```
 
+   The deployment script now supports multiple guilds as configured in `config.json`.
+
 2. Start the bot:
 
    ```bash
@@ -102,6 +104,7 @@ An automated moderation logging system that tracks message activities in Discord
 
 ### Utility Commands
 
+- `/help` - Display comprehensive information about all available bot commands (owner-only commands are hidden from regular users)
 - `/ping` - Replies with Pong!
 - `/user-info` - Display info about yourself
 - `/server` - Display comprehensive server information
@@ -118,7 +121,7 @@ An automated moderation logging system that tracks message activities in Discord
 
 ### Global Commands
 
-- `/3d-print-status` - Check 3D print status (private command, only accessible by bot owner)
+- `/3d-print-status` - Check 3D print status (private command, only accessible by bot owner and hidden from help for regular users)
 - `/weather` - Get current weather for a location
   - Required `location` option: City name (e.g., "New York" or "London,UK")
   - Optional `units` option: Temperature units (Celsius (default), Fahrenheit, or Canadian)
@@ -164,7 +167,7 @@ Edit `config.json` in the root directory with your Discord bot details and API k
 ```json
 {
   "clientId": "your_discord_client_id",
-  "guildId": "your_guild_id_for_testing",
+  "guildIds": ["your_guild_id_1", "your_guild_id_2"],
   "token": "your_discord_bot_token",
   "ownerId": "your_discord_user_id",
   "miniAPI": "your_3d_printer_api_endpoint_url",
@@ -177,7 +180,7 @@ Edit `config.json` in the root directory with your Discord bot details and API k
 ### Configuration Parameters:
 
 - `clientId`: Your Discord application client ID
-- `guildId`: Your server/guild ID (used for testing command deployment)
+- `guildIds`: Array of server/guild IDs for command deployment
 - `token`: Your Discord bot token from the Discord Developer Portal
 - `ownerId`: Your Discord user ID (required for private commands like 3d-print-status)
 - `miniAPI`: URL for your 3D printer's telemetry API (required for 3d-print-status command)

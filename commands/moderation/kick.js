@@ -6,9 +6,19 @@ module.exports = {
     .setName('kick')
     .setDescription('Select a member and kick them (but not really).')
     .setContexts(InteractionContextType.Guild)
-    .addUserOption((option) => option.setName('target').setDescription('The member to kick')),
+    .addUserOption((option) =>
+      option.setName('target').setDescription('The member to kick').setRequired(true)
+    ),
   async execute(interaction) {
     const member = interaction.options.getMember('target')
+
+    // Handle case where member is not found (e.g., user left the server)
+    if (!member) {
+      return interaction.reply({
+        content: 'The specified user is not a member of this server.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
 
     logger.info(
       {
