@@ -4,6 +4,14 @@ const pino = require('pino')
 // Determine if we're in development or production
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
+// Debug: Log environment detection
+console.log(`🔍 Environment Debug:`)
+console.log(`   NODE_ENV: "${process.env.NODE_ENV}"`)
+console.log(`   isDevelopment: ${isDevelopment}`)
+console.log(`   Log Level: ${process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info')}`)
+console.log(`   Using pino-pretty: ${isDevelopment}`)
+console.log(`---`)
+
 const logger = pino({
   level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
   timestamp: pino.stdTimeFunctions.isoTime,
