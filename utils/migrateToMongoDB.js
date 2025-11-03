@@ -71,11 +71,13 @@ async function migrateSettings() {
           guildId,
           commandPermissions: settings.commandPermissions || {},
           disabledCommands: settings.disabledCommands || [], // Will be empty initially
-          logChannel: settings.logChannel || null,
-          logMessageCreate:
-            settings.logMessageCreate !== undefined ? settings.logMessageCreate : true,
-          logMessageDelete:
-            settings.logMessageDelete !== undefined ? settings.logMessageDelete : true,
+          logs: {
+            channelId: settings.logChannel || null,
+            messageCreate:
+              settings.logMessageCreate !== undefined ? settings.logMessageCreate : true,
+            messageDelete:
+              settings.logMessageDelete !== undefined ? settings.logMessageDelete : true,
+          },
         })
 
         await guildSettings.save()

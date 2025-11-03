@@ -1,5 +1,20 @@
 const mongoose = require('mongoose')
 
+const logSettingsSchema = new mongoose.Schema({
+  channelId: {
+    type: String,
+    default: null,
+  },
+  messageCreate: {
+    type: Boolean,
+    default: true,
+  },
+  messageDelete: {
+    type: Boolean,
+    default: true,
+  },
+})
+
 const guildSettingsSchema = new mongoose.Schema(
   {
     guildId: {
@@ -16,18 +31,7 @@ const guildSettingsSchema = new mongoose.Schema(
       type: [String], // Array of command names
       default: [],
     },
-    logChannel: {
-      type: String,
-      default: null,
-    },
-    logMessageCreate: {
-      type: Boolean,
-      default: true,
-    },
-    logMessageDelete: {
-      type: Boolean,
-      default: true,
-    },
+    logs: logSettingsSchema,
   },
   {
     timestamps: true, // Adds createdAt and updatedAt
