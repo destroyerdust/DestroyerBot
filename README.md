@@ -107,9 +107,11 @@ An automated moderation logging system that tracks message activities in Discord
 - `/help` - Display comprehensive information about all available bot commands (owner-only commands are hidden from regular users)
 - `/ping` - Replies with Pong!
 - `/user-info` - Display info about yourself
-- `/server` - Display comprehensive server information
+- `/server-info` - Display comprehensive server information including channels, roles, members, and features
 - `/role-info <role>` - Display detailed information about a server role (ID, color, permissions, member count, etc.)
+- `/role-list` - Display a complete list of all server roles sorted by hierarchy with member counts and color indicators
 - `/channel-info [channel]` - Display detailed information about a channel (defaults to current channel, supports all channel types)
+- `/avatar-info [user]` - Display a user's avatar with high-quality image and download links (defaults to command user)
 
 ### Gaming Commands
 
@@ -120,6 +122,7 @@ An automated moderation logging system that tracks message activities in Discord
 ### Moderation Commands
 
 - `/kick` - Select a member and kick them (note: this is a demo command)
+- `/setnick` - Set a member's nickname in the server (server owner only by default, configurable via permission system)
 
 ### Global Commands
 

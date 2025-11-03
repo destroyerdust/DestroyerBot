@@ -36,6 +36,12 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 1. **`index.js`** - Added permission checking in interaction handler
 2. **`.gitignore`** - Added `data` directory to prevent committing settings
 
+### New Commands Added
+
+1. **`commands/moderation/setnick.js`** - Set member nicknames (restricted to server owner by default)
+2. **`commands/utility/role-list.js`** - Display comprehensive server role list
+3. **`commands/utility/avatar-info.js`** - Display user avatar information
+
 ---
 
 ## How It Works
@@ -388,6 +394,7 @@ You have two options for removing role restrictions:
 
 - `kick` - Member management command
 - `clean` - Message cleanup command
+- `setnick` - Nickname management command
 
 ---
 
