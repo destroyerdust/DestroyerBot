@@ -5,6 +5,7 @@ const {
   PermissionFlagsBits,
 } = require('discord.js')
 const logger = require('../../logger')
+const { hasCommandPermissionAsync } = require('../../utils/guildSettings')
 
 /**
  * Set Nickname Moderation Command
@@ -73,11 +74,12 @@ module.exports = {
         })
       }
 
-      // Check user permissions
+      // Check user permissions using the guild settings system
       const commandMember = interaction.member
-      if (!commandMember.permissions.has(PermissionFlagsBits.ManageNicknames)) {
+      const hasPermission = await hasCommandPermissionAsync(guild.id, 'setnick', commandMember)
+      if (!hasPermission) {
         return interaction.reply({
-          content: '❌ You don\'t have permission to manage nicknames.',
+          content: '❌ You don\'t have permission to use this command. Only the server owner or authorized roles can use it.',
           flags: MessageFlags.Ephemeral,
         })
       }

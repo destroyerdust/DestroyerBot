@@ -10,7 +10,7 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'guildSettings.json')
 // Commands that are restricted to server owner by default (unless specific roles are assigned)
 // NOTE: If you add/remove items here, update any admin commands that reference the same set
 // (for example `commands/admin/listpermissions.js`) so the UI/reporting stays consistent.
-const DEFAULT_RESTRICTED_COMMANDS = new Set(['kick', 'clean'])
+const DEFAULT_RESTRICTED_COMMANDS = new Set(['kick', 'clean', 'setnick'])
 
 // Ensure data directory exists for backup JSON file
 if (!fs.existsSync(DATA_DIR)) {
