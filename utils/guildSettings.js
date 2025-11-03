@@ -52,9 +52,9 @@ function saveSettings(settings) {
 }
 
 /**
- * Migrate existing JSON data from flat log structure to nested logs object
+ * Migrate existing JSON data from flat structures to nested objects
  */
-function migrateLogSettings() {
+function migrateSettings() {
   try {
     const settings = loadSettings()
     let hasChanges = false
@@ -62,7 +62,7 @@ function migrateLogSettings() {
     for (const guildId in settings) {
       const guild = settings[guildId]
 
-      // Check if migration is needed (has flat log properties)
+      // Migrate log settings from flat to nested
       if (guild.logChannel !== undefined || guild.logMessageCreate !== undefined || guild.logMessageDelete !== undefined) {
         // Initialize logs object if it doesn't exist
         if (!guild.logs) {
@@ -86,19 +86,44 @@ function migrateLogSettings() {
         hasChanges = true
         logger.info({ guildId }, 'Migrated log settings from flat to nested structure')
       }
+
+      // Migrate welcome settings from flat to nested
+      if (guild.welcomeEnabled !== undefined || guild.welcomeChannel !== undefined || guild.welcomeMessage !== undefined) {
+        // Initialize welcome object if it doesn't exist
+        if (!guild.welcome) {
+          guild.welcome = {}
+        }
+
+        // Migrate flat properties to nested
+        if (guild.welcomeEnabled !== undefined) {
+          guild.welcome.enabled = guild.welcomeEnabled
+          delete guild.welcomeEnabled
+        }
+        if (guild.welcomeChannel !== undefined) {
+          guild.welcome.channelId = guild.welcomeChannel
+          delete guild.welcomeChannel
+        }
+        if (guild.welcomeMessage !== undefined) {
+          guild.welcome.message = guild.welcomeMessage
+          delete guild.welcomeMessage
+        }
+
+        hasChanges = true
+        logger.info({ guildId }, 'Migrated welcome settings from flat to nested structure')
+      }
     }
 
     if (hasChanges) {
       saveSettings(settings)
-      logger.info('Completed migration of log settings to nested structure')
+      logger.info('Completed migration of settings to nested structures')
     }
   } catch (error) {
-    logger.error({ error: error.message }, 'Error migrating log settings')
+    logger.error({ error: error.message }, 'Error migrating settings')
   }
 }
 
 // Run migration on module load
-migrateLogSettings()
+migrateSettings()
 
 /**
  * Get settings for a specific guild
@@ -137,15 +162,18 @@ function getGuildSettings(guildId) {
     settings[guildId].logs.messageDelete = true
   }
 
-  // Ensure welcome settings have defaults
-  if (typeof settings[guildId].welcomeEnabled !== 'boolean') {
-    settings[guildId].welcomeEnabled = false
+  // Ensure welcome object exists and has defaults
+  if (!settings[guildId].welcome) {
+    settings[guildId].welcome = {}
   }
-  if (!settings[guildId].welcomeChannel) {
-    settings[guildId].welcomeChannel = null
+  if (typeof settings[guildId].welcome.enabled !== 'boolean') {
+    settings[guildId].welcome.enabled = false
   }
-  if (!settings[guildId].welcomeMessage) {
-    settings[guildId].welcomeMessage = 'Welcome to the server!'
+  if (!settings[guildId].welcome.channelId) {
+    settings[guildId].welcome.channelId = null
+  }
+  if (!settings[guildId].welcome.message) {
+    settings[guildId].welcome.message = 'Welcome to the server!'
   }
 
   return settings[guildId]
@@ -544,15 +572,20 @@ function setWelcomeEnabled(guildId, enable) {
     settings[guildId] = {
       guildId: guildId,
       commandPermissions: {},
-      logChannel: null,
-      logMessageCreate: true,
-      logMessageDelete: true,
-      welcomeEnabled: false,
-      welcomeChannel: null,
-      welcomeMessage: 'Welcome to the server!',
+      logs: {
+        channelId: null,
+        messageCreate: true,
+        messageDelete: true,
+      },
+      welcome: {
+        enabled: false,
+        channelId: null,
+        message: 'Welcome to the server!',
+      },
     }
   }
-  settings[guildId].welcomeEnabled = enable
+  settings[guildId].welcome = settings[guildId].welcome || {}
+  settings[guildId].welcome.enabled = enable
   saveSettings(settings)
 
   logger.info({ guildId, enable }, 'Welcome enabled setting updated')
@@ -565,7 +598,7 @@ function setWelcomeEnabled(guildId, enable) {
  */
 function getWelcomeEnabled(guildId) {
   const guildSettings = getGuildSettings(guildId)
-  return guildSettings.welcomeEnabled
+  return guildSettings.welcome?.enabled ?? false
 }
 
 /**
@@ -601,15 +634,20 @@ function setWelcomeChannel(guildId, channelId) {
     settings[guildId] = {
       guildId: guildId,
       commandPermissions: {},
-      logChannel: null,
-      logMessageCreate: true,
-      logMessageDelete: true,
-      welcomeEnabled: false,
-      welcomeChannel: null,
-      welcomeMessage: 'Welcome to the server!',
+      logs: {
+        channelId: null,
+        messageCreate: true,
+        messageDelete: true,
+      },
+      welcome: {
+        enabled: false,
+        channelId: null,
+        message: 'Welcome to the server!',
+      },
     }
   }
-  settings[guildId].welcomeChannel = channelId
+  settings[guildId].welcome = settings[guildId].welcome || {}
+  settings[guildId].welcome.channelId = channelId
   saveSettings(settings)
 
   logger.info({ guildId, channelId }, 'Welcome channel set')
@@ -622,7 +660,7 @@ function setWelcomeChannel(guildId, channelId) {
  */
 function getWelcomeChannel(guildId) {
   const guildSettings = getGuildSettings(guildId)
-  return guildSettings.welcomeChannel
+  return guildSettings.welcome?.channelId || null
 }
 
 /**
@@ -658,15 +696,20 @@ function setWelcomeMessage(guildId, message) {
     settings[guildId] = {
       guildId: guildId,
       commandPermissions: {},
-      logChannel: null,
-      logMessageCreate: true,
-      logMessageDelete: true,
-      welcomeEnabled: false,
-      welcomeChannel: null,
-      welcomeMessage: 'Welcome to the server!',
+      logs: {
+        channelId: null,
+        messageCreate: true,
+        messageDelete: true,
+      },
+      welcome: {
+        enabled: false,
+        channelId: null,
+        message: 'Welcome to the server!',
+      },
     }
   }
-  settings[guildId].welcomeMessage = message
+  settings[guildId].welcome = settings[guildId].welcome || {}
+  settings[guildId].welcome.message = message
   saveSettings(settings)
 
   logger.info({ guildId, message }, 'Welcome message set')
@@ -679,7 +722,7 @@ function setWelcomeMessage(guildId, message) {
  */
 function getWelcomeMessage(guildId) {
   const guildSettings = getGuildSettings(guildId)
-  return guildSettings.welcomeMessage
+  return guildSettings.welcome?.message || 'Welcome to the server!'
 }
 
 // ===== MONGO DB FUNCTIONS =====
