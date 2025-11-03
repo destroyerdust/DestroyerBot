@@ -86,6 +86,23 @@ module.exports = {
       3: 'Level 3',
     }
 
+    // Process roles for display
+    const roles = guild.roles.cache
+      .filter((role) => role.name !== '@everyone')
+      .sort((a, b) => b.position - a.position)
+
+    const displayRoles = roles.first(10)
+    let roleList = displayRoles
+      .map((role) => {
+        const colorEmoji = role.hexColor && role.hexColor !== '#000000' ? '🔹' : '⚪'
+        return `${colorEmoji} ${role.name}`
+      })
+      .join('\n')
+
+    if (roles.size > 10) {
+      roleList += `\n... and ${roles.size - 10} more roles`
+    }
+
     logger.info('Compiling comprehensive server statistics', {
       serverId: guild.id,
       serverName: guild.name,
@@ -183,6 +200,13 @@ module.exports = {
         inline: true,
       }
     )
+
+    // Role List
+    embed.addFields({
+      name: '📋 Role List',
+      value: roleList,
+      inline: false,
+    })
 
     // Server Features (if any)
     if (hasFeatures) {
