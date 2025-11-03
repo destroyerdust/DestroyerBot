@@ -15,7 +15,7 @@ const { hasCommandPermissionAsync } = require('../../utils/guildSettings')
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('setnick')
-    .setDescription('Set a member\'s nickname in this server')
+    .setDescription("Set a member's nickname in this server")
     .setContexts(InteractionContextType.Guild)
     .addUserOption((option) =>
       option.setName('user').setDescription('The member to change nickname for').setRequired(true)
@@ -69,7 +69,7 @@ module.exports = {
       const botMember = guild.members.me
       if (!botMember.permissions.has(PermissionFlagsBits.ManageNicknames)) {
         return interaction.reply({
-          content: '❌ I don\'t have permission to manage nicknames in this server.',
+          content: "❌ I don't have permission to manage nicknames in this server.",
           flags: MessageFlags.Ephemeral,
         })
       }
@@ -79,7 +79,8 @@ module.exports = {
       const hasPermission = await hasCommandPermissionAsync(guild.id, 'setnick', commandMember)
       if (!hasPermission) {
         return interaction.reply({
-          content: '❌ You don\'t have permission to use this command. Only the server owner or authorized roles can use it.',
+          content:
+            "❌ You don't have permission to use this command. Only the server owner or authorized roles can use it.",
           flags: MessageFlags.Ephemeral,
         })
       }
@@ -87,7 +88,7 @@ module.exports = {
       // Prevent setting nickname for server owner
       if (targetMember.id === guild.ownerId) {
         return interaction.reply({
-          content: '❌ You cannot change the server owner\'s nickname.',
+          content: "❌ You cannot change the server owner's nickname.",
           flags: MessageFlags.Ephemeral,
         })
       }
@@ -119,7 +120,8 @@ module.exports = {
       // Check if bot can modify this user
       if (targetMember.roles.highest.position >= botMember.roles.highest.position) {
         return interaction.reply({
-          content: '❌ I cannot change the nickname of someone with a higher or equal role than me.',
+          content:
+            '❌ I cannot change the nickname of someone with a higher or equal role than me.',
           flags: MessageFlags.Ephemeral,
         })
       }
@@ -180,7 +182,7 @@ module.exports = {
       let errorMessage = '❌ Failed to change nickname. Please try again.'
 
       if (error.code === 50013) {
-        errorMessage = '❌ I don\'t have permission to manage nicknames.'
+        errorMessage = "❌ I don't have permission to manage nicknames."
       } else if (error.code === 50035) {
         errorMessage = '❌ Invalid nickname. Please check the length and content.'
       }

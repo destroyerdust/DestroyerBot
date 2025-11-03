@@ -78,8 +78,10 @@ module.exports = {
       const roleArray = Array.from(roles.values())
 
       // Calculate statistics
-      const rolesWithMembers = roleArray.filter(role => role.members.size > 0).length
-      const coloredRoles = roleArray.filter(role => role.hexColor && role.hexColor !== '#000000').length
+      const rolesWithMembers = roleArray.filter((role) => role.members.size > 0).length
+      const coloredRoles = roleArray.filter(
+        (role) => role.hexColor && role.hexColor !== '#000000'
+      ).length
 
       // Create embed
       const embed = new EmbedBuilder()
