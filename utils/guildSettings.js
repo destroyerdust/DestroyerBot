@@ -88,29 +88,13 @@ function getGuildSettings(guildId) {
 }
 
 /**
- * Set role permissions for a command in a guild (saves to both JSON and MongoDB)
+ * Set role permissions for a command in a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {string} commandName - Command name
  * @param {string} roleId - Role ID to add
  */
 function setCommandRole(guildId, commandName, roleId) {
-  // Always save to JSON first
-  const settings = loadSettings()
-  if (!settings[guildId]) {
-    settings[guildId] = {
-      guildId: guildId,
-      commandPermissions: {},
-    }
-  }
-  if (!settings[guildId].commandPermissions[commandName]) {
-    settings[guildId].commandPermissions[commandName] = []
-  }
-  if (!settings[guildId].commandPermissions[commandName].includes(roleId)) {
-    settings[guildId].commandPermissions[commandName].push(roleId)
-  }
-  saveSettings(settings)
-
-  // Also save to MongoDB if connected (don't await to keep function sync)
+  // Always save to MongoDB first if connected
   if (getConnectionStatus()) {
     GuildSettings.findOrCreate(guildId)
       .then((guildSettings) => {
@@ -126,7 +110,7 @@ function setCommandRole(guildId, commandName, roleId) {
       .then(() => {
         logger.info(
           { guildId, commandName, roleId },
-          'Command role permission added (JSON + MongoDB)'
+          'Command role permission added (MongoDB + JSON)'
         )
       })
       .catch((error) => {
@@ -142,26 +126,33 @@ function setCommandRole(guildId, commandName, roleId) {
     )
   }
 
+  // Then save to JSON as backup
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+    }
+  }
+  if (!settings[guildId].commandPermissions[commandName]) {
+    settings[guildId].commandPermissions[commandName] = []
+  }
+  if (!settings[guildId].commandPermissions[commandName].includes(roleId)) {
+    settings[guildId].commandPermissions[commandName].push(roleId)
+  }
+  saveSettings(settings)
+
   logger.info({ guildId, commandName, roleId }, 'Command role permission added')
 }
 
 /**
- * Remove role permissions for a command in a guild (saves to both JSON and MongoDB)
+ * Remove role permissions for a command in a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {string} commandName - Command name
  * @param {string} roleId - Role ID to remove
  */
 function removeCommandRole(guildId, commandName, roleId) {
-  // Always save to JSON first
-  const settings = loadSettings()
-  if (settings[guildId]?.commandPermissions?.[commandName]) {
-    settings[guildId].commandPermissions[commandName] = settings[guildId].commandPermissions[
-      commandName
-    ].filter((id) => id !== roleId)
-    saveSettings(settings)
-  }
-
-  // Also save to MongoDB if connected (don't await to keep function sync)
+  // Always save to MongoDB first if connected
   if (getConnectionStatus()) {
     GuildSettings.findOne({ guildId })
       .then((guildSettings) => {
@@ -176,7 +167,7 @@ function removeCommandRole(guildId, commandName, roleId) {
       .then(() => {
         logger.info(
           { guildId, commandName, roleId },
-          'Command role permission removed (JSON + MongoDB)'
+          'Command role permission removed (MongoDB + JSON)'
         )
       })
       .catch((error) => {
@@ -190,6 +181,15 @@ function removeCommandRole(guildId, commandName, roleId) {
       { guildId, commandName, roleId },
       'Command role permission removed (JSON only - MongoDB not connected)'
     )
+  }
+
+  // Then save to JSON as backup
+  const settings = loadSettings()
+  if (settings[guildId]?.commandPermissions?.[commandName]) {
+    settings[guildId].commandPermissions[commandName] = settings[guildId].commandPermissions[
+      commandName
+    ].filter((id) => id !== roleId)
+    saveSettings(settings)
   }
 
   logger.info({ guildId, commandName, roleId }, 'Command role permission removed')
@@ -231,18 +231,11 @@ function hasCommandPermission(guildId, commandName, member) {
 }
 
 /**
- * Reset all permissions for a guild (saves to both JSON and MongoDB)
+ * Reset all permissions for a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  */
 function resetGuildPermissions(guildId) {
-  // Always save to JSON first
-  const settings = loadSettings()
-  if (settings[guildId]) {
-    settings[guildId].commandPermissions = {}
-    saveSettings(settings)
-  }
-
-  // Also save to MongoDB if connected (don't await to keep function sync)
+  // Always save to MongoDB first if connected
   if (getConnectionStatus()) {
     GuildSettings.findOne({ guildId })
       .then((guildSettings) => {
@@ -252,7 +245,7 @@ function resetGuildPermissions(guildId) {
         }
       })
       .then(() => {
-        logger.info({ guildId }, 'Guild permissions reset (JSON + MongoDB)')
+        logger.info({ guildId }, 'Guild permissions reset (MongoDB + JSON)')
       })
       .catch((error) => {
         logger.error(
@@ -264,28 +257,23 @@ function resetGuildPermissions(guildId) {
     logger.debug({ guildId }, 'Guild permissions reset (JSON only - MongoDB not connected)')
   }
 
+  // Then save to JSON as backup
+  const settings = loadSettings()
+  if (settings[guildId]) {
+    settings[guildId].commandPermissions = {}
+    saveSettings(settings)
+  }
+
   logger.info({ guildId }, 'Guild permissions reset')
 }
 
 /**
- * Set the log channel for a guild (saves to both JSON and MongoDB)
+ * Set the log channel for a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {string} channelId - Channel ID to set as log channel
  */
 function setLogChannel(guildId, channelId) {
-  // Always save to JSON first
-  const settings = loadSettings()
-  if (!settings[guildId]) {
-    settings[guildId] = {
-      guildId: guildId,
-      commandPermissions: {},
-      logChannel: null,
-    }
-  }
-  settings[guildId].logChannel = channelId
-  saveSettings(settings)
-
-  // Also save to MongoDB if connected (don't await to keep function sync)
+  // Always save to MongoDB first if connected
   if (getConnectionStatus()) {
     GuildSettings.findOrCreate(guildId)
       .then((guildSettings) => {
@@ -293,7 +281,7 @@ function setLogChannel(guildId, channelId) {
         return guildSettings.save()
       })
       .then(() => {
-        logger.info({ guildId, channelId }, 'Log channel set (JSON + MongoDB)')
+        logger.info({ guildId, channelId }, 'Log channel set (MongoDB + JSON)')
       })
       .catch((error) => {
         logger.error(
@@ -304,6 +292,18 @@ function setLogChannel(guildId, channelId) {
   } else {
     logger.debug({ guildId, channelId }, 'Log channel set (JSON only - MongoDB not connected)')
   }
+
+  // Then save to JSON as backup
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+    }
+  }
+  settings[guildId].logChannel = channelId
+  saveSettings(settings)
 
   logger.info({ guildId, channelId }, 'Log channel set')
 }
@@ -319,26 +319,12 @@ function getLogChannel(guildId) {
 }
 
 /**
- * Set whether to log message creates for a guild (saves to both JSON and MongoDB)
+ * Set whether to log message creates for a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {boolean} enable - True to enable, false to disable
  */
 function setLogMessageCreate(guildId, enable) {
-  // Always save to JSON first
-  const settings = loadSettings()
-  if (!settings[guildId]) {
-    settings[guildId] = {
-      guildId: guildId,
-      commandPermissions: {},
-      logChannel: null,
-      logMessageCreate: true,
-      logMessageDelete: true,
-    }
-  }
-  settings[guildId].logMessageCreate = enable
-  saveSettings(settings)
-
-  // Also save to MongoDB if connected (don't await to keep function sync)
+  // Always save to MongoDB first if connected
   if (getConnectionStatus()) {
     GuildSettings.findOrCreate(guildId)
       .then((guildSettings) => {
@@ -346,7 +332,7 @@ function setLogMessageCreate(guildId, enable) {
         return guildSettings.save()
       })
       .then(() => {
-        logger.info({ guildId, enable }, 'Log message create setting updated (JSON + MongoDB)')
+        logger.info({ guildId, enable }, 'Log message create setting updated (MongoDB + JSON)')
       })
       .catch((error) => {
         logger.error(
@@ -360,6 +346,20 @@ function setLogMessageCreate(guildId, enable) {
       'Log message create setting updated (JSON only - MongoDB not connected)'
     )
   }
+
+  // Then save to JSON as backup
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+      logMessageCreate: true,
+      logMessageDelete: true,
+    }
+  }
+  settings[guildId].logMessageCreate = enable
+  saveSettings(settings)
 
   logger.info({ guildId, enable }, 'Log message create setting updated')
 }
@@ -375,26 +375,12 @@ function getLogMessageCreate(guildId) {
 }
 
 /**
- * Set whether to log message deletes for a guild (saves to both JSON and MongoDB)
+ * Set whether to log message deletes for a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {boolean} enable - True to enable, false to disable
  */
 function setLogMessageDelete(guildId, enable) {
-  // Always save to JSON first
-  const settings = loadSettings()
-  if (!settings[guildId]) {
-    settings[guildId] = {
-      guildId: guildId,
-      commandPermissions: {},
-      logChannel: null,
-      logMessageCreate: true,
-      logMessageDelete: true,
-    }
-  }
-  settings[guildId].logMessageDelete = enable
-  saveSettings(settings)
-
-  // Also save to MongoDB if connected (don't await to keep function sync)
+  // Always save to MongoDB first if connected
   if (getConnectionStatus()) {
     GuildSettings.findOrCreate(guildId)
       .then((guildSettings) => {
@@ -402,7 +388,7 @@ function setLogMessageDelete(guildId, enable) {
         return guildSettings.save()
       })
       .then(() => {
-        logger.info({ guildId, enable }, 'Log message delete setting updated (JSON + MongoDB)')
+        logger.info({ guildId, enable }, 'Log message delete setting updated (MongoDB + JSON)')
       })
       .catch((error) => {
         logger.error(
@@ -416,6 +402,20 @@ function setLogMessageDelete(guildId, enable) {
       'Log message delete setting updated (JSON only - MongoDB not connected)'
     )
   }
+
+  // Then save to JSON as backup
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+      logMessageCreate: true,
+      logMessageDelete: true,
+    }
+  }
+  settings[guildId].logMessageDelete = enable
+  saveSettings(settings)
 
   logger.info({ guildId, enable }, 'Log message delete setting updated')
 }
@@ -431,12 +431,36 @@ function getLogMessageDelete(guildId) {
 }
 
 /**
- * Set whether welcome messages are enabled for a guild (saves to both JSON and MongoDB)
+ * Set whether welcome messages are enabled for a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {boolean} enable - True to enable, false to disable
  */
 function setWelcomeEnabled(guildId, enable) {
-  // Always save to JSON first
+  // Always save to MongoDB first if connected
+  if (getConnectionStatus()) {
+    GuildSettings.findOrCreate(guildId)
+      .then((guildSettings) => {
+        guildSettings.welcome = guildSettings.welcome || {}
+        guildSettings.welcome.enabled = enable
+        return guildSettings.save()
+      })
+      .then(() => {
+        logger.info({ guildId, enable }, 'Welcome enabled setting updated (MongoDB + JSON)')
+      })
+      .catch((error) => {
+        logger.error(
+          { error: error.message, guildId, enable },
+          'Error saving to MongoDB, JSON backup preserved'
+        )
+      })
+  } else {
+    logger.debug(
+      { guildId, enable },
+      'Welcome enabled setting updated (JSON only - MongoDB not connected)'
+    )
+  }
+
+  // Then save to JSON as backup
   const settings = loadSettings()
   if (!settings[guildId]) {
     settings[guildId] = {
@@ -453,30 +477,6 @@ function setWelcomeEnabled(guildId, enable) {
   settings[guildId].welcomeEnabled = enable
   saveSettings(settings)
 
-  // Also save to MongoDB if connected (don't await to keep function sync)
-  if (getConnectionStatus()) {
-    GuildSettings.findOrCreate(guildId)
-      .then((guildSettings) => {
-        guildSettings.welcome = guildSettings.welcome || {}
-        guildSettings.welcome.enabled = enable
-        return guildSettings.save()
-      })
-      .then(() => {
-        logger.info({ guildId, enable }, 'Welcome enabled setting updated (JSON + MongoDB)')
-      })
-      .catch((error) => {
-        logger.error(
-          { error: error.message, guildId, enable },
-          'Error saving to MongoDB, JSON backup preserved'
-        )
-      })
-  } else {
-    logger.debug(
-      { guildId, enable },
-      'Welcome enabled setting updated (JSON only - MongoDB not connected)'
-    )
-  }
-
   logger.info({ guildId, enable }, 'Welcome enabled setting updated')
 }
 
@@ -491,12 +491,33 @@ function getWelcomeEnabled(guildId) {
 }
 
 /**
- * Set the welcome channel for a guild (saves to both JSON and MongoDB)
+ * Set the welcome channel for a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {string} channelId - Channel ID to set as welcome channel
  */
 function setWelcomeChannel(guildId, channelId) {
-  // Always save to JSON first
+  // Always save to MongoDB first if connected
+  if (getConnectionStatus()) {
+    GuildSettings.findOrCreate(guildId)
+      .then((guildSettings) => {
+        guildSettings.welcome = guildSettings.welcome || {}
+        guildSettings.welcome.channelId = channelId
+        return guildSettings.save()
+      })
+      .then(() => {
+        logger.info({ guildId, channelId }, 'Welcome channel set (MongoDB + JSON)')
+      })
+      .catch((error) => {
+        logger.error(
+          { error: error.message, guildId, channelId },
+          'Error saving to MongoDB, JSON backup preserved'
+        )
+      })
+  } else {
+    logger.debug({ guildId, channelId }, 'Welcome channel set (JSON only - MongoDB not connected)')
+  }
+
+  // Then save to JSON as backup
   const settings = loadSettings()
   if (!settings[guildId]) {
     settings[guildId] = {
@@ -513,27 +534,6 @@ function setWelcomeChannel(guildId, channelId) {
   settings[guildId].welcomeChannel = channelId
   saveSettings(settings)
 
-  // Also save to MongoDB if connected (don't await to keep function sync)
-  if (getConnectionStatus()) {
-    GuildSettings.findOrCreate(guildId)
-      .then((guildSettings) => {
-        guildSettings.welcome = guildSettings.welcome || {}
-        guildSettings.welcome.channelId = channelId
-        return guildSettings.save()
-      })
-      .then(() => {
-        logger.info({ guildId, channelId }, 'Welcome channel set (JSON + MongoDB)')
-      })
-      .catch((error) => {
-        logger.error(
-          { error: error.message, guildId, channelId },
-          'Error saving to MongoDB, JSON backup preserved'
-        )
-      })
-  } else {
-    logger.debug({ guildId, channelId }, 'Welcome channel set (JSON only - MongoDB not connected)')
-  }
-
   logger.info({ guildId, channelId }, 'Welcome channel set')
 }
 
@@ -548,12 +548,33 @@ function getWelcomeChannel(guildId) {
 }
 
 /**
- * Set the welcome message for a guild (saves to both JSON and MongoDB)
+ * Set the welcome message for a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {string} message - Welcome message to set
  */
 function setWelcomeMessage(guildId, message) {
-  // Always save to JSON first
+  // Always save to MongoDB first if connected
+  if (getConnectionStatus()) {
+    GuildSettings.findOrCreate(guildId)
+      .then((guildSettings) => {
+        guildSettings.welcome = guildSettings.welcome || {}
+        guildSettings.welcome.message = message
+        return guildSettings.save()
+      })
+      .then(() => {
+        logger.info({ guildId, message }, 'Welcome message set (MongoDB + JSON)')
+      })
+      .catch((error) => {
+        logger.error(
+          { error: error.message, guildId, message },
+          'Error saving to MongoDB, JSON backup preserved'
+        )
+      })
+  } else {
+    logger.debug({ guildId, message }, 'Welcome message set (JSON only - MongoDB not connected)')
+  }
+
+  // Then save to JSON as backup
   const settings = loadSettings()
   if (!settings[guildId]) {
     settings[guildId] = {
@@ -569,27 +590,6 @@ function setWelcomeMessage(guildId, message) {
   }
   settings[guildId].welcomeMessage = message
   saveSettings(settings)
-
-  // Also save to MongoDB if connected (don't await to keep function sync)
-  if (getConnectionStatus()) {
-    GuildSettings.findOrCreate(guildId)
-      .then((guildSettings) => {
-        guildSettings.welcome = guildSettings.welcome || {}
-        guildSettings.welcome.message = message
-        return guildSettings.save()
-      })
-      .then(() => {
-        logger.info({ guildId, message }, 'Welcome message set (JSON + MongoDB)')
-      })
-      .catch((error) => {
-        logger.error(
-          { error: error.message, guildId, message },
-          'Error saving to MongoDB, JSON backup preserved'
-        )
-      })
-  } else {
-    logger.debug({ guildId, message }, 'Welcome message set (JSON only - MongoDB not connected)')
-  }
 
   logger.info({ guildId, message }, 'Welcome message set')
 }
@@ -649,10 +649,7 @@ async function getGuildSettingsAsync(guildId) {
  */
 async function setCommandRoleAsync(guildId, commandName, roleId) {
   try {
-    // Always update JSON backup first
-    setCommandRole(guildId, commandName, roleId)
-
-    // Then update MongoDB if connected
+    // Save to MongoDB first if connected
     if (getConnectionStatus()) {
       const settings = await GuildSettings.findOrCreate(guildId)
       const permissions = settings.commandPermissions || new Map()
@@ -670,13 +667,42 @@ async function setCommandRoleAsync(guildId, commandName, roleId) {
     } else {
       logger.warn('MongoDB not connected, saved to JSON only')
     }
+
+    // Then update JSON backup
+    const settings = loadSettings()
+    if (!settings[guildId]) {
+      settings[guildId] = {
+        guildId: guildId,
+        commandPermissions: {},
+      }
+    }
+    if (!settings[guildId].commandPermissions[commandName]) {
+      settings[guildId].commandPermissions[commandName] = []
+    }
+    if (!settings[guildId].commandPermissions[commandName].includes(roleId)) {
+      settings[guildId].commandPermissions[commandName].push(roleId)
+    }
+    saveSettings(settings)
   } catch (error) {
     logger.error(
       { error: error.message, guildId, commandName, roleId },
       'Error setting command role, saved to JSON only'
     )
     // Ensure JSON is updated even if MongoDB fails
-    setCommandRole(guildId, commandName, roleId)
+    const settings = loadSettings()
+    if (!settings[guildId]) {
+      settings[guildId] = {
+        guildId: guildId,
+        commandPermissions: {},
+      }
+    }
+    if (!settings[guildId].commandPermissions[commandName]) {
+      settings[guildId].commandPermissions[commandName] = []
+    }
+    if (!settings[guildId].commandPermissions[commandName].includes(roleId)) {
+      settings[guildId].commandPermissions[commandName].push(roleId)
+    }
+    saveSettings(settings)
   }
 }
 
