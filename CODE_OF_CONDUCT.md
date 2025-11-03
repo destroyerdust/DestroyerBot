@@ -17,35 +17,35 @@ diverse, inclusive, and healthy community.
 Examples of behavior that contributes to a positive environment for our
 community include:
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes,
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Accepting responsibility and apologizing to those affected by our mistakes,
   and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the overall
+- Focusing on what is best not just for us as individuals, but for the overall
   community
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Referring to people by their preferred pronouns and using gender-neutral
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Referring to people by their preferred pronouns and using gender-neutral
   pronouns when uncertain
 
 Examples of unacceptable behavior include:
 
-* The use of sexualized language or imagery, and sexual attention or advances of
+- The use of sexualized language or imagery, and sexual attention or advances of
   any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or email address,
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information, such as a physical or email address,
   without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
+- Other conduct which could reasonably be considered inappropriate in a
   professional setting
-* Swearing, usage of strong or disturbing language
-* Demonstrating graphics or any other content you know may be considered disturbing
-* Starting and/or participating in arguments related to politics
-* Assuming or promoting any kind of inequality
-* Drug promotion of any kind
-* Attacking personal tastes
-* Not being respectful to reasonable communication boundaries
+- Swearing, usage of strong or disturbing language
+- Demonstrating graphics or any other content you know may be considered disturbing
+- Starting and/or participating in arguments related to politics
+- Assuming or promoting any kind of inequality
+- Drug promotion of any kind
+- Attacking personal tastes
+- Not being respectful to reasonable communication boundaries
 
 ## Enforcement Responsibilities
 
@@ -126,11 +126,11 @@ community.
 
 As a Discord bot project, we have additional expectations for community behavior:
 
-* Respect server rules and bot functionality
-* Do not attempt to exploit or abuse bot features
-* Report bugs and security issues responsibly through appropriate channels
-* Be mindful that bot interactions may be logged for debugging purposes
-* Respect user privacy and data protection standards
+- Respect server rules and bot functionality
+- Do not attempt to exploit or abuse bot features
+- Report bugs and security issues responsibly through appropriate channels
+- Be mindful that bot interactions may be logged for debugging purposes
+- Respect user privacy and data protection standards
 
 ## Attribution
 
