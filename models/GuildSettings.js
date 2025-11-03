@@ -15,6 +15,21 @@ const logSettingsSchema = new mongoose.Schema({
   },
 })
 
+const welcomeSettingsSchema = new mongoose.Schema({
+  enabled: {
+    type: Boolean,
+    default: false,
+  },
+  channelId: {
+    type: String,
+    default: null,
+  },
+  message: {
+    type: String,
+    default: 'Welcome to the server!',
+  },
+})
+
 const guildSettingsSchema = new mongoose.Schema(
   {
     guildId: {
@@ -32,6 +47,7 @@ const guildSettingsSchema = new mongoose.Schema(
       default: [],
     },
     logs: logSettingsSchema,
+    welcome: welcomeSettingsSchema,
   },
   {
     timestamps: true, // Adds createdAt and updatedAt

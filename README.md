@@ -19,7 +19,13 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
    npm install
    ```
 
-3. Edit `config.json` in the root directory with your Discord bot details and API keys. See the [Config](#config) section below for all required parameters.
+3. Copy `.env.example` to `.env` and fill in your Discord bot details and API keys:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` with your actual values. See the [Environment Variables](#environment-variables) section below for all required parameters.
 
 ## Usage
 
@@ -29,7 +35,7 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
    node deploy-commands.js
    ```
 
-   The deployment script now supports multiple guilds as configured in `config.json`.
+   The deployment script now supports multiple guilds as configured in `.env`.
 
 2. Start the bot:
 
@@ -107,9 +113,11 @@ An automated moderation logging system that tracks message activities in Discord
 - `/help` - Display comprehensive information about all available bot commands (owner-only commands are hidden from regular users)
 - `/ping` - Replies with Pong!
 - `/user-info` - Display info about yourself
-- `/server` - Display comprehensive server information
+- `/server-info` - Display comprehensive server information including channels, roles, members, and features
 - `/role-info <role>` - Display detailed information about a server role (ID, color, permissions, member count, etc.)
+- `/role-list` - Display a complete list of all server roles sorted by hierarchy with member counts and color indicators
 - `/channel-info [channel]` - Display detailed information about a channel (defaults to current channel, supports all channel types)
+- `/avatar-info [user]` - Display a user's avatar with high-quality image and download links (defaults to command user)
 
 ### Gaming Commands
 
@@ -120,6 +128,7 @@ An automated moderation logging system that tracks message activities in Discord
 ### Moderation Commands
 
 - `/kick` - Select a member and kick them (note: this is a demo command)
+- `/setnick` - Set a member's nickname in the server (server owner only by default, configurable via permission system)
 
 ### Global Commands
 
@@ -162,49 +171,41 @@ The bot is designed to run with PM2 for process management. Use the provided scr
 
 For production deployment, ensure you have PM2 installed globally and set up your environment variables.
 
-## Config
+## Environment Variables
 
-Edit `config.json` in the root directory with your Discord bot details and API keys. Full configuration example:
+Create a `.env` file in the root directory (automatically ignored by .gitignore). Full configuration example:
 
-```json
-{
-  "clientId": "your_discord_client_id",
-  "guildIds": ["your_guild_id_1", "your_guild_id_2"],
-  "token": "your_discord_bot_token",
-  "ownerId": "your_discord_user_id",
-  "miniAPI": "your_3d_printer_api_endpoint_url",
-  "pirateWeatherApiKey": "your_pirate_weather_api_key",
-  "pokemonApiKey": "your_pokemon_tcg_api_key",
-  "raiderIOApiKey": "your_raider_io_api_key"
-}
+```
+CLIENT_ID=your_discord_client_id
+GUILD_IDS=your_guild_id_1,your_guild_id_2
+TOKEN=your_discord_bot_token
+OWNER_ID=your_discord_user_id
+MINI_API=your_3d_printer_api_endpoint_url
+PIRATE_WEATHER_API_KEY=your_pirate_weather_api_key
+POKEMON_API_KEY=your_pokemon_tcg_api_key
+RAIDER_IO_API_KEY=your_raider_io_api_key
+MONGO_CONNECTION_STRING=mongodb+srv://username:password@cluster.mongodb.net/
+MONGO_DATABASE_NAME=database_name
+LOG_LEVEL=debug
 ```
 
 ### Configuration Parameters:
 
-- `clientId`: Your Discord application client ID
-- `guildIds`: Array of server/guild IDs for command deployment
-- `token`: Your Discord bot token from the Discord Developer Portal
-- `ownerId`: Your Discord user ID (required for private commands like 3d-print-status)
-- `miniAPI`: URL for your 3D printer's telemetry API (required for 3d-print-status command)
-- `pirateWeatherApiKey`: Free API key obtained from [pirateweather.net](https://pirateweather.net/) (required for weather command)
-- `pokemonApiKey`: Free API key obtained from [pokemontcg.io](https://pokemontcg.io/) (required for pokemon command)
-- `raiderIOApiKey`: Optional API key obtained from [raider.io](https://raider.io/) (provides higher rate limits for WoW character/guild lookups)
-
-## Environment Variables
-
-Create a `.env` file in the root directory (automatically ignored by .gitignore):
-
-```
-LOG_LEVEL=debug
-```
-
+- `CLIENT_ID`: Your Discord application client ID
+- `GUILD_IDS`: Comma-separated list of server/guild IDs for command deployment
+- `TOKEN`: Your Discord bot token from the Discord Developer Portal
+- `OWNER_ID`: Your Discord user ID (required for private commands like 3d-print-status)
+- `MINI_API`: URL for your 3D printer's telemetry API (required for 3d-print-status command)
+- `PIRATE_WEATHER_API_KEY`: Free API key obtained from [pirateweather.net](https://pirateweather.net/) (required for weather command)
+- `POKEMON_API_KEY`: Free API key obtained from [pokemontcg.io](https://pokemontcg.io/) (required for pokemon command)
+- `RAIDER_IO_API_KEY`: Optional API key obtained from [raider.io](https://raider.io/) (provides higher rate limits for WoW character/guild lookups)
+- `MONGO_CONNECTION_STRING`: MongoDB connection string for database storage
+- `MONGO_DATABASE_NAME`: Name of the MongoDB database to use
 - `LOG_LEVEL`: Set the logging level (default: info, options: trace, debug, info, warn, error, fatal)
-
-This controls the verbosity of Pino logging throughout the application.
 
 ## Database
 
-Currently, no database is configured. Commands operate with in-memory data or external API calls.
+The bot uses MongoDB with Mongoose for persistent data storage, including guild settings, permissions, and logging configurations. Configure the `MONGO_CONNECTION_STRING` and `MONGO_DATABASE_NAME` environment variables to connect to your MongoDB instance.
 
 ## Logging
 

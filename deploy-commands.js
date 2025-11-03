@@ -1,8 +1,11 @@
 // Script to collect local command modules and push their definitions to Discord
 // Run with: `node deploy-commands.js` (see README.md). This updates guild and global slash commands.
-// Deploys guild commands to all guilds specified in config.json guildIds array, and global commands application-wide.
+// Deploys guild commands to all guilds specified in .env GUILD_IDS, and global commands application-wide.
+require('dotenv').config()
 const { REST, Routes, InteractionContextType } = require('discord.js')
-const { clientId, guildIds, token } = require('./config.json')
+const clientId = process.env.CLIENT_ID
+const guildIds = process.env.GUILD_IDS.split(',')
+const token = process.env.TOKEN
 const fs = require('node:fs')
 const path = require('node:path')
 const logger = require('./logger')

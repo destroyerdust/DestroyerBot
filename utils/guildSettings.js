@@ -10,7 +10,7 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'guildSettings.json')
 // Commands that are restricted to server owner by default (unless specific roles are assigned)
 // NOTE: If you add/remove items here, update any admin commands that reference the same set
 // (for example `commands/admin/listpermissions.js`) so the UI/reporting stays consistent.
-const DEFAULT_RESTRICTED_COMMANDS = new Set(['kick', 'clean'])
+const DEFAULT_RESTRICTED_COMMANDS = new Set(['kick', 'clean', 'setnick'])
 
 // Ensure data directory exists for backup JSON file
 if (!fs.existsSync(DATA_DIR)) {
@@ -74,6 +74,15 @@ function getGuildSettings(guildId) {
   }
   if (typeof settings[guildId].logMessageDelete !== 'boolean') {
     settings[guildId].logMessageDelete = true
+  }
+  if (typeof settings[guildId].welcomeEnabled !== 'boolean') {
+    settings[guildId].welcomeEnabled = false
+  }
+  if (!settings[guildId].welcomeChannel) {
+    settings[guildId].welcomeChannel = null
+  }
+  if (!settings[guildId].welcomeMessage) {
+    settings[guildId].welcomeMessage = 'Welcome to the server!'
   }
   return settings[guildId]
 }
@@ -421,6 +430,180 @@ function getLogMessageDelete(guildId) {
   return guildSettings.logMessageDelete
 }
 
+/**
+ * Set whether welcome messages are enabled for a guild (saves to both JSON and MongoDB)
+ * @param {string} guildId - Guild ID
+ * @param {boolean} enable - True to enable, false to disable
+ */
+function setWelcomeEnabled(guildId, enable) {
+  // Always save to JSON first
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+      logMessageCreate: true,
+      logMessageDelete: true,
+      welcomeEnabled: false,
+      welcomeChannel: null,
+      welcomeMessage: 'Welcome to the server!',
+    }
+  }
+  settings[guildId].welcomeEnabled = enable
+  saveSettings(settings)
+
+  // Also save to MongoDB if connected (don't await to keep function sync)
+  if (getConnectionStatus()) {
+    GuildSettings.findOrCreate(guildId)
+      .then((guildSettings) => {
+        guildSettings.welcome = guildSettings.welcome || {}
+        guildSettings.welcome.enabled = enable
+        return guildSettings.save()
+      })
+      .then(() => {
+        logger.info({ guildId, enable }, 'Welcome enabled setting updated (JSON + MongoDB)')
+      })
+      .catch((error) => {
+        logger.error(
+          { error: error.message, guildId, enable },
+          'Error saving to MongoDB, JSON backup preserved'
+        )
+      })
+  } else {
+    logger.debug(
+      { guildId, enable },
+      'Welcome enabled setting updated (JSON only - MongoDB not connected)'
+    )
+  }
+
+  logger.info({ guildId, enable }, 'Welcome enabled setting updated')
+}
+
+/**
+ * Get whether welcome messages are enabled for a guild
+ * @param {string} guildId - Guild ID
+ * @returns {boolean} True if enabled
+ */
+function getWelcomeEnabled(guildId) {
+  const guildSettings = getGuildSettings(guildId)
+  return guildSettings.welcomeEnabled
+}
+
+/**
+ * Set the welcome channel for a guild (saves to both JSON and MongoDB)
+ * @param {string} guildId - Guild ID
+ * @param {string} channelId - Channel ID to set as welcome channel
+ */
+function setWelcomeChannel(guildId, channelId) {
+  // Always save to JSON first
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+      logMessageCreate: true,
+      logMessageDelete: true,
+      welcomeEnabled: false,
+      welcomeChannel: null,
+      welcomeMessage: 'Welcome to the server!',
+    }
+  }
+  settings[guildId].welcomeChannel = channelId
+  saveSettings(settings)
+
+  // Also save to MongoDB if connected (don't await to keep function sync)
+  if (getConnectionStatus()) {
+    GuildSettings.findOrCreate(guildId)
+      .then((guildSettings) => {
+        guildSettings.welcome = guildSettings.welcome || {}
+        guildSettings.welcome.channelId = channelId
+        return guildSettings.save()
+      })
+      .then(() => {
+        logger.info({ guildId, channelId }, 'Welcome channel set (JSON + MongoDB)')
+      })
+      .catch((error) => {
+        logger.error(
+          { error: error.message, guildId, channelId },
+          'Error saving to MongoDB, JSON backup preserved'
+        )
+      })
+  } else {
+    logger.debug({ guildId, channelId }, 'Welcome channel set (JSON only - MongoDB not connected)')
+  }
+
+  logger.info({ guildId, channelId }, 'Welcome channel set')
+}
+
+/**
+ * Get the welcome channel for a guild
+ * @param {string} guildId - Guild ID
+ * @returns {string|null} Welcome channel ID or null if not set
+ */
+function getWelcomeChannel(guildId) {
+  const guildSettings = getGuildSettings(guildId)
+  return guildSettings.welcomeChannel
+}
+
+/**
+ * Set the welcome message for a guild (saves to both JSON and MongoDB)
+ * @param {string} guildId - Guild ID
+ * @param {string} message - Welcome message to set
+ */
+function setWelcomeMessage(guildId, message) {
+  // Always save to JSON first
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logChannel: null,
+      logMessageCreate: true,
+      logMessageDelete: true,
+      welcomeEnabled: false,
+      welcomeChannel: null,
+      welcomeMessage: 'Welcome to the server!',
+    }
+  }
+  settings[guildId].welcomeMessage = message
+  saveSettings(settings)
+
+  // Also save to MongoDB if connected (don't await to keep function sync)
+  if (getConnectionStatus()) {
+    GuildSettings.findOrCreate(guildId)
+      .then((guildSettings) => {
+        guildSettings.welcome = guildSettings.welcome || {}
+        guildSettings.welcome.message = message
+        return guildSettings.save()
+      })
+      .then(() => {
+        logger.info({ guildId, message }, 'Welcome message set (JSON + MongoDB)')
+      })
+      .catch((error) => {
+        logger.error(
+          { error: error.message, guildId, message },
+          'Error saving to MongoDB, JSON backup preserved'
+        )
+      })
+  } else {
+    logger.debug({ guildId, message }, 'Welcome message set (JSON only - MongoDB not connected)')
+  }
+
+  logger.info({ guildId, message }, 'Welcome message set')
+}
+
+/**
+ * Get the welcome message for a guild
+ * @param {string} guildId - Guild ID
+ * @returns {string} Welcome message
+ */
+function getWelcomeMessage(guildId) {
+  const guildSettings = getGuildSettings(guildId)
+  return guildSettings.welcomeMessage
+}
+
 // ===== MONGO DB FUNCTIONS =====
 
 /**
@@ -440,6 +623,9 @@ async function getGuildSettingsAsync(guildId) {
         logChannel: settings.logs?.channelId,
         logMessageCreate: settings.logs?.messageCreate,
         logMessageDelete: settings.logs?.messageDelete,
+        welcomeEnabled: settings.welcome?.enabled,
+        welcomeChannel: settings.welcome?.channelId,
+        welcomeMessage: settings.welcome?.message,
       }
     } else {
       // Fallback to JSON
@@ -895,6 +1081,168 @@ async function getLogMessageDeleteAsync(guildId) {
   }
 }
 
+/**
+ * Set whether welcome messages are enabled for a guild (async, saves to both MongoDB and JSON)
+ * @param {string} guildId - Guild ID
+ * @param {boolean} enable - True to enable, false to disable
+ */
+async function setWelcomeEnabledAsync(guildId, enable) {
+  try {
+    // Always update JSON backup first
+    setWelcomeEnabled(guildId, enable)
+
+    // Then update MongoDB if connected
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOrCreate(guildId)
+      settings.welcome = settings.welcome || {}
+      settings.welcome.enabled = enable
+      await settings.save()
+      logger.info({ guildId, enable }, 'Welcome enabled setting updated (MongoDB + JSON)')
+    } else {
+      logger.warn('MongoDB not connected, saved to JSON only')
+    }
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId, enable },
+      'Error setting welcome enabled, saved to JSON only'
+    )
+    // Ensure JSON is updated even if MongoDB fails
+    setWelcomeEnabled(guildId, enable)
+  }
+}
+
+/**
+ * Get whether welcome messages are enabled for a guild (async, MongoDB primary)
+ * @param {string} guildId - Guild ID
+ * @returns {Promise<boolean>} True if enabled
+ */
+async function getWelcomeEnabledAsync(guildId) {
+  try {
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOne({ guildId })
+      return settings?.welcome?.enabled ?? false
+    } else {
+      // Fallback to JSON
+      logger.warn('MongoDB not connected, using JSON fallback')
+      return getWelcomeEnabled(guildId)
+    }
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId },
+      'Error getting welcome enabled from MongoDB, falling back to JSON'
+    )
+    return getWelcomeEnabled(guildId)
+  }
+}
+
+/**
+ * Set the welcome channel for a guild (async, saves to both MongoDB and JSON)
+ * @param {string} guildId - Guild ID
+ * @param {string} channelId - Channel ID to set as welcome channel
+ */
+async function setWelcomeChannelAsync(guildId, channelId) {
+  try {
+    // Always update JSON backup first
+    setWelcomeChannel(guildId, channelId)
+
+    // Then update MongoDB if connected
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOrCreate(guildId)
+      settings.welcome = settings.welcome || {}
+      settings.welcome.channelId = channelId
+      await settings.save()
+      logger.info({ guildId, channelId }, 'Welcome channel set (MongoDB + JSON)')
+    } else {
+      logger.warn('MongoDB not connected, saved to JSON only')
+    }
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId, channelId },
+      'Error setting welcome channel, saved to JSON only'
+    )
+    // Ensure JSON is updated even if MongoDB fails
+    setWelcomeChannel(guildId, channelId)
+  }
+}
+
+/**
+ * Get the welcome channel for a guild (async, MongoDB primary)
+ * @param {string} guildId - Guild ID
+ * @returns {Promise<string|null>} Welcome channel ID or null if not set
+ */
+async function getWelcomeChannelAsync(guildId) {
+  try {
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOne({ guildId })
+      return settings?.welcome?.channelId || null
+    } else {
+      // Fallback to JSON
+      logger.warn('MongoDB not connected, using JSON fallback')
+      return getWelcomeChannel(guildId)
+    }
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId },
+      'Error getting welcome channel from MongoDB, falling back to JSON'
+    )
+    return getWelcomeChannel(guildId)
+  }
+}
+
+/**
+ * Set the welcome message for a guild (async, saves to both MongoDB and JSON)
+ * @param {string} guildId - Guild ID
+ * @param {string} message - Welcome message to set
+ */
+async function setWelcomeMessageAsync(guildId, message) {
+  try {
+    // Always update JSON backup first
+    setWelcomeMessage(guildId, message)
+
+    // Then update MongoDB if connected
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOrCreate(guildId)
+      settings.welcome = settings.welcome || {}
+      settings.welcome.message = message
+      await settings.save()
+      logger.info({ guildId, message }, 'Welcome message set (MongoDB + JSON)')
+    } else {
+      logger.warn('MongoDB not connected, saved to JSON only')
+    }
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId, message },
+      'Error setting welcome message, saved to JSON only'
+    )
+    // Ensure JSON is updated even if MongoDB fails
+    setWelcomeMessage(guildId, message)
+  }
+}
+
+/**
+ * Get the welcome message for a guild (async, MongoDB primary)
+ * @param {string} guildId - Guild ID
+ * @returns {Promise<string>} Welcome message
+ */
+async function getWelcomeMessageAsync(guildId) {
+  try {
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOne({ guildId })
+      return settings?.welcome?.message || 'Welcome to the server!'
+    } else {
+      // Fallback to JSON
+      logger.warn('MongoDB not connected, using JSON fallback')
+      return getWelcomeMessage(guildId)
+    }
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId },
+      'Error getting welcome message from MongoDB, falling back to JSON'
+    )
+    return getWelcomeMessage(guildId)
+  }
+}
+
 module.exports = {
   // Legacy JSON-based functions (for backward compatibility)
   loadSettings,
@@ -910,6 +1258,12 @@ module.exports = {
   getLogMessageCreate,
   setLogMessageDelete,
   getLogMessageDelete,
+  setWelcomeEnabled,
+  getWelcomeEnabled,
+  setWelcomeChannel,
+  getWelcomeChannel,
+  setWelcomeMessage,
+  getWelcomeMessage,
 
   // New async MongoDB-based functions
   getGuildSettingsAsync,
@@ -926,4 +1280,10 @@ module.exports = {
   getLogMessageCreateAsync,
   setLogMessageDeleteAsync,
   getLogMessageDeleteAsync,
+  setWelcomeEnabledAsync,
+  getWelcomeEnabledAsync,
+  setWelcomeChannelAsync,
+  getWelcomeChannelAsync,
+  setWelcomeMessageAsync,
+  getWelcomeMessageAsync,
 }

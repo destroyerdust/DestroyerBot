@@ -1,4 +1,4 @@
-const { EmbedBuilder, AuditLogEvent } = require('discord.js')
+const { EmbedBuilder, AuditLogEvent, PermissionFlagsBits } = require('discord.js')
 const { getLogChannelAsync, getLogMessageDeleteAsync } = require('../utils/guildSettings')
 const logger = require('../logger')
 
@@ -57,18 +57,22 @@ module.exports = {
     )
 
     // Try to fetch the audit log to find who deleted the message
-    try {
-      const auditLogs = await message.guild.fetchAuditLogs({
-        type: AuditLogEvent.MessageDelete,
-        limit: 1,
-      })
+    if (message.guild.members.me.permissions.has(PermissionFlagsBits.ViewAuditLog)) {
+      try {
+        const auditLogs = await message.guild.fetchAuditLogs({
+          type: AuditLogEvent.MessageDelete,
+          limit: 1,
+        })
 
-      const deleteEntry = auditLogs.entries.first()
-      if (deleteEntry && deleteEntry.extra.channel.id === message.channel.id) {
-        deletedBy = deleteEntry.executor.tag
+        const deleteEntry = auditLogs.entries.first()
+        if (deleteEntry && deleteEntry.extra.channel.id === message.channel.id) {
+          deletedBy = deleteEntry.executor.tag
+        }
+      } catch (error) {
+        logger.warn({ error: error.message }, 'Could not fetch audit logs for message delete')
       }
-    } catch (error) {
-      logger.warn({ error: error.message }, 'Could not fetch audit logs for message delete')
+    } else {
+      logger.debug('Missing ViewAuditLog permission, skipping audit log fetch')
     }
 
     const embed = new EmbedBuilder()
