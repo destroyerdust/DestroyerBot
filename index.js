@@ -3,15 +3,19 @@ const path = require('node:path')
 const { Client, Collection, GatewayIntentBits, MessageFlags } = require('discord.js')
 const { token } = require('./config.json')
 const logger = require('./logger')
-const { hasCommandPermission } = require('./utils/guildSettings')
+const { hasCommandPermissionAsync } = require('./utils/guildSettings')
+const { connectToDatabase } = require('./utils/database')
+const { runMigration } = require('./utils/migrateToMongoDB')
 
 logger.info('Starting DestroyerBot...')
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.MessageContent,
   ],
 })
@@ -61,8 +65,20 @@ for (const file of eventFiles) {
 
 logger.info(`Loaded ${eventFiles.length} events.`)
 
-client.once('clientReady', () => {
+client.once('clientReady', async () => {
   logger.info('The bot is online')
+
+  // Initialize database connection and run migration
+  try {
+    await connectToDatabase()
+    const migrated = await runMigration()
+    if (migrated) {
+      logger.info('Database migration completed successfully')
+    }
+  } catch (error) {
+    logger.error({ error: error.message, stack: error.stack }, 'Failed to initialize database')
+    // Continue running even if database fails - will use JSON fallback
+  }
 })
 
 client.on('interactionCreate', async (interaction) => {
@@ -87,24 +103,35 @@ client.on('interactionCreate', async (interaction) => {
 
   // Check permissions for guild commands (skip for DMs)
   if (interaction.guild && interaction.member) {
-    const hasPermission = hasCommandPermission(
-      interaction.guild.id,
-      interaction.commandName,
-      interaction.member
-    )
+    try {
+      const hasPermission = await hasCommandPermissionAsync(
+        interaction.guild.id,
+        interaction.commandName,
+        interaction.member
+      )
 
-    if (!hasPermission) {
-      logger.warn(
-        {
-          guildId: interaction.guild.id,
-          userId: interaction.user.id,
-          username: interaction.user.tag,
-          commandName: interaction.commandName,
-        },
-        'User blocked from using command due to role restrictions'
+      if (!hasPermission) {
+        logger.warn(
+          {
+            guildId: interaction.guild.id,
+            userId: interaction.user.id,
+            username: interaction.user.tag,
+            commandName: interaction.commandName,
+          },
+          'User blocked from using command due to permissions'
+        )
+        return interaction.reply({
+          content: "⛔ You don't have permission to use this command.",
+          flags: MessageFlags.Ephemeral,
+        })
+      }
+    } catch (error) {
+      logger.error(
+        { error: error.message, guildId: interaction.guild.id },
+        'Error checking command permissions'
       )
       return interaction.reply({
-        content: "⛔ You don't have permission to use this command.",
+        content: 'There was an error checking permissions. Please try again.',
         flags: MessageFlags.Ephemeral,
       })
     }

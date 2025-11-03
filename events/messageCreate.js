@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js')
-const { getLogChannel, getLogMessageCreate } = require('../utils/guildSettings')
+const { getLogChannelAsync, getLogMessageCreateAsync } = require('../utils/guildSettings')
 const logger = require('../logger')
 
 module.exports = {
@@ -27,7 +27,7 @@ module.exports = {
 
     logger.info({ guildId: message.guild.id }, 'Handling message create in guild')
 
-    const logChannelId = getLogChannel(message.guild.id)
+    const logChannelId = await getLogChannelAsync(message.guild.id)
     logger.debug({ guildId: message.guild.id, logChannelId }, 'Retrieved log channel ID')
 
     if (!logChannelId) {
@@ -41,7 +41,8 @@ module.exports = {
       return
     }
 
-    if (!getLogMessageCreate(message.guild.id)) {
+    const shouldLog = await getLogMessageCreateAsync(message.guild.id)
+    if (!shouldLog) {
       logger.debug({ guildId: message.guild.id }, 'Message create logging disabled, skipping')
       return
     }

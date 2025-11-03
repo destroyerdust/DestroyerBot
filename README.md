@@ -94,7 +94,7 @@ An automated moderation logging system that tracks message activities in Discord
 **Setup Steps:**
 
 1. Set the log channel: `/setlogchannel channel:#logs`
-2. Enable features: `/logsettings create enable` and `/logsettings delete enable`
+2. Enable features: `/logsettings messagecreate enable` and `/logsettings messagedelete enable`
 3. Enable Message Content Intent in [Discord Developer Portal](https://discord.com/developers/applications) under Bot settings
 4. Restart bot and test by creating/deleting messages
 
@@ -108,6 +108,8 @@ An automated moderation logging system that tracks message activities in Discord
 - `/ping` - Replies with Pong!
 - `/user-info` - Display info about yourself
 - `/server` - Display comprehensive server information
+- `/role-info <role>` - Display detailed information about a server role (ID, color, permissions, member count, etc.)
+- `/channel-info [channel]` - Display detailed information about a channel (defaults to current channel, supports all channel types)
 
 ### Gaming Commands
 

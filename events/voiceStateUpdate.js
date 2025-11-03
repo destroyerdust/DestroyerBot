@@ -11,7 +11,7 @@ module.exports = {
       } else if (oldState.channelId && !newState.channelId) {
         action = `left ${oldState.channel.name}`
       } else if (oldState.channelId !== newState.channelId) {
-        action = `moved from ${oldState.channel?.name || 'unknown'} to ${newState.channel?.name || 'unknown'}`
+        action = `moved from ${oldState.channel.name || 'unknown'} to ${newState.channel.name || 'unknown'}`
       }
       if (action) logger.info(`Voice: ${user.tag} ${action}`)
     }

@@ -204,7 +204,7 @@ module.exports = {
         WELCOME_SCREEN_ENABLED: '👋',
       }
 
-      const featureList = features
+      let featureList = features
         .slice(0, 10)
         .map((feature) => {
           const emoji = featureEmojis[feature] || '✨'

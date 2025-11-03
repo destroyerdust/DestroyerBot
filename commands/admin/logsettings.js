@@ -1,9 +1,9 @@
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
 const {
-  setLogMessageCreate,
-  getLogMessageCreate,
-  setLogMessageDelete,
-  getLogMessageDelete,
+  setLogMessageCreateAsync,
+  getLogMessageCreateAsync,
+  setLogMessageDeleteAsync,
+  getLogMessageDeleteAsync,
 } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
@@ -15,7 +15,7 @@ module.exports = {
     .setContexts(InteractionContextType.Guild)
     .addSubcommandGroup((group) =>
       group
-        .setName('create')
+        .setName('messagecreate')
         .setDescription('Settings for message creation logging')
         .addSubcommand((subcommand) =>
           subcommand.setName('enable').setDescription('Enable logging of new messages')
@@ -26,7 +26,7 @@ module.exports = {
     )
     .addSubcommandGroup((group) =>
       group
-        .setName('delete')
+        .setName('messagedelete')
         .setDescription('Settings for message deletion logging')
         .addSubcommand((subcommand) =>
           subcommand.setName('enable').setDescription('Enable logging of deleted messages')
@@ -53,28 +53,28 @@ module.exports = {
     let enable = null
     let type = ''
 
-    if (subcommandGroup === 'create') {
+    if (subcommandGroup === 'messagecreate') {
       type = 'message create'
       if (subcommand === 'enable') {
         enable = true
-        setLogMessageCreate(guildId, true)
+        await setLogMessageCreateAsync(guildId, true)
       } else if (subcommand === 'disable') {
         enable = false
-        setLogMessageCreate(guildId, false)
+        await setLogMessageCreateAsync(guildId, false)
       }
-    } else if (subcommandGroup === 'delete') {
+    } else if (subcommandGroup === 'messagedelete') {
       type = 'message delete'
       if (subcommand === 'enable') {
         enable = true
-        setLogMessageDelete(guildId, true)
+        await setLogMessageDeleteAsync(guildId, true)
       } else if (subcommand === 'disable') {
         enable = false
-        setLogMessageDelete(guildId, false)
+        await setLogMessageDeleteAsync(guildId, false)
       }
     }
 
-    const currentCreate = getLogMessageCreate(guildId)
-    const currentDelete = getLogMessageDelete(guildId)
+    const currentCreate = await getLogMessageCreateAsync(guildId)
+    const currentDelete = await getLogMessageDeleteAsync(guildId)
 
     const statusText = `**Message Create Logging:** ${currentCreate ? '✅ Enabled' : '❌ Disabled'}\n**Message Delete Logging:** ${currentDelete ? '✅ Enabled' : '❌ Disabled'}`
 
