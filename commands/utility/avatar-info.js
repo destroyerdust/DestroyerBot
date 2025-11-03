@@ -9,7 +9,7 @@ const logger = require('../../logger')
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('avatar-info')
-    .setDescription('Get information about a user\'s avatar')
+    .setDescription("Get information about a user's avatar")
     .setContexts(
       InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
     )
@@ -34,7 +34,11 @@ module.exports = {
 
     // Get avatar URLs with different options
     const avatarURL = user.displayAvatarURL({ extension: 'png', size: 1024 })
-    const avatarURLDynamic = user.displayAvatarURL({ extension: 'png', size: 1024, forceStatic: false })
+    const avatarURLDynamic = user.displayAvatarURL({
+      extension: 'png',
+      size: 1024,
+      forceStatic: false,
+    })
     const avatarThumbnail = user.displayAvatarURL({ extension: 'png', size: 256 })
 
     // Check if avatar is animated (GIF)
@@ -54,10 +58,9 @@ module.exports = {
     )
 
     // Avatar links
-    const avatarLinks = [
-      `[PNG (1024px)](${avatarURL})`,
-      `[Dynamic](${avatarURLDynamic})`,
-    ].join(' • ')
+    const avatarLinks = [`[PNG (1024px)](${avatarURL})`, `[Dynamic](${avatarURLDynamic})`].join(
+      ' • '
+    )
 
     embed.addFields({
       name: '🔗 Direct Links',
