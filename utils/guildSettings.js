@@ -52,6 +52,55 @@ function saveSettings(settings) {
 }
 
 /**
+ * Migrate existing JSON data from flat log structure to nested logs object
+ */
+function migrateLogSettings() {
+  try {
+    const settings = loadSettings()
+    let hasChanges = false
+
+    for (const guildId in settings) {
+      const guild = settings[guildId]
+
+      // Check if migration is needed (has flat log properties)
+      if (guild.logChannel !== undefined || guild.logMessageCreate !== undefined || guild.logMessageDelete !== undefined) {
+        // Initialize logs object if it doesn't exist
+        if (!guild.logs) {
+          guild.logs = {}
+        }
+
+        // Migrate flat properties to nested
+        if (guild.logChannel !== undefined) {
+          guild.logs.channelId = guild.logChannel
+          delete guild.logChannel
+        }
+        if (guild.logMessageCreate !== undefined) {
+          guild.logs.messageCreate = guild.logMessageCreate
+          delete guild.logMessageCreate
+        }
+        if (guild.logMessageDelete !== undefined) {
+          guild.logs.messageDelete = guild.logMessageDelete
+          delete guild.logMessageDelete
+        }
+
+        hasChanges = true
+        logger.info({ guildId }, 'Migrated log settings from flat to nested structure')
+      }
+    }
+
+    if (hasChanges) {
+      saveSettings(settings)
+      logger.info('Completed migration of log settings to nested structure')
+    }
+  } catch (error) {
+    logger.error({ error: error.message }, 'Error migrating log settings')
+  }
+}
+
+// Run migration on module load
+migrateLogSettings()
+
+/**
  * Get settings for a specific guild
  * @param {string} guildId - Guild ID
  * @returns {Object} Guild settings
@@ -62,19 +111,33 @@ function getGuildSettings(guildId) {
     settings[guildId] = {
       guildId: guildId,
       commandPermissions: {},
-      logChannel: null,
+      logs: {
+        channelId: null,
+        messageCreate: true,
+        messageDelete: true,
+      },
+      welcomeEnabled: false,
+      welcomeChannel: null,
+      welcomeMessage: 'Welcome to the server!',
     }
     saveSettings(settings)
   }
-  if (!settings[guildId].logChannel) {
-    settings[guildId].logChannel = null
+
+  // Ensure logs object exists and has defaults
+  if (!settings[guildId].logs) {
+    settings[guildId].logs = {}
   }
-  if (typeof settings[guildId].logMessageCreate !== 'boolean') {
-    settings[guildId].logMessageCreate = true
+  if (!settings[guildId].logs.channelId) {
+    settings[guildId].logs.channelId = null
   }
-  if (typeof settings[guildId].logMessageDelete !== 'boolean') {
-    settings[guildId].logMessageDelete = true
+  if (typeof settings[guildId].logs.messageCreate !== 'boolean') {
+    settings[guildId].logs.messageCreate = true
   }
+  if (typeof settings[guildId].logs.messageDelete !== 'boolean') {
+    settings[guildId].logs.messageDelete = true
+  }
+
+  // Ensure welcome settings have defaults
   if (typeof settings[guildId].welcomeEnabled !== 'boolean') {
     settings[guildId].welcomeEnabled = false
   }
@@ -84,6 +147,7 @@ function getGuildSettings(guildId) {
   if (!settings[guildId].welcomeMessage) {
     settings[guildId].welcomeMessage = 'Welcome to the server!'
   }
+
   return settings[guildId]
 }
 
@@ -277,7 +341,8 @@ function setLogChannel(guildId, channelId) {
   if (getConnectionStatus()) {
     GuildSettings.findOrCreate(guildId)
       .then((guildSettings) => {
-        guildSettings.logChannel = channelId
+        guildSettings.logs = guildSettings.logs || {}
+        guildSettings.logs.channelId = channelId
         return guildSettings.save()
       })
       .then(() => {
@@ -299,10 +364,15 @@ function setLogChannel(guildId, channelId) {
     settings[guildId] = {
       guildId: guildId,
       commandPermissions: {},
-      logChannel: null,
+      logs: {
+        channelId: null,
+        messageCreate: true,
+        messageDelete: true,
+      },
     }
   }
-  settings[guildId].logChannel = channelId
+  settings[guildId].logs = settings[guildId].logs || {}
+  settings[guildId].logs.channelId = channelId
   saveSettings(settings)
 
   logger.info({ guildId, channelId }, 'Log channel set')
@@ -315,7 +385,7 @@ function setLogChannel(guildId, channelId) {
  */
 function getLogChannel(guildId) {
   const guildSettings = getGuildSettings(guildId)
-  return guildSettings.logChannel
+  return guildSettings.logs?.channelId || null
 }
 
 /**
@@ -328,7 +398,8 @@ function setLogMessageCreate(guildId, enable) {
   if (getConnectionStatus()) {
     GuildSettings.findOrCreate(guildId)
       .then((guildSettings) => {
-        guildSettings.logMessageCreate = enable
+        guildSettings.logs = guildSettings.logs || {}
+        guildSettings.logs.messageCreate = enable
         return guildSettings.save()
       })
       .then(() => {
@@ -353,12 +424,15 @@ function setLogMessageCreate(guildId, enable) {
     settings[guildId] = {
       guildId: guildId,
       commandPermissions: {},
-      logChannel: null,
-      logMessageCreate: true,
-      logMessageDelete: true,
+      logs: {
+        channelId: null,
+        messageCreate: true,
+        messageDelete: true,
+      },
     }
   }
-  settings[guildId].logMessageCreate = enable
+  settings[guildId].logs = settings[guildId].logs || {}
+  settings[guildId].logs.messageCreate = enable
   saveSettings(settings)
 
   logger.info({ guildId, enable }, 'Log message create setting updated')
@@ -371,7 +445,7 @@ function setLogMessageCreate(guildId, enable) {
  */
 function getLogMessageCreate(guildId) {
   const guildSettings = getGuildSettings(guildId)
-  return guildSettings.logMessageCreate
+  return guildSettings.logs?.messageCreate ?? true
 }
 
 /**
@@ -384,7 +458,8 @@ function setLogMessageDelete(guildId, enable) {
   if (getConnectionStatus()) {
     GuildSettings.findOrCreate(guildId)
       .then((guildSettings) => {
-        guildSettings.logMessageDelete = enable
+        guildSettings.logs = guildSettings.logs || {}
+        guildSettings.logs.messageDelete = enable
         return guildSettings.save()
       })
       .then(() => {
@@ -409,12 +484,15 @@ function setLogMessageDelete(guildId, enable) {
     settings[guildId] = {
       guildId: guildId,
       commandPermissions: {},
-      logChannel: null,
-      logMessageCreate: true,
-      logMessageDelete: true,
+      logs: {
+        channelId: null,
+        messageCreate: true,
+        messageDelete: true,
+      },
     }
   }
-  settings[guildId].logMessageDelete = enable
+  settings[guildId].logs = settings[guildId].logs || {}
+  settings[guildId].logs.messageDelete = enable
   saveSettings(settings)
 
   logger.info({ guildId, enable }, 'Log message delete setting updated')
@@ -427,7 +505,7 @@ function setLogMessageDelete(guildId, enable) {
  */
 function getLogMessageDelete(guildId) {
   const guildSettings = getGuildSettings(guildId)
-  return guildSettings.logMessageDelete
+  return guildSettings.logs?.messageDelete ?? true
 }
 
 /**
