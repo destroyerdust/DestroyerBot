@@ -5,7 +5,7 @@ const {
   MessageFlags,
 } = require('discord.js')
 const logger = require('../../logger')
-const { pokemonApiKey } = require('../../config.json')
+const pokemonApiKey = process.env.POKEMON_API_KEY
 
 // This is a test file for testing different APIs
 
@@ -81,7 +81,7 @@ module.exports = {
 
         if (response.status === 401 || response.status === 403) {
           return interaction.editReply({
-            content: 'Pokemon TCG API key is invalid or missing from config.json.',
+            content: 'Pokemon TCG API key is invalid or missing from .env.',
             flags: MessageFlags.Ephemeral,
           })
         }

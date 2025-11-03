@@ -5,7 +5,7 @@ const {
   MessageFlags,
 } = require('discord.js')
 const logger = require('../../logger')
-const { raiderIOApiKey } = require('../../config.json')
+const raiderIOApiKey = process.env.RAIDER_IO_API_KEY
 
 module.exports = {
   data: new SlashCommandBuilder()

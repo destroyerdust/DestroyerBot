@@ -4,7 +4,8 @@ const {
   InteractionContextType,
   MessageFlags,
 } = require('discord.js')
-const { miniAPI, ownerId } = require('../../config.json')
+const miniAPI = process.env.MINI_API
+const ownerId = process.env.OWNER_ID
 const logger = require('../../logger')
 
 module.exports = {

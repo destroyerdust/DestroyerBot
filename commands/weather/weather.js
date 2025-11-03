@@ -6,7 +6,7 @@ const {
   MessageFlags,
 } = require('discord.js')
 const logger = require('../../logger')
-const { pirateWeatherApiKey } = require('../../config.json')
+const pirateWeatherApiKey = process.env.PIRATE_WEATHER_API_KEY
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -147,7 +147,7 @@ module.exports = {
         if (weatherResponse.status === 401 || weatherResponse.status === 403) {
           return interaction.editReply({
             content:
-              'Pirate Weather API key is invalid or missing. Please configure your key in config.json.',
+              'Pirate Weather API key is invalid or missing. Please configure your key in .env.',
             flags: MessageFlags.Ephemeral,
           })
         }

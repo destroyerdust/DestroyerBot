@@ -1,7 +1,8 @@
+require('dotenv').config()
 const fs = require('node:fs')
 const path = require('node:path')
 const { Client, Collection, GatewayIntentBits, MessageFlags } = require('discord.js')
-const { token } = require('./config.json')
+const token = process.env.TOKEN
 const logger = require('./logger')
 const { hasCommandPermissionAsync } = require('./utils/guildSettings')
 const { connectToDatabase } = require('./utils/database')
@@ -66,7 +67,20 @@ for (const file of eventFiles) {
 logger.info(`Loaded ${eventFiles.length} events.`)
 
 client.once('clientReady', async () => {
-  logger.info('The bot is online')
+  const { user, guilds, ws } = client
+
+  logger.info(
+    {
+      botUsername: user.username,
+      botDiscriminator: user.discriminator,
+      botId: user.id,
+      guildCount: guilds.cache.size,
+      websocketStatus: ws.status,
+      websocketPing: ws.ping,
+      readyAt: new Date().toISOString(),
+    },
+    `${user.tag} is online and ready! Serving ${guilds.cache.size} server(s)`
+  )
 
   // Initialize database connection and run migration
   try {
@@ -149,4 +163,27 @@ client.on('interactionCreate', async (interaction) => {
 })
 
 logger.info('Attempting to log in with the provided token...')
+
+// Debug: Check if token exists and is valid format
+if (!token) {
+  logger.error('No TOKEN found in environment variables. Please check your .env file.')
+  process.exit(1)
+}
+
+if (token === 'your_discord_bot_token_here') {
+  logger.error(
+    'TOKEN is still set to placeholder value. Please update .env with your real Discord bot token from https://discord.com/developers/applications'
+  )
+  process.exit(1)
+}
+
+if (typeof token !== 'string' || token.length < 50) {
+  logger.error(
+    'TOKEN appears to be invalid (wrong format or too short). Discord bot tokens should be ~59 characters long.'
+  )
+  process.exit(1)
+}
+
+logger.debug(`Token format validation passed (length: ${token.length})`)
+
 client.login(token)

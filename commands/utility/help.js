@@ -10,7 +10,7 @@ const {
   MessageFlags,
   InteractionContextType,
 } = require('discord.js')
-const { ownerId: BOT_OWNER_ID } = require('../../config.json')
+const BOT_OWNER_ID = process.env.OWNER_ID
 const logger = require('../../logger')
 
 /**

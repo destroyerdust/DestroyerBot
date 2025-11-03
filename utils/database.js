@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const logger = require('../logger')
-const { mongoConnectionString, mongoDatabaseName } = require('../config.json')
+const mongoConnectionString = process.env.MONGO_CONNECTION_STRING
+const mongoDatabaseName = process.env.MONGO_DATABASE_NAME
 
 let isConnected = false
 
