@@ -63,7 +63,11 @@ function migrateSettings() {
       const guild = settings[guildId]
 
       // Migrate log settings from flat to nested
-      if (guild.logChannel !== undefined || guild.logMessageCreate !== undefined || guild.logMessageDelete !== undefined) {
+      if (
+        guild.logChannel !== undefined ||
+        guild.logMessageCreate !== undefined ||
+        guild.logMessageDelete !== undefined
+      ) {
         // Initialize logs object if it doesn't exist
         if (!guild.logs) {
           guild.logs = {}
@@ -88,7 +92,11 @@ function migrateSettings() {
       }
 
       // Migrate welcome settings from flat to nested
-      if (guild.welcomeEnabled !== undefined || guild.welcomeChannel !== undefined || guild.welcomeMessage !== undefined) {
+      if (
+        guild.welcomeEnabled !== undefined ||
+        guild.welcomeChannel !== undefined ||
+        guild.welcomeMessage !== undefined
+      ) {
         // Initialize welcome object if it doesn't exist
         if (!guild.welcome) {
           guild.welcome = {}
