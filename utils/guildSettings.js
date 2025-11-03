@@ -1289,10 +1289,7 @@ async function getWelcomeEnabledAsync(guildId) {
  */
 async function setWelcomeChannelAsync(guildId, channelId) {
   try {
-    // Always update JSON backup first
-    setWelcomeChannel(guildId, channelId)
-
-    // Then update MongoDB if connected
+    // Save to MongoDB first if connected
     if (getConnectionStatus()) {
       const settings = await GuildSettings.findOrCreate(guildId)
       settings.welcome = settings.welcome || {}
@@ -1302,13 +1299,54 @@ async function setWelcomeChannelAsync(guildId, channelId) {
     } else {
       logger.warn('MongoDB not connected, saved to JSON only')
     }
+
+    // Then update JSON backup
+    const settings = loadSettings()
+    if (!settings[guildId]) {
+      settings[guildId] = {
+        guildId: guildId,
+        commandPermissions: {},
+        logs: {
+          channelId: null,
+          messageCreate: true,
+          messageDelete: true,
+        },
+        welcome: {
+          enabled: false,
+          channelId: null,
+          message: 'Welcome to the server!',
+        },
+      }
+    }
+    settings[guildId].welcome = settings[guildId].welcome || {}
+    settings[guildId].welcome.channelId = channelId
+    saveSettings(settings)
   } catch (error) {
     logger.error(
       { error: error.message, guildId, channelId },
       'Error setting welcome channel, saved to JSON only'
     )
     // Ensure JSON is updated even if MongoDB fails
-    setWelcomeChannel(guildId, channelId)
+    const settings = loadSettings()
+    if (!settings[guildId]) {
+      settings[guildId] = {
+        guildId: guildId,
+        commandPermissions: {},
+        logs: {
+          channelId: null,
+          messageCreate: true,
+          messageDelete: true,
+        },
+        welcome: {
+          enabled: false,
+          channelId: null,
+          message: 'Welcome to the server!',
+        },
+      }
+    }
+    settings[guildId].welcome = settings[guildId].welcome || {}
+    settings[guildId].welcome.channelId = channelId
+    saveSettings(settings)
   }
 }
 
