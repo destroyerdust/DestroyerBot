@@ -437,9 +437,9 @@ async function getGuildSettingsAsync(guildId) {
         guildId: settings.guildId,
         commandPermissions: Object.fromEntries(settings.commandPermissions || new Map()),
         disabledCommands: settings.disabledCommands || [],
-        logChannel: settings.logChannel,
-        logMessageCreate: settings.logMessageCreate,
-        logMessageDelete: settings.logMessageDelete,
+        logChannel: settings.logs?.channelId,
+        logMessageCreate: settings.logs?.messageCreate,
+        logMessageDelete: settings.logs?.messageDelete,
       }
     } else {
       // Fallback to JSON
@@ -746,7 +746,8 @@ async function setLogChannelAsync(guildId, channelId) {
     // Then update MongoDB if connected
     if (getConnectionStatus()) {
       const settings = await GuildSettings.findOrCreate(guildId)
-      settings.logChannel = channelId
+      settings.logs = settings.logs || {}
+      settings.logs.channelId = channelId
       await settings.save()
       logger.info({ guildId, channelId }, 'Log channel set (MongoDB + JSON)')
     } else {
@@ -771,7 +772,7 @@ async function getLogChannelAsync(guildId) {
   try {
     if (getConnectionStatus()) {
       const settings = await GuildSettings.findOne({ guildId })
-      return settings?.logChannel || null
+      return settings?.logs?.channelId || null
     } else {
       // Fallback to JSON
       logger.warn('MongoDB not connected, using JSON fallback')
@@ -799,7 +800,8 @@ async function setLogMessageCreateAsync(guildId, enable) {
     // Then update MongoDB if connected
     if (getConnectionStatus()) {
       const settings = await GuildSettings.findOrCreate(guildId)
-      settings.logMessageCreate = enable
+      settings.logs = settings.logs || {}
+      settings.logs.messageCreate = enable
       await settings.save()
       logger.info({ guildId, enable }, 'Log message create setting updated (MongoDB + JSON)')
     } else {
@@ -824,7 +826,7 @@ async function getLogMessageCreateAsync(guildId) {
   try {
     if (getConnectionStatus()) {
       const settings = await GuildSettings.findOne({ guildId })
-      return settings?.logMessageCreate ?? true
+      return settings?.logs?.messageCreate ?? true
     } else {
       // Fallback to JSON
       logger.warn('MongoDB not connected, using JSON fallback')
@@ -852,7 +854,8 @@ async function setLogMessageDeleteAsync(guildId, enable) {
     // Then update MongoDB if connected
     if (getConnectionStatus()) {
       const settings = await GuildSettings.findOrCreate(guildId)
-      settings.logMessageDelete = enable
+      settings.logs = settings.logs || {}
+      settings.logs.messageDelete = enable
       await settings.save()
       logger.info({ guildId, enable }, 'Log message delete setting updated (MongoDB + JSON)')
     } else {
@@ -877,7 +880,7 @@ async function getLogMessageDeleteAsync(guildId) {
   try {
     if (getConnectionStatus()) {
       const settings = await GuildSettings.findOne({ guildId })
-      return settings?.logMessageDelete ?? true
+      return settings?.logs?.messageDelete ?? true
     } else {
       // Fallback to JSON
       logger.warn('MongoDB not connected, using JSON fallback')

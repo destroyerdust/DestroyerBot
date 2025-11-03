@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
-const { setLogChannel } = require('../../utils/guildSettings')
+const { setLogChannelAsync } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
 module.exports = {
@@ -30,7 +30,7 @@ module.exports = {
     )
 
     try {
-      setLogChannel(interaction.guild.id, channel.id)
+      await setLogChannelAsync(interaction.guild.id, channel.id)
 
       await interaction.reply({
         content: `✅ Log channel set to ${channel}. Moderation actions will be logged here.`,
