@@ -54,9 +54,97 @@ const guildSettingsSchema = new mongoose.Schema(
   }
 )
 
-// Create indexes for better query performance
-guildSettingsSchema.index({ guildId: 1 })
-guildSettingsSchema.index({ commandPermissions: 1 })
+// Create optimized indexes for better query performance
+// Note: guildId index is automatically created by unique: true constraint
+
+// Essential single-field indexes for frequent queries
+guildSettingsSchema.index({ disabledCommands: 1 }, { name: 'disabled_commands' })
+guildSettingsSchema.index({ 'logs.channelId': 1 }, { name: 'log_channel' })
+guildSettingsSchema.index({ 'welcome.channelId': 1 }, { name: 'welcome_channel' })
+
+// Critical compound indexes for common query patterns
+guildSettingsSchema.index(
+  {
+    guildId: 1,
+    disabledCommands: 1,
+  },
+  { name: 'guild_disabled_commands' }
+)
+
+guildSettingsSchema.index(
+  {
+    guildId: 1,
+    'logs.channelId': 1,
+  },
+  { name: 'guild_log_channel' }
+)
+
+guildSettingsSchema.index(
+  {
+    guildId: 1,
+    'welcome.enabled': 1,
+    'welcome.channelId': 1,
+  },
+  { name: 'guild_welcome_settings' }
+)
+
+// Permission query optimization with partial index
+guildSettingsSchema.index(
+  {
+    guildId: 1,
+    commandPermissions: 1,
+  },
+  {
+    name: 'guild_command_permissions',
+    partialFilterExpression: {
+      commandPermissions: { $exists: true, $ne: {} },
+    },
+  }
+)
+
+// Sparse indexes for optional features (only index active configurations)
+guildSettingsSchema.index(
+  {
+    'logs.channelId': 1,
+  },
+  {
+    name: 'active_log_channels',
+    sparse: true,
+    partialFilterExpression: {
+      'logs.channelId': { $ne: null },
+    },
+  }
+)
+
+guildSettingsSchema.index(
+  {
+    'welcome.channelId': 1,
+  },
+  {
+    name: 'active_welcome_channels',
+    sparse: true,
+    partialFilterExpression: {
+      'welcome.enabled': true,
+      'welcome.channelId': { $ne: null },
+    },
+  }
+)
+
+// Query performance indexes for maintenance and analytics
+guildSettingsSchema.index(
+  {
+    updatedAt: 1,
+    guildId: 1,
+  },
+  { name: 'recent_updates' }
+)
+
+guildSettingsSchema.index(
+  {
+    createdAt: 1,
+  },
+  { name: 'creation_date' }
+)
 
 // Static method to find or create guild settings
 guildSettingsSchema.statics.findOrCreate = async function (guildId) {
