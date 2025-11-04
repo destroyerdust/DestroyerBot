@@ -1,9 +1,11 @@
 # Project Brief: DestroyerBot
 
 ## Overview
+
 DestroyerBot is a comprehensive Discord bot built with Discord.js v14, designed to provide utility commands, gaming integrations, server moderation tools, and advanced permission management for Discord servers.
 
 ## Core Requirements
+
 - **Discord Integration**: Full Discord.js v14 implementation with slash commands
 - **Permission System**: Role-based access control for commands with per-guild configuration
 - **Message Logging**: Automated moderation logging for message creation/deletion events
@@ -14,6 +16,7 @@ DestroyerBot is a comprehensive Discord bot built with Discord.js v14, designed 
 - **Process Management**: PM2-based deployment and monitoring
 
 ## Technical Scope
+
 - Node.js application with modern JavaScript (ES6+)
 - Event-driven architecture with Discord.js event handlers
 - Modular command structure with category organization
@@ -22,6 +25,7 @@ DestroyerBot is a comprehensive Discord bot built with Discord.js v14, designed 
 - Code formatting and linting standards
 
 ## Success Criteria
+
 - Bot successfully deploys slash commands to configured guilds
 - Permission system allows fine-grained access control
 - Message logging captures and reports moderation events
@@ -31,6 +35,7 @@ DestroyerBot is a comprehensive Discord bot built with Discord.js v14, designed 
 - Code passes linting and formatting checks
 
 ## Constraints
+
 - Must use Discord.js v14 (latest stable version)
 - Requires MongoDB for data persistence
 - Must support multiple guilds with isolated configurations
