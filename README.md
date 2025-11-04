@@ -125,6 +125,11 @@ An automated moderation logging system that tracks message activities in Discord
   - `character` subcommand with required `realm` option
   - `guild` subcommand with required `realm` option
 
+- `/wow` - World of Warcraft information and utilities
+  - `realm` subcommand with required `realm` option and optional `region` option: Get realm status, population, and connected realm information
+  - `token` subcommand with optional `region` option: Get current WoW Token prices and market data
+  - Uses Blizzard API (requires `BLIZZARD_CLIENT_ID` and `BLIZZARD_CLIENT_SECRET` environment variables)
+
 ### Moderation Commands
 
 - `/kick` - Select a member and kick them (note: this is a demo command)
@@ -184,6 +189,8 @@ MINI_API=your_3d_printer_api_endpoint_url
 PIRATE_WEATHER_API_KEY=your_pirate_weather_api_key
 POKEMON_API_KEY=your_pokemon_tcg_api_key
 RAIDER_IO_API_KEY=your_raider_io_api_key
+BLIZZARD_CLIENT_ID=your_blizzard_api_client_id
+BLIZZARD_CLIENT_SECRET=your_blizzard_api_client_secret
 MONGO_CONNECTION_STRING=mongodb+srv://username:password@cluster.mongodb.net/
 MONGO_DATABASE_NAME=database_name
 LOG_LEVEL=debug
@@ -199,6 +206,8 @@ LOG_LEVEL=debug
 - `PIRATE_WEATHER_API_KEY`: Free API key obtained from [pirateweather.net](https://pirateweather.net/) (required for weather command)
 - `POKEMON_API_KEY`: Free API key obtained from [pokemontcg.io](https://pokemontcg.io/) (required for pokemon command)
 - `RAIDER_IO_API_KEY`: Optional API key obtained from [raider.io](https://raider.io/) (provides higher rate limits for WoW character/guild lookups)
+- `BLIZZARD_CLIENT_ID`: Your Blizzard API client ID obtained from [Battle.net Developer Portal](https://develop.battle.net/) (required for wow command)
+- `BLIZZARD_CLIENT_SECRET`: Your Blizzard API client secret obtained from [Battle.net Developer Portal](https://develop.battle.net/) (required for wow command)
 - `MONGO_CONNECTION_STRING`: MongoDB connection string for database storage
 - `MONGO_DATABASE_NAME`: Name of the MongoDB database to use
 - `LOG_LEVEL`: Set the logging level (default: info, options: trace, debug, info, warn, error, fatal)
