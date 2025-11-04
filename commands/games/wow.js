@@ -101,21 +101,27 @@ module.exports = {
 async function handleRealmCommand(interaction, region) {
   const realm = interaction.options.getString('realm')
 
-  logger.debug({
-    command: 'wow realm',
-    realm: realm,
-    region: region,
-    userId: interaction.user.id,
-    guildId: interaction.guild?.id
-  }, 'Starting realm command execution')
-
-  if (!realm || realm.trim().length === 0) {
-    logger.warn({
+  logger.debug(
+    {
       command: 'wow realm',
       realm: realm,
       region: region,
-      userId: interaction.user.id
-    }, 'Invalid realm parameter provided')
+      userId: interaction.user.id,
+      guildId: interaction.guild?.id,
+    },
+    'Starting realm command execution'
+  )
+
+  if (!realm || realm.trim().length === 0) {
+    logger.warn(
+      {
+        command: 'wow realm',
+        realm: realm,
+        region: region,
+        userId: interaction.user.id,
+      },
+      'Invalid realm parameter provided'
+    )
     return interaction.editReply({
       content: '❌ Please provide a valid realm name.',
     })
@@ -130,35 +136,44 @@ async function handleRealmCommand(interaction, region) {
     .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
     .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
 
-  logger.debug({
-    command: 'wow realm',
-    originalRealm: realm,
-    cleanRealm: cleanRealm,
-    realmSlug: realmSlug,
-    region: region,
-    userId: interaction.user.id
-  }, 'Realm parameter validated and slugified, starting API calls')
+  logger.debug(
+    {
+      command: 'wow realm',
+      originalRealm: realm,
+      cleanRealm: cleanRealm,
+      realmSlug: realmSlug,
+      region: region,
+      userId: interaction.user.id,
+    },
+    'Realm parameter validated and slugified, starting API calls'
+  )
 
   try {
     // Get Blizzard API access token
-    logger.debug({
-      command: 'wow realm',
-      cleanRealm: cleanRealm,
-      region: region
-    }, 'Requesting Blizzard API access token')
+    logger.debug(
+      {
+        command: 'wow realm',
+        cleanRealm: cleanRealm,
+        region: region,
+      },
+      'Requesting Blizzard API access token'
+    )
     const token = await getBlizzardAccessToken()
-    logger.debug({
-      command: 'wow realm',
-      cleanRealm: cleanRealm,
-      tokenLength: token ? token.length : 0
-    }, 'Blizzard API access token obtained')
+    logger.debug(
+      {
+        command: 'wow realm',
+        cleanRealm: cleanRealm,
+        tokenLength: token ? token.length : 0,
+      },
+      'Blizzard API access token obtained'
+    )
 
     // Fetch realm data
     const realmResponse = await fetch(
       `https://us.api.blizzard.com/data/wow/realm/${encodeURIComponent(realmSlug)}?namespace=dynamic-us&locale=en_US`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
         },
       }
@@ -166,7 +181,9 @@ async function handleRealmCommand(interaction, region) {
 
     if (!realmResponse.ok) {
       if (realmResponse.status === 404) {
-        return interaction.editReply(`❌ Realm "${cleanRealm}" not found in region ${region.toUpperCase()}.`)
+        return interaction.editReply(
+          `❌ Realm "${cleanRealm}" not found in region ${region.toUpperCase()}.`
+        )
       }
       throw new Error(`Blizzard API error: ${realmResponse.status}`)
     }
@@ -174,57 +191,74 @@ async function handleRealmCommand(interaction, region) {
     const realmData = await realmResponse.json()
     // Extract connected realm ID from the href URL
     const connectedRealmHref = realmData.connected_realm?.href
-    const connectedRealmId = connectedRealmHref ? connectedRealmHref.match(/\/connected-realm\/(\d+)/)?.[1] : null
+    const connectedRealmId = connectedRealmHref
+      ? connectedRealmHref.match(/\/connected-realm\/(\d+)/)?.[1]
+      : null
 
-    logger.debug({
-      command: 'wow realm',
-      cleanRealm: cleanRealm,
-      realmData: realmData,
-      connectedRealmHref: connectedRealmHref,
-      connectedRealmId: connectedRealmId
-    }, 'Realm data retrieved successfully')
+    logger.debug(
+      {
+        command: 'wow realm',
+        cleanRealm: cleanRealm,
+        realmData: realmData,
+        connectedRealmHref: connectedRealmHref,
+        connectedRealmId: connectedRealmId,
+      },
+      'Realm data retrieved successfully'
+    )
 
     // Get connected realms
-    logger.debug({
-      command: 'wow realm',
-      cleanRealm: cleanRealm,
-      connectedRealmId: connectedRealmId
-    }, 'Fetching connected realms data')
+    logger.debug(
+      {
+        command: 'wow realm',
+        cleanRealm: cleanRealm,
+        connectedRealmId: connectedRealmId,
+      },
+      'Fetching connected realms data'
+    )
 
     const connectedRealmsResponse = await fetch(
       `https://us.api.blizzard.com/data/wow/connected-realm/${connectedRealmId}?namespace=dynamic-us&locale=en_US`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
         },
       }
     )
 
-    logger.debug({
-      command: 'wow realm',
-      cleanRealm: cleanRealm,
-      connectedResponseStatus: connectedRealmsResponse.status,
-      connectedResponseOk: connectedRealmsResponse.ok
-    }, 'Connected realms API response received')
-
-    if (!connectedRealmsResponse.ok) {
-      logger.warn({
+    logger.debug(
+      {
         command: 'wow realm',
         cleanRealm: cleanRealm,
-        status: connectedRealmsResponse.status,
-        statusText: connectedRealmsResponse.statusText
-      }, 'Connected realms API returned non-OK status')
+        connectedResponseStatus: connectedRealmsResponse.status,
+        connectedResponseOk: connectedRealmsResponse.ok,
+      },
+      'Connected realms API response received'
+    )
+
+    if (!connectedRealmsResponse.ok) {
+      logger.warn(
+        {
+          command: 'wow realm',
+          cleanRealm: cleanRealm,
+          status: connectedRealmsResponse.status,
+          statusText: connectedRealmsResponse.statusText,
+        },
+        'Connected realms API returned non-OK status'
+      )
       throw new Error(`Connected realms API error: ${connectedRealmsResponse.status}`)
     }
 
     const connectedData = await connectedRealmsResponse.json()
-    logger.debug({
-      command: 'wow realm',
-      cleanRealm: cleanRealm,
-      connectedData: connectedData,
-      connectedRealmsCount: connectedData.realms?.length || 0
-    }, 'Connected realms data parsed successfully')
+    logger.debug(
+      {
+        command: 'wow realm',
+        cleanRealm: cleanRealm,
+        connectedData: connectedData,
+        connectedRealmsCount: connectedData.realms?.length || 0,
+      },
+      'Connected realms data parsed successfully'
+    )
 
     // Create embed
     const embed = new EmbedBuilder()
@@ -239,14 +273,18 @@ async function handleRealmCommand(interaction, region) {
     embed.addFields(
       { name: 'Status', value: `${statusEmoji} ${connectedData.status.name}`, inline: true },
       { name: 'Type', value: realmData.type.name, inline: true },
-      { name: 'Population', value: `${populationEmoji} ${connectedData.population.name}`, inline: true }
+      {
+        name: 'Population',
+        value: `${populationEmoji} ${connectedData.population.name}`,
+        inline: true,
+      }
     )
 
     // Connected realms
     if (connectedData.realms && connectedData.realms.length > 1) {
       const connectedNames = connectedData.realms
-        .filter(r => r.id !== realmData.id)
-        .map(r => r.name)
+        .filter((r) => r.id !== realmData.id)
+        .map((r) => r.name)
         .join(', ')
 
       embed.addFields({
@@ -255,8 +293,6 @@ async function handleRealmCommand(interaction, region) {
         inline: false,
       })
     }
-
-
 
     await interaction.editReply({ embeds: [embed] })
     logger.info(
@@ -267,7 +303,6 @@ async function handleRealmCommand(interaction, region) {
       },
       'Realm info embed sent'
     )
-
   } catch (error) {
     logger.error(
       {
@@ -287,70 +322,89 @@ async function handleRealmCommand(interaction, region) {
   }
 }
 
-
-
 async function handleTokenCommand(interaction, region) {
-  logger.debug({
-    command: 'wow token',
-    region: region,
-    userId: interaction.user.id,
-    guildId: interaction.guild?.id
-  }, 'Starting token command execution')
+  logger.debug(
+    {
+      command: 'wow token',
+      region: region,
+      userId: interaction.user.id,
+      guildId: interaction.guild?.id,
+    },
+    'Starting token command execution'
+  )
 
   try {
     // Get Blizzard API access token
-    logger.debug({
-      command: 'wow token',
-      region: region
-    }, 'Requesting Blizzard API access token for token price')
+    logger.debug(
+      {
+        command: 'wow token',
+        region: region,
+      },
+      'Requesting Blizzard API access token for token price'
+    )
     const token = await getBlizzardAccessToken()
-    logger.debug({
-      command: 'wow token',
-      region: region,
-      tokenLength: token ? token.length : 0
-    }, 'Blizzard API access token obtained for token price')
+    logger.debug(
+      {
+        command: 'wow token',
+        region: region,
+        tokenLength: token ? token.length : 0,
+      },
+      'Blizzard API access token obtained for token price'
+    )
 
     // Get WoW Token price index
-    logger.debug({
-      command: 'wow token',
-      region: region,
-      tokenPreview: token ? token.substring(0, 10) + '...' : 'null'
-    }, 'Fetching WoW token price data')
+    logger.debug(
+      {
+        command: 'wow token',
+        region: region,
+        tokenPreview: token ? token.substring(0, 10) + '...' : 'null',
+      },
+      'Fetching WoW token price data'
+    )
 
     const tokenResponse = await fetch(
       `https://us.api.blizzard.com/data/wow/token/?namespace=dynamic-us&locale=en_US`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
         },
       }
     )
 
-    logger.debug({
-      command: 'wow token',
-      region: region,
-      responseStatus: tokenResponse.status,
-      responseOk: tokenResponse.ok
-    }, 'Token API response received')
-
-    if (!tokenResponse.ok) {
-      logger.warn({
+    logger.debug(
+      {
         command: 'wow token',
         region: region,
-        status: tokenResponse.status,
-        statusText: tokenResponse.statusText
-      }, 'Token API returned non-OK status')
+        responseStatus: tokenResponse.status,
+        responseOk: tokenResponse.ok,
+      },
+      'Token API response received'
+    )
+
+    if (!tokenResponse.ok) {
+      logger.warn(
+        {
+          command: 'wow token',
+          region: region,
+          status: tokenResponse.status,
+          statusText: tokenResponse.statusText,
+        },
+        'Token API returned non-OK status'
+      )
       throw new Error(`Token API error: ${tokenResponse.status}`)
     }
 
     const tokenData = await tokenResponse.json()
-    logger.debug({
-      command: 'wow token',
-      region: region,
-      tokenDataKeys: Object.keys(tokenData),
-      hasPrice: !!tokenData.price
-    }, 'Token data parsed successfully')
+    logger.debug(
+      {
+        command: 'wow token',
+        region: region,
+        tokenDataKeys: Object.keys(tokenData),
+        hasPrice: !!tokenData.price,
+      },
+      'Token data parsed successfully'
+    )
 
     // Convert price from copper to gold
     const priceInCopper = tokenData.price
@@ -367,19 +421,20 @@ async function handleTokenCommand(interaction, region) {
       {
         name: '💰 Current Price',
         value: `${priceInGold.toLocaleString()} gold ${remainingSilver} silver`,
-        inline: true
+        inline: true,
       },
       {
         name: '📊 Raw Value',
         value: `${priceInCopper.toLocaleString()} copper`,
-        inline: true
+        inline: true,
       }
     )
 
     // Add helpful links
     embed.addFields({
       name: '🔗 Token Tools',
-      value: '[WoWToken.info](https://wowtoken.info) • [WoWTokenPrices](https://wowtokenprices.com)',
+      value:
+        '[WoWToken.info](https://wowtoken.info) • [WoWTokenPrices](https://wowtokenprices.com)',
       inline: false,
     })
 
@@ -392,7 +447,6 @@ async function handleTokenCommand(interaction, region) {
       },
       'Token price info embed sent'
     )
-
   } catch (error) {
     logger.error(
       {
@@ -412,18 +466,24 @@ async function handleTokenCommand(interaction, region) {
 }
 
 async function getBlizzardAccessToken() {
-  logger.debug({
-    hasClientId: !!blizzardClientId,
-    hasClientSecret: !!blizzardClientSecret,
-    clientIdLength: blizzardClientId ? blizzardClientId.length : 0,
-    clientSecretLength: blizzardClientSecret ? blizzardClientSecret.length : 0
-  }, 'Checking Blizzard API credentials')
+  logger.debug(
+    {
+      hasClientId: !!blizzardClientId,
+      hasClientSecret: !!blizzardClientSecret,
+      clientIdLength: blizzardClientId ? blizzardClientId.length : 0,
+      clientSecretLength: blizzardClientSecret ? blizzardClientSecret.length : 0,
+    },
+    'Checking Blizzard API credentials'
+  )
 
   if (!blizzardClientId || !blizzardClientSecret) {
-    logger.error({
-      hasClientId: !!blizzardClientId,
-      hasClientSecret: !!blizzardClientSecret
-    }, 'Blizzard API credentials not configured')
+    logger.error(
+      {
+        hasClientId: !!blizzardClientId,
+        hasClientSecret: !!blizzardClientSecret,
+      },
+      'Blizzard API credentials not configured'
+    )
     throw new Error('Blizzard API credentials not configured')
   }
 
@@ -433,32 +493,42 @@ async function getBlizzardAccessToken() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': 'Basic ' + Buffer.from(`${blizzardClientId}:${blizzardClientSecret}`).toString('base64'),
+      Authorization:
+        'Basic ' + Buffer.from(`${blizzardClientId}:${blizzardClientSecret}`).toString('base64'),
     },
     body: 'grant_type=client_credentials',
   })
 
-  logger.debug({
-    authResponseStatus: authResponse.status,
-    authResponseOk: authResponse.ok,
-    authResponseStatusText: authResponse.statusText
-  }, 'Blizzard authentication response received')
+  logger.debug(
+    {
+      authResponseStatus: authResponse.status,
+      authResponseOk: authResponse.ok,
+      authResponseStatusText: authResponse.statusText,
+    },
+    'Blizzard authentication response received'
+  )
 
   if (!authResponse.ok) {
-    logger.error({
-      status: authResponse.status,
-      statusText: authResponse.statusText
-    }, 'Blizzard API authentication failed')
+    logger.error(
+      {
+        status: authResponse.status,
+        statusText: authResponse.statusText,
+      },
+      'Blizzard API authentication failed'
+    )
     throw new Error(`Authentication failed: ${authResponse.status}`)
   }
 
   const authData = await authResponse.json()
-  logger.debug({
-    hasAccessToken: !!authData.access_token,
-    tokenType: authData.token_type,
-    expiresIn: authData.expires_in,
-    tokenLength: authData.access_token ? authData.access_token.length : 0
-  }, 'Blizzard API authentication successful')
+  logger.debug(
+    {
+      hasAccessToken: !!authData.access_token,
+      tokenType: authData.token_type,
+      expiresIn: authData.expires_in,
+      tokenLength: authData.access_token ? authData.access_token.length : 0,
+    },
+    'Blizzard API authentication successful'
+  )
 
   // DEBUG: Output access token to console (REMOVE IN PRODUCTION)
   console.log('🔑 Blizzard Access Token:', authData.access_token)
@@ -469,20 +539,20 @@ async function getBlizzardAccessToken() {
 function getFactionColor(category) {
   // Color based on realm type
   const colors = {
-    'Normal': 0x3fc7eb,      // Blue
-    'Roleplaying': 0xff7c0a, // Orange
-    'PvP': 0xc41e3a,         // Red
-    'PvE': 0xff7c0a,         // Orange
+    Normal: 0x3fc7eb, // Blue
+    Roleplaying: 0xff7c0a, // Orange
+    PvP: 0xc41e3a, // Red
+    PvE: 0xff7c0a, // Orange
   }
   return colors[category] || 0x0099ff
 }
 
 function getPopulationEmoji(population) {
   const emojis = {
-    'Low': '📉',
-    'Medium': '📊',
-    'High': '📈',
-    'Full': '🔴',
+    Low: '📉',
+    Medium: '📊',
+    High: '📈',
+    Full: '🔴',
   }
   return emojis[population] || '❓'
 }
