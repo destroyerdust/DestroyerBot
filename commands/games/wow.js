@@ -36,8 +36,7 @@ module.exports = {
               { name: '🇺🇸 US', value: 'us' },
               { name: '🇪🇺 EU', value: 'eu' },
               { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' },
-              { name: '🇨🇳 CN', value: 'cn' }
+              { name: '🇹🇼 TW', value: 'tw' }
             )
         )
     )
@@ -55,8 +54,7 @@ module.exports = {
               { name: '🇺🇸 US', value: 'us' },
               { name: '🇪🇺 EU', value: 'eu' },
               { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' },
-              { name: '🇨🇳 CN', value: 'cn' }
+              { name: '🇹🇼 TW', value: 'tw' }
             )
         )
     ),
@@ -170,7 +168,7 @@ async function handleRealmCommand(interaction, region) {
 
     // Fetch realm data
     const realmResponse = await fetch(
-      `https://us.api.blizzard.com/data/wow/realm/${encodeURIComponent(realmSlug)}?namespace=dynamic-us&locale=en_US`,
+      `https://${region}.api.blizzard.com/data/wow/realm/${encodeURIComponent(realmSlug)}?namespace=dynamic-${region}&locale=en_US`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -217,7 +215,7 @@ async function handleRealmCommand(interaction, region) {
     )
 
     const connectedRealmsResponse = await fetch(
-      `https://us.api.blizzard.com/data/wow/connected-realm/${connectedRealmId}?namespace=dynamic-us&locale=en_US`,
+      `https://${region}.api.blizzard.com/data/wow/connected-realm/${connectedRealmId}?namespace=dynamic-${region}&locale=en_US`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -363,7 +361,7 @@ async function handleTokenCommand(interaction, region) {
     )
 
     const tokenResponse = await fetch(
-      `https://us.api.blizzard.com/data/wow/token/?namespace=dynamic-us&locale=en_US`,
+      `https://${region}.api.blizzard.com/data/wow/token/?namespace=dynamic-${region}&locale=en_US`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -433,8 +431,7 @@ async function handleTokenCommand(interaction, region) {
     // Add helpful links
     embed.addFields({
       name: '🔗 Token Tools',
-      value:
-        '[WoWToken.info](https://wowtoken.info) • [WoWTokenPrices](https://wowtokenprices.com)',
+      value: '[WoWToken.app](https://wowtoken.app/) • [WoWAuction.us](https://wowauction.us/token)',
       inline: false,
     })
 
