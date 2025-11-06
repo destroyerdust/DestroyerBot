@@ -16,7 +16,7 @@ module.exports = {
       ApplicationIntegrationType.GuildInstall,
       ApplicationIntegrationType.UserInstall,
     ])
-    .setContexts(InteractionContextType.Guild | InteractionContextType.BotDM)
+    .setContexts([InteractionContextType.Guild, InteractionContextType.BotDM])
     .addStringOption((option) =>
       option
         .setName('location')
