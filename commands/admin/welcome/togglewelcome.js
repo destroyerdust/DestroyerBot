@@ -14,18 +14,18 @@ module.exports = {
         .setDescription('Enable or disable welcome messages')
         .setRequired(true)
         .addChoices(
-          { name: 'enable', value: 'enable' },
-          { name: 'disable', value: 'disable' }
+          { name: 'enable', value: 'true' },
+          { name: 'disable', value: 'false' }
         )
     ),
   async execute(interaction) {
     const action = interaction.options.getString('action')
-    const enabled = action === 'enable'
+    const enabled = action === 'true'
 
     logger.info(
       {
         guildId: interaction.guild.id,
-        action,
+        action: enabled ? 'enable' : 'disable',
         enabled,
         executedBy: interaction.user.tag,
         userId: interaction.user.id,
@@ -37,14 +37,14 @@ module.exports = {
       await setWelcomeEnabledAsync(interaction.guild.id, enabled)
 
       await interaction.reply({
-        content: `✅ Welcome messages ${action}d.`,
+        content: `✅ Welcome messages ${enabled ? 'enabled' : 'disabled'}.`,
         flags: MessageFlags.Ephemeral,
       })
 
       logger.info(
         {
           guildId: interaction.guild.id,
-          action,
+          action: enabled ? 'enable' : 'disable',
           enabled,
           success: true,
           userId: interaction.user.id,
@@ -57,7 +57,7 @@ module.exports = {
           error: error.message,
           stack: error.stack,
           guildId: interaction.guild.id,
-          action,
+          action: enabled ? 'enable' : 'disable',
           enabled,
           userId: interaction.user.id,
         },
