@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const { setWelcomeEnabledAsync } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
@@ -13,10 +18,7 @@ module.exports = {
         .setName('action')
         .setDescription('Enable or disable welcome messages')
         .setRequired(true)
-        .addChoices(
-          { name: 'enable', value: 'true' },
-          { name: 'disable', value: 'false' }
-        )
+        .addChoices({ name: 'enable', value: 'true' }, { name: 'disable', value: 'false' })
     ),
   async execute(interaction) {
     const action = interaction.options.getString('action')
@@ -70,10 +72,7 @@ module.exports = {
           flags: MessageFlags.Ephemeral,
         })
       } catch (replyError) {
-        logger.error(
-          { error: replyError.message },
-          'Failed to send error reply'
-        )
+        logger.error({ error: replyError.message }, 'Failed to send error reply')
       }
     }
   },
