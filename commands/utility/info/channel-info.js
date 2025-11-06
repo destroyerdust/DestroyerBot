@@ -113,12 +113,6 @@ module.exports = {
    * @returns {Promise<void>}
    */
   async execute(interaction) {
-    // Input validation - ensure interaction is valid
-    if (!interaction || !interaction.isChatInputCommand()) {
-      logger.error('Invalid interaction received in channel-info command')
-      return
-    }
-
     const guild = interaction.guild
     const requestedChannel = interaction.options.getChannel('channel') || interaction.channel
 
@@ -131,11 +125,17 @@ module.exports = {
         channelId: requestedChannel?.id,
         channelName: requestedChannel?.name,
         channelType: requestedChannel?.type,
+        executedBy: interaction.user.tag,
       },
       `Channel info requested for ${requestedChannel?.name || 'unknown channel'}`
     )
 
     try {
+      // Validate interaction is valid
+      if (!interaction || !interaction.isChatInputCommand()) {
+        throw new Error('Invalid interaction received in channel-info command')
+      }
+
       // Validate guild context
       if (!guild) {
         return interaction.reply({
@@ -355,6 +355,8 @@ module.exports = {
           channelType: channel.type,
           embedSent: true,
           ephemeral: true,
+          userId: interaction.user.id,
+          success: true,
         },
         'Channel information sent successfully'
       )

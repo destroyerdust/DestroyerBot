@@ -10,9 +10,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('bot-stats')
     .setDescription('Display bot statistics and status')
-    .setContexts(
-      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
-    ),
+    .setContexts([InteractionContextType.Guild]),
   async execute(interaction) {
     const client = interaction.client
 
@@ -58,7 +56,12 @@ module.exports = {
       .setTitle('🤖 Bot Statistics')
       .setDescription('Current bot status and system information')
       .setColor(0x0099ff)
-      .setThumbnail(client.user.displayAvatarURL({ size: 128 }))
+      .setThumbnail(
+        client.user.displayAvatarURL({
+          size: 128,
+          extension: 'png',
+        })
+      )
 
     // Basic stats
     embed.addFields(

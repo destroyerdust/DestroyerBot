@@ -6,13 +6,94 @@ const {
 } = require('discord.js')
 const logger = require('../../../logger')
 
+// Key permissions to display in user info
+const KEY_PERMISSIONS = [
+  'Administrator',
+  'ManageGuild',
+  'ManageRoles',
+  'ManageChannels',
+  'KickMembers',
+  'BanMembers',
+]
+
+// Emoji mapping for user badges/flags
+const FLAG_EMOJIS = {
+  Staff: '👨‍💼',
+  Partner: '🤝',
+  Hypesquad: '🎉',
+  BugHunterLevel1: '🐛',
+  BugHunterLevel2: '🐛🐛',
+  HypeSquadOnlineHouse1: '🏠',
+  HypeSquadOnlineHouse2: '🏠',
+  HypeSquadOnlineHouse3: '🏠',
+  PremiumEarlySupporter: '⭐',
+  VerifiedBot: '✅',
+  VerifiedDeveloper: '🔧',
+  CertifiedModerator: '🛡️',
+  BotHTTPInteractions: '🌐',
+  ActiveDeveloper: '💻',
+}
+
+// Default color fallback
+const DEFAULT_COLOR = 0x00ff00
+
+/**
+ * Determines account type (Bot, System, or User)
+ * @param {User} user - The Discord user object
+ * @returns {object} Object with emoji and type string
+ */
+function getAccountType(user) {
+  if (user.bot) return { emoji: '🤖', type: 'Bot' }
+  if (user.system) return { emoji: '⚙️', type: 'System' }
+  return { emoji: '👤', type: 'User' }
+}
+
+/**
+ * Formats a timestamp for Discord timestamp display
+ * @param {number} timestamp - Millisecond timestamp
+ * @param {string} format - Discord timestamp format ('F' for full date, 'R' for relative)
+ * @returns {string} Formatted Discord timestamp
+ */
+function formatTimestamp(timestamp, format = 'F') {
+  return `<t:${Math.floor(timestamp / 1000)}:${format}>`
+}
+
+/**
+ * Formats member roles for display
+ * @param {GuildMember} member - The guild member object
+ * @param {Guild} guild - The guild object
+ * @returns {string} Formatted role list
+ */
+function formatRoles(member, guild) {
+  const roles = member.roles.cache
+    .filter((role) => role.id !== guild.id) // Exclude @everyone
+    .sort((a, b) => b.position - a.position)
+    .map((role) => role.toString())
+    .slice(0, 10)
+
+  let roleText = roles.length > 0 ? roles.join(', ') : 'None'
+  if (roles.length > 10) roleText += ` (+${roles.length - 10} more)`
+
+  return roleText.length > 1024 ? roleText.substring(0, 1021) + '...' : roleText
+}
+
+/**
+ * Filters and formats user badges/flags
+ * @param {User} user - The Discord user object
+ * @returns {string} Formatted badge list
+ */
+function formatBadges(user) {
+  const flags = user.flags?.toArray() || []
+  if (flags.length === 0) return null
+
+  return flags.map((flag) => `${FLAG_EMOJIS[flag] || '🏷️'} ${flag}`).join('\n')
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('user-info')
     .setDescription('Display detailed information about a user')
-    .setContexts(
-      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
-    )
+    .setContexts(InteractionContextType.Guild | InteractionContextType.BotDM)
     .addUserOption((option) =>
       option.setName('user').setDescription('The user to get info about').setRequired(false)
     ),
@@ -49,9 +130,10 @@ module.exports = {
     )
 
     // Account details
-    const accountType = user.bot ? '🤖 Bot' : user.system ? '⚙️ System' : '👤 User'
-    const createdAt = `<t:${Math.floor(user.createdTimestamp / 1000)}:F>`
-    const createdRelative = `<t:${Math.floor(user.createdTimestamp / 1000)}:R>`
+    const { emoji: acctEmoji, type: acctType } = getAccountType(user)
+    const accountType = `${acctEmoji} ${acctType}`
+    const createdAt = formatTimestamp(user.createdTimestamp, 'F')
+    const createdRelative = formatTimestamp(user.createdTimestamp, 'R')
 
     embed.addFields(
       { name: '🏷️ Account Type', value: accountType, inline: true },
@@ -61,17 +143,9 @@ module.exports = {
 
     // Guild member information (if available)
     if (member) {
-      const joinedAt = `<t:${Math.floor(member.joinedTimestamp / 1000)}:F>`
-      const joinedRelative = `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`
-
-      const roles = member.roles.cache
-        .filter((role) => role.id !== interaction.guild.id) // Exclude @everyone
-        .sort((a, b) => b.position - a.position)
-        .map((role) => role.toString())
-        .slice(0, 10) // Limit to first 10 roles
-
-      const roleText = roles.length > 0 ? roles.join(', ') : 'None'
-      if (roles.length > 10) roleText += ` (+${roles.length - 10} more)`
+      const joinedAt = formatTimestamp(member.joinedTimestamp, 'F')
+      const joinedRelative = formatTimestamp(member.joinedTimestamp, 'R')
+      const roleText = formatRoles(member, interaction.guild)
 
       embed.addFields(
         { name: '📥 Joined Server', value: `${joinedAt}\n${joinedRelative}`, inline: true },
@@ -79,24 +153,16 @@ module.exports = {
         { name: '🏆 Top Role', value: member.roles.highest.toString(), inline: true }
       )
 
-      if (roles.length > 0) {
+      if (roleText !== 'None') {
         embed.addFields({
           name: `👥 Roles (${member.roles.cache.size - 1})`,
-          value: roleText.length > 1024 ? roleText.substring(0, 1021) + '...' : roleText,
+          value: roleText,
           inline: false,
         })
       }
 
       // Member permissions (key permissions only)
-      const keyPermissions = [
-        'Administrator',
-        'ManageGuild',
-        'ManageRoles',
-        'ManageChannels',
-        'KickMembers',
-        'BanMembers',
-      ]
-      const memberPerms = keyPermissions.filter((perm) => member.permissions.has(perm))
+      const memberPerms = KEY_PERMISSIONS.filter((perm) => member.permissions.has(perm))
       if (memberPerms.length > 0) {
         embed.addFields({
           name: '🔑 Key Permissions',
@@ -107,29 +173,12 @@ module.exports = {
     }
 
     // User flags/badges (if any)
-    const flags = user.flags?.toArray() || []
-    if (flags.length > 0) {
-      const flagEmojis = {
-        Staff: '👨‍💼',
-        Partner: '🤝',
-        Hypesquad: '🎉',
-        BugHunterLevel1: '🐛',
-        BugHunterLevel2: '🐛🐛',
-        HypeSquadOnlineHouse1: '🏠',
-        HypeSquadOnlineHouse2: '🏠',
-        HypeSquadOnlineHouse3: '🏠',
-        PremiumEarlySupporter: '⭐',
-        VerifiedBot: '✅',
-        VerifiedDeveloper: '🔧',
-        CertifiedModerator: '🛡️',
-        BotHTTPInteractions: '🌐',
-        ActiveDeveloper: '💻',
-      }
-
-      const flagText = flags.map((flag) => `${flagEmojis[flag] || '🏷️'} ${flag}`).join('\n')
+    const badgeText = formatBadges(user)
+    const flagsCount = user.flags?.toArray().length || 0
+    if (badgeText) {
       embed.addFields({
         name: '🏷️ Badges',
-        value: flagText,
+        value: badgeText,
         inline: false,
       })
     }
@@ -148,7 +197,7 @@ module.exports = {
         ephemeral: true,
         hasMemberData: !!member,
         rolesCount: member?.roles.cache.size,
-        flagsCount: flags.length,
+        flagsCount,
       },
       'User info response sent'
     )

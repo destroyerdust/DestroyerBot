@@ -181,7 +181,6 @@ module.exports = {
         .setFooter({
           text: `Requested by ${interaction.user.username}`,
           iconURL: interaction.user.displayAvatarURL({
-            dynamic: true,
             size: 16,
             extension: 'png',
           }),
