@@ -19,6 +19,17 @@
 
 ## Recent Changes
 
+### Utility Commands Reorganized into Logical Subfolders
+
+- **Status**: ✅ Completed - Utility commands now organized by functionality
+- **Organization**: Created two subfolders under `commands/utility/`:
+  - `info/` - Information lookup commands (avatar-info, user-info, channel-info, role-info, role-list, server-info)
+  - `status/` - Bot monitoring commands (ping, bot-stats)
+- **Root Level**: Help and clean commands kept at `commands/utility/` root level
+- **Import Paths**: Updated all require paths from `../../` to `../../../` to account for nested structure
+- **Verification**: All 10 utility commands successfully loaded and deployed to Discord
+- **Impact**: Better organization makes utility commands easier to navigate and maintain
+
 ### Admin Commands Reorganized into Logical Subfolders
 
 - **Status**: ✅ Completed - Admin commands now organized by functionality
