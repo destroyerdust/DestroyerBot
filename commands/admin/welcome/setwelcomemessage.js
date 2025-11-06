@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
+const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, MessageFlags } = require('discord.js')
 const { setWelcomeMessageAsync } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
@@ -18,11 +18,20 @@ module.exports = {
   async execute(interaction) {
     const message = interaction.options.getString('message')
 
+    // Input validation
+    if (!message || message.trim().length === 0) {
+      return interaction.reply({
+        content: '❌ Welcome message cannot be empty.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+
     logger.info(
       {
         guildId: interaction.guild.id,
-        message,
+        messageLength: message.length,
         executedBy: interaction.user.tag,
+        userId: interaction.user.id,
       },
       'Setting welcome message'
     )
@@ -30,19 +39,27 @@ module.exports = {
     try {
       await setWelcomeMessageAsync(interaction.guild.id, message)
 
+      // Generate preview with placeholder replacements
+      const preview = message
+        .replace(/{user}/g, interaction.user.toString())
+        .replace(/{username}/g, interaction.user.username)
+        .replace(/{guild}/g, interaction.guild.name)
+
+      // Truncate preview if it exceeds Discord's limit
+      const previewContent = preview.length > 1900 ? `${preview.substring(0, 1897)}...` : preview
+
       await interaction.reply({
-        content: `✅ Welcome message set to: "${message}"\n\n**Preview:** ${message
-          .replace(/{user}/g, interaction.user.toString())
-          .replace(/{username}/g, interaction.user.username)
-          .replace(/{guild}/g, interaction.guild.name)}`,
-        ephemeral: true,
+        content: `✅ Welcome message set successfully!\n\n**Preview:**\n${previewContent}`,
+        flags: MessageFlags.Ephemeral,
       })
 
       logger.info(
         {
           guildId: interaction.guild.id,
-          message,
+          messageLength: message.length,
+          previewLength: preview.length,
           success: true,
+          userId: interaction.user.id,
         },
         'Welcome message set successfully'
       )
@@ -52,14 +69,23 @@ module.exports = {
           error: error.message,
           stack: error.stack,
           guildId: interaction.guild.id,
-          message,
+          messageLength: message.length,
+          userId: interaction.user.id,
         },
         'Error setting welcome message'
       )
-      await interaction.reply({
-        content: '❌ An error occurred while setting the welcome message.',
-        ephemeral: true,
-      })
+
+      try {
+        await interaction.reply({
+          content: '❌ An error occurred while setting the welcome message.',
+          flags: MessageFlags.Ephemeral,
+        })
+      } catch (replyError) {
+        logger.error(
+          { error: replyError.message },
+          'Failed to send error reply'
+        )
+      }
     }
   },
 }
