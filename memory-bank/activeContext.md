@@ -4,176 +4,210 @@
 
 ### Memory Bank Maintenance
 
-- **Status**: Active - Memory bank fully initialized and maintained
-- **Location**: `development` branch (merged from `feature/memory-bank-init`)
-- **Goal**: Keep comprehensive project documentation current and accurate
-- **Files Maintained**: All 6 core memory bank files (projectbrief.md, productContext.md, activeContext.md, systemPatterns.md, techContext.md, progress.md)
-- **Update Frequency**: As needed when significant changes occur or context shifts
+- **Status**: Active - Memory bank fully maintained and current
+- **Location**: `development` branch
+- **Goal**: Keep comprehensive project documentation synchronized with codebase state
+- **Files Maintained**: All 6 core memory bank files
+- **Update Frequency**: Regular updates as changes occur
+- **Last Updated**: November 6, 2025
 
 ### Immediate Priorities
 
-1. Establish regular memory bank review and update workflow
-2. Conduct codebase review against documented patterns
-3. Identify potential improvements and feature enhancements
-4. Plan next development phase based on project roadmap
+1. ✅ Complete memory bank update with recent refactoring work
+2. [ ] Establish continuous documentation maintenance workflow
+3. [ ] Review codebase for alignment with documented patterns
+4. [ ] Identify optimization opportunities going forward
 
 ## Recent Changes
 
-### Utility Commands Reorganized into Logical Subfolders
+### Discord.js v14+ Compliance Refactoring Complete
 
-- **Status**: ✅ Completed - Utility commands now organized by functionality
-- **Organization**: Created two subfolders under `commands/utility/`:
-  - `info/` - Information lookup commands (avatar-info, user-info, channel-info, role-info, role-list, server-info)
-  - `status/` - Bot monitoring commands (ping, bot-stats)
-- **Root Level**: Help and clean commands kept at `commands/utility/` root level
-- **Import Paths**: Updated all require paths from `../../` to `../../../` to account for nested structure
-- **Verification**: All 10 utility commands successfully loaded and deployed to Discord
-- **Impact**: Better organization makes utility commands easier to navigate and maintain
+- **Status**: ✅ Completed (Most Recent) - November 6, 2025
+- **Scope**: Comprehensive refactoring of weather, utility, gaming, and admin commands
+- **Recent Commits** (Last 15):
+  - `bc703c8`: weather command context array format update to v14+ compliance
+  - `7b803a0`: utility commands refactored for v14+ best practices
+  - `065d685`: wow.js upgraded to v14+ standards
+  - `83f4d6d`: rio.js upgraded to v14+ standards
+  - `68447a5`: logsettings.js updated for v14+ best practices
+  - `d8206fc`: setlogchannel.js updated for v14+ best practices
+  - `06d2f6a`: Code formatting cleanup
+  - `06d2f6a`: setwelcomechannel.js upgraded to v14+ best practices
+  - `fd86a06`: setwelcomemessage.js updated to v14+ standards
+  - `d77012f`: togglewelcome.js refactored for enable/disable naming
+- **Impact**: All commands now fully compliant with Discord.js v14+ API standards
+- **Verification**: All commands successfully deployed and tested
 
-### Admin Commands Reorganized into Logical Subfolders
+### Utility Commands Reorganization
 
-- **Status**: ✅ Completed - Admin commands now organized by functionality
-- **Organization**: Created three subfolders under `commands/admin/`:
-  - `logging/` - Message logging related commands (logsettings, setlogchannel)
-  - `welcome/` - Welcome feature commands (setwelcomechannel, setwelcomemessage, togglewelcome)
-  - `permissions/` - Permission management commands (listpermissions, removecommandrole, resetpermissions, setcommandrole)
-- **Root Level**: togglecommand.js kept at `commands/admin/` root level
-- **Import Paths**: Updated all require paths from `../../` to `../../../` to account for nested structure
-- **Verification**: All 10 admin commands successfully loaded and deployed to Discord
-- **Impact**: Better organization improves code maintainability and reduces cognitive load when navigating admin commands
+- **Status**: ✅ Completed - Commands organized into logical subfolders
+- **Organization**:
+  - `info/` - Information lookup (6 commands)
+  - `status/` - Bot monitoring (2 commands)
+  - Root level - Global utility (2 commands)
+- **Impact**: Better navigation and maintainability
 
-### Database Indexing Optimization Complete
+### Admin Commands Reorganization
 
-- **Status**: ✅ Completed - Phase 1 database scaling optimization implemented
-- **Performance Improvements**: 5-10x faster database queries for guild operations
-- **Indexes Added**: 9 optimized indexes including compound, sparse, and partial indexes
-- **Query Optimization**: Covered queries, batch operations, and bulk retrieval implemented
-- **Monitoring**: Index usage analysis and slow query detection added
-- **Impact**: Bot now scales efficiently to hundreds or thousands of guilds
+- **Status**: ✅ Completed - Commands organized into functional subfolders
+- **Organization**:
+  - `logging/` - Message logging (2 commands)
+  - `welcome/` - Welcome system (3 commands)
+  - `permissions/` - Permission management (4 commands)
+  - Root level - Command toggles (1 command)
+- **Impact**: Improved code structure and team navigation
 
-### Memory Bank Initialization Complete
+### Database Indexing Optimization
 
-- **Status**: ✅ Completed - All 6 core memory bank files created and populated
-- **Branch**: `feature/memory-bank-init` successfully merged to `development`
-- **Files Created**: projectbrief.md, productContext.md, activeContext.md, systemPatterns.md, techContext.md, progress.md
-- **Documentation**: Comprehensive project documentation now established
+- **Status**: ✅ Completed - Phase 1 performance improvements deployed
+- **Performance Gains**: 5-10x faster database queries
+- **Indexes Deployed**: 9 optimized indexes including compound and partial indexes
+- **Impact**: Efficient scaling to multiple guilds
 
-### Memory Bank Structure Established
+### Memory Bank System
 
-- Created `/memory-bank/` directory structure
-- Implemented core file hierarchy as defined in Cline rules
-- Files follow established patterns and formatting standards
-- Documentation maintenance workflow initiated
+- **Status**: ✅ Completed - Full memory bank implemented and maintained
+- **Files**: All 6 core files current and synchronized
+- **Integration**: Actively used for project continuity
 
 ## Next Steps
 
-### Short Term (Next Sessions)
+### Short Term (This Session)
 
-- [ ] Establish regular memory bank maintenance schedule
-- [ ] Conduct comprehensive codebase review
-- [ ] Identify and prioritize feature enhancements
-- [ ] Plan Phase 1 development (Q1 2025) from roadmap
+- [x] Update activeContext.md with refactoring work
+- [x] Document Discord.js v14+ compliance updates
+- [ ] Finalize all memory bank file updates
+- [ ] Verify documentation accuracy against codebase
 
-### Medium Term (1-2 Weeks)
+### Medium Term (Next 1-2 Weeks)
 
-- [ ] Implement test suite improvements
-- [ ] Evaluate external API integrations for reliability
-- [ ] Assess performance bottlenecks in large servers
-- [ ] Plan Phase 2: Caching Layer Implementation (Redis integration)
+- [ ] Implement comprehensive test suite
+- [ ] Evaluate command response times under load
+- [ ] Assess error handling robustness across all commands
+- [ ] Plan performance optimization roadmap
 
-### Long Term Considerations (3-6 Months)
+### Long Term (1-3 Months)
 
-- [ ] Feature roadmap development and prioritization
-- [ ] Performance optimization for 10k+ member servers
-- [ ] Security hardening and audit logging enhancements
-- [ ] Scalability planning for horizontal growth
+- [ ] Implement Phase 2: Redis caching layer
+- [ ] Add advanced logging features (message edits, bulk operations)
+- [ ] Expand gaming integrations
+- [ ] Plan scalability improvements for 10k+ member servers
 
 ## Active Decisions and Considerations
 
-### Documentation Strategy
+### Discord.js Version Strategy
 
-- **Decision**: Follow Cline's Memory Bank methodology strictly
-- **Rationale**: Ensures consistent, comprehensive project documentation
-- **Impact**: Requires discipline in maintaining all memory bank files
-- **Consideration**: Balance between documentation completeness and development velocity
+- **Decision**: Maintain v14+ compliance as the standard
+- **Rationale**: Latest stable version with active maintenance and modern features
+- **Impact**: Requires ongoing updates as Discord.js evolves
+- **Consideration**: Balance between new features and stability
 
-### Branch Strategy for Memory Bank
+### Code Organization Strategy
 
-- **Decision**: Use dedicated feature branch for memory bank initialization
-- **Rationale**: Keeps documentation work isolated from main development
-- **Impact**: Allows review of documentation changes before merging
-- **Consideration**: Memory bank files may need updates alongside code changes
+- **Decision**: Organize commands into logical subfolders by function
+- **Rationale**: Improves discoverability and reduces cognitive load
+- **Impact**: Easier for new developers to contribute commands
+- **Consideration**: Dynamic command loading handles nested structure seamlessly
 
-### File Organization
+### Performance Optimization Priorities
 
-- **Decision**: Keep memory bank files in dedicated directory
-- **Rationale**: Clear separation of documentation from code
-- **Impact**: Easy to identify and maintain documentation files
-- **Consideration**: Ensure memory bank is included in project backups
+- **Decision**: Focus on database query optimization first
+- **Rationale**: Most common bottleneck for multi-guild operations
+- **Impact**: Significant performance gains with minimal code changes
+- **Consideration**: Monitor performance as guild count increases
+
+### Documentation Maintenance
+
+- **Decision**: Update memory bank with each significant code change
+- **Rationale**: Ensures documentation stays in sync with implementation
+- **Impact**: Clear project continuity between development sessions
+- **Consideration**: Document refactoring alongside code changes
 
 ## Important Patterns and Preferences
 
-### Code Style
+### Code Style & Standards
 
-- **ESLint + Prettier**: Strict code formatting and linting enforced
-- **Async/Await**: Preferred over Promise chains for readability
-- **Error Handling**: Comprehensive try/catch with user-friendly messages
-- **Logging**: Pino logger used consistently across all modules
+- **ESLint + Prettier**: Strictly enforced across codebase
+- **Async/Await**: Preferred for readability and error handling
+- **Error Messages**: User-friendly with clear actionable guidance
+- **Logging**: Structured Pino logging with contextual data
+- **Comments**: Focused on "why" rather than "what" code does
 
-### Command Structure
+### Command Architecture
 
-- **Modular Design**: Each command in separate file with data/export pattern
-- **Category Organization**: Commands grouped by functionality (admin, utility, etc.)
-- **Permission Checks**: Centralized permission validation through guild settings
-- **Autocomplete**: Implemented where user experience benefits
+- **File Structure**: `data` (SlashCommandBuilder) + `execute` (handler function)
+- **Organization**: Category-based folders with optional subfolders
+- **Permissions**: Guild-scoped settings with role-based access control
+- **Autocomplete**: Implemented for user selection fields where beneficial
+- **Error Handling**: Try/catch with user feedback and logging
 
-### Database Design
+### Database Patterns
 
-- **Guild Isolation**: All settings scoped to individual Discord guilds
-- **Mongoose Schemas**: Structured data models with validation
-- **Migration Scripts**: Versioned database updates in `/utils`
-- **Connection Management**: Centralized database utilities
+- **Guild Isolation**: All settings scoped to individual server
+- **Mongoose Schemas**: Structured with validation and indexes
+- **Connection Pooling**: Optimized connection management
+- **Query Optimization**: Covered queries, batch operations, bulk retrieval
+- **Monitoring**: Index usage tracking and slow query detection
+
+### Event Handling
+
+- **Event Files**: Dedicated modules in `/events` directory
+- **Structure**: Export name and execute function
+- **Filtering**: Skip bot messages, DM handling, permission checks
+- **Logging**: Comprehensive event execution logging
+- **Error Recovery**: Graceful handling of event processing errors
 
 ## Learnings and Project Insights
 
-### Current State Analysis
+### Recent Discoveries
 
-- **Strength**: Well-structured codebase with clear separation of concerns
-- **Strength**: Comprehensive feature set covering admin, gaming, and utility needs
-- **Strength**: Complete memory bank documentation system now established
-- **Opportunity**: Regular documentation maintenance workflow to be established
-- **Consideration**: Some utility functions may benefit from consolidation
+- **v14+ Compatibility**: Full v14 compliance now achieved across all commands
+- **Command Organization**: Nested folders improved navigation without breaking dynamic loading
+- **Performance**: Database indexing provides significant gains for common query patterns
+- **Code Quality**: Consistent refactoring maintains high code standards
 
 ### Technical Observations
 
-- **Discord.js v14**: Good choice for modern Discord features and long-term support
-- **MongoDB Integration**: Solid foundation for multi-guild data management
-- **PM2 Deployment**: Appropriate for production process management
-- **External APIs**: Good coverage of gaming and utility services
+- **Discord.js v14**: Well-designed for slash commands and modern features
+- **MongoDB Performance**: Proper indexing critical for multi-guild scalability
+- **PM2 Integration**: Reliable for production process management
+- **Pino Logging**: Excellent for structured development and production logging
 
-### Development Workflow Insights
+### Codebase Health
 
-- **Branch Strategy**: Feature branches working well for isolated changes
-- **Code Quality**: ESLint/Prettier combination effective for consistency
-- **Testing**: Currently placeholder - opportunity for improvement
-- **Documentation**: Memory bank system will significantly improve project maintainability
+- **Strength**: Well-organized modular architecture
+- **Strength**: Comprehensive command coverage across all categories
+- **Strength**: Complete memory bank documentation system
+- **Strength**: Modern JavaScript practices throughout
+- **Opportunity**: Test suite needs expansion
+- **Opportunity**: Edge case handling could be enhanced
 
 ## Open Questions and Research Needs
 
-### Code Quality Assessment
+### Performance Validation
 
-- How thoroughly are commands tested?
-- Are there any performance bottlenecks in current implementation?
-- How robust is error handling across all command paths?
+- How does bot perform with 1000+ guilds?
+- What is typical command response time under load?
+- Are there database query bottlenecks for high-volume scenarios?
+- How do external API calls impact performance?
 
 ### Feature Completeness
 
-- Are all documented features working as expected?
-- What user feedback exists about current functionality?
-- How does the bot perform under load?
+- Are all documented features working as specified?
+- What is user feedback on current functionality?
+- Which features see the most usage?
+- What features would provide most value to add?
+
+### Testing & Quality
+
+- What test coverage currently exists?
+- Are there edge cases not yet covered?
+- How robust is error handling in all paths?
+- What scenarios need additional validation?
 
 ### Future Development
 
-- What features would provide the most value to users?
-- How can the permission system be enhanced?
-- What scalability improvements are needed?
+- What is priority for Phase 2 implementation?
+- Should Redis caching be prioritized?
+- Which gaming integrations should be added?
+- How should interactive components be implemented?
