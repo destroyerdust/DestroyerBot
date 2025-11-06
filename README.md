@@ -170,6 +170,19 @@ An automated moderation logging system that tracks message activities in Discord
 - **Prettier**: Code formatting with `.prettierrc.json` configuration
 - **Pino**: Advanced logging library for better log management
 
+### Project Documentation
+
+The project includes comprehensive memory bank documentation located in `/memory-bank/`:
+
+- **projectbrief.md** - Project overview, core requirements, and success criteria
+- **productContext.md** - Product vision, problems solved, and user experience goals
+- **systemPatterns.md** - System architecture, design patterns, and implementation flows
+- **techContext.md** - Technology stack and development setup
+- **activeContext.md** - Current work focus, recent changes, and next steps
+- **progress.md** - Feature status, development progress, and future roadmap
+
+These files provide detailed context for understanding the project architecture and contributing effectively.
+
 ## Deployment
 
 The bot is designed to run with PM2 for process management. Use the provided scripts or run PM2 commands directly.
