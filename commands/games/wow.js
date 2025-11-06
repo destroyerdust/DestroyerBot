@@ -6,9 +6,114 @@ const {
 } = require('discord.js')
 const logger = require('../../logger')
 
-// Blizzard API configuration (would need to be added to environment variables)
+// Blizzard API configuration
 const blizzardClientId = process.env.BLIZZARD_CLIENT_ID
 const blizzardClientSecret = process.env.BLIZZARD_CLIENT_SECRET
+
+// Region choices for Discord command options
+const REGION_CHOICES = [
+  { name: '🇺🇸 US', value: 'us' },
+  { name: '🇪🇺 EU', value: 'eu' },
+  { name: '🇰🇷 KR', value: 'kr' },
+  { name: '🇹🇼 TW', value: 'tw' },
+]
+
+// Realm type to color mapping
+const FACTION_COLORS = {
+  Normal: 0x3fc7eb,
+  Roleplaying: 0xff7c0a,
+  PvP: 0xc41e3a,
+  PvE: 0xff7c0a,
+}
+
+// Population level to emoji mapping
+const POPULATION_EMOJIS = {
+  Low: '📉',
+  Medium: '📊',
+  High: '📈',
+  Full: '🔴',
+}
+
+// Constants for currency conversion
+const COPPER_PER_GOLD = 10000
+const COPPER_PER_SILVER = 100
+
+// Regex for realm slug conversion
+const REALM_SLUG_REGEX = /[^a-z0-9\s-]/g
+
+/**
+ * Safely parses JSON from a fetch response
+ * @param {Response} response - The fetch response object
+ * @returns {Promise<Record<string, any>>} Parsed JSON or empty object
+ */
+async function safeParseJson(response) {
+  try {
+    return await response.json()
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * Converts a realm name to URL-safe slug format
+ * @param {string} realmName - The original realm name
+ * @returns {string} The slugified realm name
+ */
+function generateRealmSlug(realmName) {
+  return realmName
+    .toLowerCase()
+    .replace(REALM_SLUG_REGEX, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+/**
+ * Formats copper currency value to human-readable format
+ * @param {number} copper - Amount in copper
+ * @returns {string} Formatted currency string (e.g., "100 gold 50 silver")
+ */
+function formatCurrency(copper) {
+  const gold = Math.floor(copper / COPPER_PER_GOLD)
+  const silver = Math.floor((copper % COPPER_PER_GOLD) / COPPER_PER_SILVER)
+  return `${gold.toLocaleString()} gold ${silver} silver`
+}
+
+/**
+ * Gets emoji for population level
+ * @param {string} population - Population level from API
+ * @returns {string} Emoji representing population
+ */
+function getPopulationEmoji(population) {
+  return POPULATION_EMOJIS[population] || '❓'
+}
+
+/**
+ * Gets color for realm type/category
+ * @param {string} category - Realm category from API
+ * @returns {number} Color code for embed
+ */
+function getRealmColor(category) {
+  return FACTION_COLORS[category] || 0x0099ff
+}
+
+/**
+ * Validates Blizzard API credentials
+ * @returns {boolean} True if both client ID and secret are configured
+ * @throws {Error} If credentials are not configured
+ */
+function validateBlizzardCredentials() {
+  if (!blizzardClientId || !blizzardClientSecret) {
+    logger.error(
+      {
+        hasClientId: !!blizzardClientId,
+        hasClientSecret: !!blizzardClientSecret,
+      },
+      'Blizzard API credentials not configured'
+    )
+    throw new Error('Blizzard API credentials not configured')
+  }
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -126,13 +231,7 @@ async function handleRealmCommand(interaction, region) {
   }
 
   const cleanRealm = realm.trim()
-  // Convert realm name to slug format for API
-  const realmSlug = cleanRealm
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-    .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+  const realmSlug = generateRealmSlug(cleanRealm)
 
   logger.debug(
     {
@@ -261,7 +360,7 @@ async function handleRealmCommand(interaction, region) {
     // Create embed
     const embed = new EmbedBuilder()
       .setTitle(`🌐 ${realmData.name} (${realmData.region.name})`)
-      .setColor(getFactionColor(realmData.category))
+      .setColor(getRealmColor(realmData.category))
       .setDescription(`*${realmData.category} Realm*`)
 
     // Basic realm info
@@ -406,8 +505,8 @@ async function handleTokenCommand(interaction, region) {
 
     // Convert price from copper to gold
     const priceInCopper = tokenData.price
-    const priceInGold = Math.floor(priceInCopper / 10000)
-    const remainingSilver = Math.floor((priceInCopper % 10000) / 100)
+    const formattedPrice = formatCurrency(priceInCopper)
+    const priceInGold = Math.floor(priceInCopper / COPPER_PER_GOLD)
 
     // Create embed
     const embed = new EmbedBuilder()
@@ -418,7 +517,7 @@ async function handleTokenCommand(interaction, region) {
     embed.addFields(
       {
         name: '💰 Current Price',
-        value: `${priceInGold.toLocaleString()} gold ${remainingSilver} silver`,
+        value: formattedPrice,
         inline: true,
       },
       {
@@ -531,25 +630,4 @@ async function getBlizzardAccessToken() {
   console.log('🔑 Blizzard Access Token:', authData.access_token)
 
   return authData.access_token
-}
-
-function getFactionColor(category) {
-  // Color based on realm type
-  const colors = {
-    Normal: 0x3fc7eb, // Blue
-    Roleplaying: 0xff7c0a, // Orange
-    PvP: 0xc41e3a, // Red
-    PvE: 0xff7c0a, // Orange
-  }
-  return colors[category] || 0x0099ff
-}
-
-function getPopulationEmoji(population) {
-  const emojis = {
-    Low: '📉',
-    Medium: '📊',
-    High: '📈',
-    Full: '🔴',
-  }
-  return emojis[population] || '❓'
 }
