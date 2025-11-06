@@ -1,4 +1,10 @@
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  InteractionContextType,
+  MessageFlags,
+  ChannelType,
+} = require('discord.js')
 const { setLogChannelAsync } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
@@ -8,13 +14,12 @@ module.exports = {
     .setDescription('Set the channel for moderation and action logging')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .setContexts(InteractionContextType.Guild)
-    .addChannelOption(
-      (option) =>
-        option
-          .setName('channel')
-          .setDescription('The channel to use for logging moderation actions')
-          .setRequired(true)
-          .addChannelTypes(0) // GuildCategory, basically text channels
+    .addChannelOption((option) =>
+      option
+        .setName('channel')
+        .setDescription('The channel to use for logging moderation actions')
+        .setRequired(true)
+        .addChannelTypes(ChannelType.GuildText)
     ),
   async execute(interaction) {
     const channel = interaction.options.getChannel('channel')
@@ -25,6 +30,7 @@ module.exports = {
         channelId: channel.id,
         channelName: channel.name,
         executedBy: interaction.user.tag,
+        userId: interaction.user.id,
       },
       'Setting log channel'
     )
@@ -34,7 +40,7 @@ module.exports = {
 
       await interaction.reply({
         content: `✅ Log channel set to ${channel}. Moderation actions will be logged here.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
 
       logger.info(
@@ -42,6 +48,7 @@ module.exports = {
           guildId: interaction.guild.id,
           channelId: channel.id,
           success: true,
+          userId: interaction.user.id,
         },
         'Log channel set successfully'
       )
@@ -52,13 +59,19 @@ module.exports = {
           stack: error.stack,
           guildId: interaction.guild.id,
           channelId: channel.id,
+          userId: interaction.user.id,
         },
         'Error setting log channel'
       )
-      await interaction.reply({
-        content: '❌ An error occurred while setting the log channel.',
-        ephemeral: true,
-      })
+
+      try {
+        await interaction.reply({
+          content: '❌ An error occurred while setting the log channel.',
+          flags: MessageFlags.Ephemeral,
+        })
+      } catch (replyError) {
+        logger.error({ error: replyError.message }, 'Failed to send error reply')
+      }
     }
   },
 }
