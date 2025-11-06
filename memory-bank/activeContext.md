@@ -19,6 +19,18 @@
 
 ## Recent Changes
 
+### Admin Commands Reorganized into Logical Subfolders
+
+- **Status**: ✅ Completed - Admin commands now organized by functionality
+- **Organization**: Created three subfolders under `commands/admin/`:
+  - `logging/` - Message logging related commands (logsettings, setlogchannel)
+  - `welcome/` - Welcome feature commands (setwelcomechannel, setwelcomemessage, togglewelcome)
+  - `permissions/` - Permission management commands (listpermissions, removecommandrole, resetpermissions, setcommandrole)
+- **Root Level**: togglecommand.js kept at `commands/admin/` root level
+- **Import Paths**: Updated all require paths from `../../` to `../../../` to account for nested structure
+- **Verification**: All 10 admin commands successfully loaded and deployed to Discord
+- **Impact**: Better organization improves code maintainability and reduces cognitive load when navigating admin commands
+
 ### Database Indexing Optimization Complete
 
 - **Status**: ✅ Completed - Phase 1 database scaling optimization implemented
