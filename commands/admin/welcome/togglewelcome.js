@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, MessageFlags } = require('discord.js')
-const { setWelcomeEnabledAsync, getWelcomeEnabledAsync } = require('../../../utils/guildSettings')
+const { setWelcomeEnabledAsync } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
 module.exports = {
@@ -8,18 +8,24 @@ module.exports = {
     .setDescription('Enable or disable welcome messages')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .setContexts(InteractionContextType.Guild)
-    .addBooleanOption((option) =>
+    .addStringOption((option) =>
       option
-        .setName('enabled')
-        .setDescription('Whether to enable welcome messages')
+        .setName('action')
+        .setDescription('Enable or disable welcome messages')
         .setRequired(true)
+        .addChoices(
+          { name: 'enable', value: 'enable' },
+          { name: 'disable', value: 'disable' }
+        )
     ),
   async execute(interaction) {
-    const enabled = interaction.options.getBoolean('enabled')
+    const action = interaction.options.getString('action')
+    const enabled = action === 'enable'
 
     logger.info(
       {
         guildId: interaction.guild.id,
+        action,
         enabled,
         executedBy: interaction.user.tag,
         userId: interaction.user.id,
@@ -31,13 +37,14 @@ module.exports = {
       await setWelcomeEnabledAsync(interaction.guild.id, enabled)
 
       await interaction.reply({
-        content: `✅ Welcome messages ${enabled ? 'enabled' : 'disabled'}.`,
+        content: `✅ Welcome messages ${action}d.`,
         flags: MessageFlags.Ephemeral,
       })
 
       logger.info(
         {
           guildId: interaction.guild.id,
+          action,
           enabled,
           success: true,
           userId: interaction.user.id,
@@ -50,6 +57,7 @@ module.exports = {
           error: error.message,
           stack: error.stack,
           guildId: interaction.guild.id,
+          action,
           enabled,
           userId: interaction.user.id,
         },
