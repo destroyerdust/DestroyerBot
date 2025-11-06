@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
-const { setCommandRole } = require('../../utils/guildSettings')
-const logger = require('../../logger')
+const { setCommandRole } = require('../../../utils/guildSettings')
+const logger = require('../../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()

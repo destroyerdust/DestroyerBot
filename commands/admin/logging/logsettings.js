@@ -4,8 +4,8 @@ const {
   getLogMessageCreateAsync,
   setLogMessageDeleteAsync,
   getLogMessageDeleteAsync,
-} = require('../../utils/guildSettings')
-const logger = require('../../logger')
+} = require('../../../utils/guildSettings')
+const logger = require('../../../logger')
 
 module.exports = {
   data: new SlashCommandBuilder()

@@ -10,7 +10,7 @@ const {
   InteractionContextType,
   ChannelType,
 } = require('discord.js')
-const logger = require('../../logger')
+const logger = require('../../../logger')
 
 /**
  * Get channel type name with emoji

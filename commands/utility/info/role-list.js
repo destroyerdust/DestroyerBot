@@ -4,7 +4,7 @@ const {
   InteractionContextType,
   MessageFlags,
 } = require('discord.js')
-const logger = require('../../logger')
+const logger = require('../../../logger')
 
 /**
  * Chunk array into smaller arrays of specified size

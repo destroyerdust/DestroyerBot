@@ -4,8 +4,8 @@ const {
   PermissionFlagsBits,
   InteractionContextType,
 } = require('discord.js')
-const { getGuildSettingsAsync } = require('../../utils/guildSettings')
-const logger = require('../../logger')
+const { getGuildSettingsAsync } = require('../../../utils/guildSettings')
+const logger = require('../../../logger')
 
 // Import the default restricted commands (should match utils/guildSettings.js)
 const DEFAULT_RESTRICTED_COMMANDS = new Set(['kick', 'clean', 'setnick'])

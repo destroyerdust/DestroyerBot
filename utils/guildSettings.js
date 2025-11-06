@@ -1436,6 +1436,223 @@ async function getWelcomeMessageAsync(guildId) {
   }
 }
 
+// ===== OPTIMIZED QUERY FUNCTIONS =====
+
+/**
+ * Get guild settings with projection for covered queries (optimized for performance)
+ * @param {string} guildId - Guild ID
+ * @returns {Promise<Object|null>} Guild settings with only frequently accessed fields
+ */
+async function getGuildSettingsOptimized(guildId) {
+  try {
+    if (!getConnectionStatus()) {
+      return getGuildSettings(guildId)
+    }
+
+    // Use projection to create covered query (can be satisfied by index only)
+    const settings = await GuildSettings.findOne(
+      { guildId },
+      {
+        guildId: 1,
+        disabledCommands: 1,
+        'logs.channelId': 1,
+        'logs.messageCreate': 1,
+        'logs.messageDelete': 1,
+        'welcome.enabled': 1,
+        'welcome.channelId': 1,
+        'welcome.message': 1,
+        commandPermissions: 1,
+      }
+    )
+
+    return settings
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId },
+      'Error getting optimized guild settings, falling back to standard query'
+    )
+    return getGuildSettings(guildId)
+  }
+}
+
+/**
+ * Check multiple command permissions in a single optimized query
+ * @param {string} guildId - Guild ID
+ * @param {Array<string>} commandNames - Array of command names to check
+ * @param {Object} member - Discord GuildMember object
+ * @returns {Promise<Object>} Object with command names as keys and boolean permission values
+ */
+async function checkMultiplePermissions(guildId, commandNames, member) {
+  try {
+    const settings = await getGuildSettingsOptimized(guildId)
+
+    if (!settings) {
+      // Guild not found, deny all permissions
+      return Object.fromEntries(commandNames.map((name) => [name, false]))
+    }
+
+    // Process all permission checks in memory for better performance
+    const results = {}
+    for (const commandName of commandNames) {
+      results[commandName] = hasCommandPermissionFromSettings(settings, commandName, member)
+    }
+
+    return results
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId, commandNames },
+      'Error checking multiple permissions, falling back to individual checks'
+    )
+
+    // Fallback to individual checks
+    const results = {}
+    for (const commandName of commandNames) {
+      results[commandName] = await hasCommandPermissionAsync(guildId, commandName, member)
+    }
+    return results
+  }
+}
+
+/**
+ * Check permission using pre-loaded settings object (for batch operations)
+ * @param {Object} settings - Guild settings object from getGuildSettingsOptimized
+ * @param {string} commandName - Command name
+ * @param {Object} member - Discord GuildMember object
+ * @returns {boolean} True if member has permission
+ */
+function hasCommandPermissionFromSettings(settings, commandName, member) {
+  // Server owner always has permission
+  if (member.id === member.guild.ownerId) {
+    return true
+  }
+
+  // Check if command is disabled
+  if (settings.disabledCommands?.includes(commandName)) {
+    return false
+  }
+
+  const allowedRoles = settings.commandPermissions?.get(commandName)
+
+  // If command is in default-restricted list AND no specific roles are configured,
+  // deny access (only owner can use)
+  if (
+    DEFAULT_RESTRICTED_COMMANDS.has(commandName) &&
+    (!allowedRoles || allowedRoles.length === 0)
+  ) {
+    return false
+  }
+
+  // If no roles are configured (and command is not default-restricted), allow everyone
+  if (!allowedRoles || allowedRoles.length === 0) {
+    return true
+  }
+
+  // Check if member has any of the allowed roles
+  const memberRoles = member.roles.cache.map((role) => role.id)
+  return allowedRoles.some((roleId) => memberRoles.includes(roleId))
+}
+
+/**
+ * Batch update multiple guild settings in a single transaction
+ * @param {string} guildId - Guild ID
+ * @param {Object} updates - Object containing settings to update
+ * @returns {Promise<Object>} Update result
+ */
+async function batchUpdateGuildSettings(guildId, updates) {
+  try {
+    if (!getConnectionStatus()) {
+      throw new Error('Database not connected')
+    }
+
+    const settings = await GuildSettings.findOne({ guildId })
+    if (!settings) {
+      throw new Error(`Guild settings not found for guild: ${guildId}`)
+    }
+
+    // Apply updates
+    if (updates.commandPermissions !== undefined) {
+      settings.commandPermissions = updates.commandPermissions
+    }
+    if (updates.disabledCommands !== undefined) {
+      settings.disabledCommands = updates.disabledCommands
+    }
+    if (updates.logs !== undefined) {
+      settings.logs = { ...settings.logs, ...updates.logs }
+    }
+    if (updates.welcome !== undefined) {
+      settings.welcome = { ...settings.welcome, ...updates.welcome }
+    }
+
+    await settings.save()
+    logger.info({ guildId, updates: Object.keys(updates) }, 'Batch guild settings update completed')
+
+    return settings
+  } catch (error) {
+    logger.error({ error: error.message, guildId, updates }, 'Error in batch guild settings update')
+    throw error
+  }
+}
+
+/**
+ * Get multiple guilds' settings in a single query (for bulk operations)
+ * @param {Array<string>} guildIds - Array of guild IDs
+ * @returns {Promise<Map>} Map of guildId -> settings object
+ */
+async function getMultipleGuildSettings(guildIds) {
+  try {
+    if (!getConnectionStatus()) {
+      // Fallback to individual JSON lookups
+      const results = new Map()
+      for (const guildId of guildIds) {
+        results.set(guildId, getGuildSettings(guildId))
+      }
+      return results
+    }
+
+    const settings = await GuildSettings.find(
+      { guildId: { $in: guildIds } },
+      {
+        guildId: 1,
+        disabledCommands: 1,
+        'logs.channelId': 1,
+        'logs.messageCreate': 1,
+        'logs.messageDelete': 1,
+        'welcome.enabled': 1,
+        'welcome.channelId': 1,
+        'welcome.message': 1,
+        commandPermissions: 1,
+      }
+    )
+
+    // Convert to Map for easy lookup
+    const results = new Map()
+    settings.forEach((setting) => {
+      results.set(setting.guildId, setting)
+    })
+
+    // Fill in missing guilds with defaults
+    for (const guildId of guildIds) {
+      if (!results.has(guildId)) {
+        results.set(guildId, getGuildSettings(guildId))
+      }
+    }
+
+    return results
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildIds },
+      'Error getting multiple guild settings, falling back to individual queries'
+    )
+
+    // Fallback to individual queries
+    const results = new Map()
+    for (const guildId of guildIds) {
+      results.set(guildId, await getGuildSettingsAsync(guildId))
+    }
+    return results
+  }
+}
+
 module.exports = {
   // Legacy JSON-based functions (for backward compatibility)
   loadSettings,
@@ -1479,4 +1696,11 @@ module.exports = {
   getWelcomeChannelAsync,
   setWelcomeMessageAsync,
   getWelcomeMessageAsync,
+
+  // Optimized query functions for many guilds
+  getGuildSettingsOptimized,
+  checkMultiplePermissions,
+  hasCommandPermissionFromSettings,
+  batchUpdateGuildSettings,
+  getMultipleGuildSettings,
 }

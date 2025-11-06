@@ -10,7 +10,7 @@ const {
   InteractionContextType,
   PermissionFlagsBits,
 } = require('discord.js')
-const logger = require('../../logger')
+const logger = require('../../../logger')
 
 /**
  * Permission categories for better organization
