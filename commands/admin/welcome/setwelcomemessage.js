@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, MessageFlags } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const { setWelcomeMessageAsync } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
@@ -81,10 +86,7 @@ module.exports = {
           flags: MessageFlags.Ephemeral,
         })
       } catch (replyError) {
-        logger.error(
-          { error: replyError.message },
-          'Failed to send error reply'
-        )
+        logger.error({ error: replyError.message }, 'Failed to send error reply')
       }
     }
   },

@@ -1,4 +1,10 @@
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, MessageFlags, ChannelType } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  InteractionContextType,
+  MessageFlags,
+  ChannelType,
+} = require('discord.js')
 const { setWelcomeChannelAsync } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
@@ -8,13 +14,12 @@ module.exports = {
     .setDescription('Set the channel for welcome messages')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .setContexts(InteractionContextType.Guild)
-    .addChannelOption(
-      (option) =>
-        option
-          .setName('channel')
-          .setDescription('The channel to send welcome messages to')
-          .setRequired(true)
-          .addChannelTypes(ChannelType.GuildText)
+    .addChannelOption((option) =>
+      option
+        .setName('channel')
+        .setDescription('The channel to send welcome messages to')
+        .setRequired(true)
+        .addChannelTypes(ChannelType.GuildText)
     ),
   async execute(interaction) {
     const channel = interaction.options.getChannel('channel')
@@ -82,10 +87,7 @@ module.exports = {
           flags: MessageFlags.Ephemeral,
         })
       } catch (replyError) {
-        logger.error(
-          { error: replyError.message },
-          'Failed to send error reply'
-        )
+        logger.error({ error: replyError.message }, 'Failed to send error reply')
       }
     }
   },
