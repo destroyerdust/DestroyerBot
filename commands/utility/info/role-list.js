@@ -36,7 +36,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('role-list')
     .setDescription('Display a comprehensive list of all server roles')
-    .setContexts(InteractionContextType.Guild),
+    .setContexts([InteractionContextType.Guild]),
   async execute(interaction) {
     const guild = interaction.guild
 
@@ -118,7 +118,10 @@ module.exports = {
 
       embed.setFooter({
         text: `Requested by ${interaction.user.username} • ${totalRoles} total roles`,
-        iconURL: interaction.user.displayAvatarURL({ size: 64 }),
+        iconURL: interaction.user.displayAvatarURL({
+          size: 64,
+          extension: 'png',
+        }),
       })
 
       await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })

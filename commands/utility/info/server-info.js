@@ -7,6 +7,211 @@ const {
 } = require('discord.js')
 const logger = require('../../../logger')
 
+// Verification level names mapping
+const VERIFICATION_LEVELS = {
+  0: 'None',
+  1: 'Low',
+  2: 'Medium',
+  3: 'High',
+  4: 'Highest',
+}
+
+// Premium tier names mapping
+const PREMIUM_TIERS = {
+  0: 'None',
+  1: 'Level 1',
+  2: 'Level 2',
+  3: 'Level 3',
+}
+
+// Feature emoji mapping
+const FEATURE_EMOJIS = {
+  ANIMATED_BANNER: '🎬',
+  ANIMATED_ICON: '🎭',
+  BANNER: '🏴',
+  COMMUNITY: '🌍',
+  DISCOVERABLE: '🔍',
+  FEATURABLE: '⭐',
+  INVITE_SPLASH: '💫',
+  MEMBER_VERIFICATION_GATE_ENABLED: '✅',
+  NEWS: '📰',
+  PARTNERED: '🤝',
+  PREVIEW_ENABLED: '👁️',
+  VANITY_URL: '🔗',
+  VERIFIED: '✔️',
+  VIP_REGIONS: '👑',
+  WELCOME_SCREEN_ENABLED: '👋',
+}
+
+// Display limits
+const DISPLAY_LIMITS = {
+  ROLES: 10,
+  FEATURES: 10,
+}
+
+// Default embed color fallback
+const DEFAULT_COLOR = 0x5865f2
+
+/**
+ * Formats a timestamp for Discord timestamp display
+ * @param {number} timestamp - Millisecond timestamp
+ * @param {string} format - Discord timestamp format ('F' for full date, 'R' for relative)
+ * @returns {string} Formatted Discord timestamp
+ */
+function formatTimestamp(timestamp, format = 'F') {
+  return `<t:${Math.floor(timestamp / 1000)}:${format}>`
+}
+
+/**
+ * Compiles channel statistics by type
+ * @param {Collection} channels - Guild channels collection
+ * @returns {object} Object containing counts for each channel type
+ */
+function compileChannelStats(channels) {
+  return {
+    text: channels.filter((ch) => ch.type === ChannelType.GuildText).size,
+    voice: channels.filter((ch) => ch.type === ChannelType.GuildVoice).size,
+    stage: channels.filter((ch) => ch.type === ChannelType.GuildStageVoice).size,
+    forum: channels.filter((ch) => ch.type === ChannelType.GuildForum).size,
+    announcement: channels.filter((ch) => ch.type === ChannelType.GuildAnnouncement).size,
+    category: channels.filter((ch) => ch.type === ChannelType.GuildCategory).size,
+  }
+}
+
+/**
+ * Compiles member status breakdown by presence
+ * @param {Guild} guild - The guild object
+ * @returns {object} Object containing counts for each presence status
+ */
+function compileMemberStatusBreakdown(guild) {
+  const breakdown = {
+    online: 0,
+    idle: 0,
+    dnd: 0,
+    offline: 0,
+  }
+
+  try {
+    const members = guild.members.cache
+    breakdown.online = members.filter((m) => m.presence?.status === 'online').size
+    breakdown.idle = members.filter((m) => m.presence?.status === 'idle').size
+    breakdown.dnd = members.filter((m) => m.presence?.status === 'dnd').size
+    breakdown.offline = members.filter((m) => m.presence?.status === 'offline' || !m.presence).size
+  } catch (error) {
+    logger.debug('Could not fetch member presence data', { error: error.message })
+    breakdown.online = guild.approximatePresenceCount || 0
+  }
+
+  return breakdown
+}
+
+/**
+ * Formats role list for display with color indicators
+ * @param {Guild} guild - The guild object
+ * @returns {string} Formatted role list
+ */
+function formatRoleList(guild) {
+  const roles = guild.roles.cache
+    .filter((role) => role.name !== '@everyone')
+    .sort((a, b) => b.position - a.position)
+
+  const displayRoles = roles.first(DISPLAY_LIMITS.ROLES)
+  let roleList = displayRoles
+    .map((role) => {
+      const colorEmoji = role.hexColor && role.hexColor !== '#000000' ? '🔹' : '⚪'
+      return `${colorEmoji} ${role.name}`
+    })
+    .join('\n')
+
+  if (roles.size > DISPLAY_LIMITS.ROLES) {
+    roleList += `\n... and ${roles.size - DISPLAY_LIMITS.ROLES} more roles`
+  }
+
+  return roleList
+}
+
+/**
+ * Formats server features with emojis
+ * @param {string[]} features - Array of feature strings
+ * @returns {string|null} Formatted feature list or null if no features
+ */
+function formatServerFeatures(features) {
+  if (!features || features.length === 0) return null
+
+  let featureList = features
+    .slice(0, DISPLAY_LIMITS.FEATURES)
+    .map((feature) => {
+      const emoji = FEATURE_EMOJIS[feature] || '✨'
+      const formattedName = feature
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, (l) => l.toUpperCase())
+      return `${emoji} ${formattedName}`
+    })
+    .join('\n')
+
+  if (features.length > DISPLAY_LIMITS.FEATURES) {
+    featureList += `\n... and ${features.length - DISPLAY_LIMITS.FEATURES} more`
+  }
+
+  return featureList
+}
+
+/**
+ * Compiles server settings for display
+ * @param {Guild} guild - The guild object
+ * @returns {string[]} Array of setting strings
+ */
+function compileServerSettings(guild) {
+  const settings = []
+
+  if (guild.mfaLevel === 1) settings.push('🔐 2FA Required')
+  if (guild.nsfwLevel > 0) settings.push(`🔞 NSFW Level ${guild.nsfwLevel}`)
+  if (guild.explicitContentFilter > 0)
+    settings.push(`🛡️ Content Filter Level ${guild.explicitContentFilter}`)
+  if (guild.defaultMessageNotifications !== 'ALL') settings.push('🔕 Quiet Notifications')
+  if (guild.systemChannelFlags?.suppressJoinNotifications)
+    settings.push('👋 Join Messages Disabled')
+  if (guild.systemChannelFlags?.suppressPremiumSubscriptions)
+    settings.push('🚀 Boost Messages Disabled')
+
+  return settings
+}
+
+/**
+ * Builds member status breakdown display text
+ * @param {object} breakdown - Member status breakdown object
+ * @returns {string} Formatted status text
+ */
+function buildStatusBreakdownText(breakdown) {
+  const statusText = []
+
+  if (breakdown.online > 0) statusText.push(`🟢 ${breakdown.online.toLocaleString()}`)
+  if (breakdown.idle > 0) statusText.push(`🟡 ${breakdown.idle.toLocaleString()}`)
+  if (breakdown.dnd > 0) statusText.push(`🔴 ${breakdown.dnd.toLocaleString()}`)
+  if (breakdown.offline > 0) statusText.push(`⚫ ${breakdown.offline.toLocaleString()}`)
+
+  return statusText.join(' • ')
+}
+
+/**
+ * Builds channel statistics display text
+ * @param {object} stats - Channel statistics object
+ * @returns {string} Formatted channel stats
+ */
+function buildChannelStatsText(stats) {
+  const channelStats = []
+
+  if (stats.text > 0) channelStats.push(`💬 ${stats.text} Text`)
+  if (stats.voice > 0) channelStats.push(`🔊 ${stats.voice} Voice`)
+  if (stats.stage > 0) channelStats.push(`🎭 ${stats.stage} Stage`)
+  if (stats.forum > 0) channelStats.push(`📋 ${stats.forum} Forum`)
+  if (stats.announcement > 0) channelStats.push(`📢 ${stats.announcement} Announcement`)
+  if (stats.category > 0) channelStats.push(`📁 ${stats.category} Categories`)
+
+  return channelStats.join('\n') || 'None'
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('server-info')
@@ -35,73 +240,11 @@ module.exports = {
       })
     }
 
-    // Comprehensive channel counting
-    const channels = guild.channels.cache
-    const textChannels = channels.filter((ch) => ch.type === ChannelType.GuildText).size
-    const voiceChannels = channels.filter((ch) => ch.type === ChannelType.GuildVoice).size
-    const stageChannels = channels.filter((ch) => ch.type === ChannelType.GuildStageVoice).size
-    const forumChannels = channels.filter((ch) => ch.type === ChannelType.GuildForum).size
-    const announcementChannels = channels.filter(
-      (ch) => ch.type === ChannelType.GuildAnnouncement
-    ).size
-    const categories = channels.filter((ch) => ch.type === ChannelType.GuildCategory).size
-
-    // Member status breakdown (now available with GuildPresences intent)
-    let onlineCount = 0
-    let idleCount = 0
-    let dndCount = 0
-    let offlineCount = 0
-
-    try {
-      // Count members by presence status
-      const members = guild.members.cache
-      onlineCount = members.filter((m) => m.presence?.status === 'online').size
-      idleCount = members.filter((m) => m.presence?.status === 'idle').size
-      dndCount = members.filter((m) => m.presence?.status === 'dnd').size
-      offlineCount = members.filter((m) => m.presence?.status === 'offline' || !m.presence).size
-    } catch (error) {
-      logger.debug('Could not fetch member presence data', { error: error.message })
-      // Fallback to approximate count if detailed breakdown fails
-      onlineCount = guild.approximatePresenceCount || 0
-    }
-
-    // Server features and capabilities
+    // Compile all server statistics
+    const channelStats = compileChannelStats(guild.channels.cache)
+    const memberStatusBreakdown = compileMemberStatusBreakdown(guild)
     const features = guild.features || []
-    const hasFeatures = features.length > 0
-
-    // Verification level names
-    const verificationLevels = {
-      0: 'None',
-      1: 'Low',
-      2: 'Medium',
-      3: 'High',
-      4: 'Highest',
-    }
-
-    // Premium tier names
-    const premiumTiers = {
-      0: 'None',
-      1: 'Level 1',
-      2: 'Level 2',
-      3: 'Level 3',
-    }
-
-    // Process roles for display
-    const roles = guild.roles.cache
-      .filter((role) => role.name !== '@everyone')
-      .sort((a, b) => b.position - a.position)
-
-    const displayRoles = roles.first(10)
-    let roleList = displayRoles
-      .map((role) => {
-        const colorEmoji = role.hexColor && role.hexColor !== '#000000' ? '🔹' : '⚪'
-        return `${colorEmoji} ${role.name}`
-      })
-      .join('\n')
-
-    if (roles.size > 10) {
-      roleList += `\n... and ${roles.size - 10} more roles`
-    }
+    const serverSettings = compileServerSettings(guild)
 
     logger.info('Compiling comprehensive server statistics', {
       serverId: guild.id,
@@ -109,12 +252,7 @@ module.exports = {
       memberCount: guild.memberCount,
       approximatePresenceCount: guild.approximatePresenceCount,
       premiumTier: guild.premiumTier,
-      textChannels,
-      voiceChannels,
-      stageChannels,
-      forumChannels,
-      announcementChannels,
-      categories,
+      ...channelStats,
       roleCount: guild.roles.cache.size,
       verificationLevel: guild.verificationLevel,
       premiumSubscriptionCount: guild.premiumSubscriptionCount,
@@ -130,9 +268,10 @@ module.exports = {
       explicitContentFilter: guild.explicitContentFilter,
     })
 
+    // Create embed with server information
     const embed = new EmbedBuilder()
       .setTitle(`🏠 ${guild.name}`)
-      .setColor(guild.members.me?.displayColor || 0x5865f2)
+      .setColor(guild.members.me?.displayColor || DEFAULT_COLOR)
       .setThumbnail(guild.iconURL({ size: 256 }))
 
     // Set banner if available
@@ -146,8 +285,8 @@ module.exports = {
     }
 
     // Basic Information
-    const createdAt = `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>`
-    const createdRelative = `<t:${Math.floor(guild.createdTimestamp / 1000)}:R>`
+    const createdAt = formatTimestamp(guild.createdTimestamp, 'F')
+    const createdRelative = formatTimestamp(guild.createdTimestamp, 'R')
 
     embed.addFields(
       { name: '🆔 Server ID', value: `\`${guild.id}\``, inline: true },
@@ -155,10 +294,10 @@ module.exports = {
       { name: '📅 Created', value: `${createdAt}\n${createdRelative}`, inline: true }
     )
 
-    // Member Statistics - using accurate presence data with GuildPresences intent
+    // Member Statistics
     const totalMembers = guild.memberCount.toLocaleString()
-    const onlineMembers = onlineCount.toLocaleString() // Use actual count from presence data
-    const boostLevel = premiumTiers[guild.premiumTier] || 'None'
+    const onlineMembers = memberStatusBreakdown.online.toLocaleString()
+    const boostLevel = PREMIUM_TIERS[guild.premiumTier] || 'None'
     const boosts = guild.premiumSubscriptionCount.toLocaleString()
 
     embed.addFields(
@@ -167,41 +306,30 @@ module.exports = {
       { name: '🚀 Boost Level', value: `${boostLevel} (${boosts} boosts)`, inline: true }
     )
 
-    // Member Status Breakdown (now available with GuildPresences intent)
-    const statusText = []
-    if (onlineCount > 0) statusText.push(`🟢 ${onlineCount.toLocaleString()}`)
-    if (idleCount > 0) statusText.push(`🟡 ${idleCount.toLocaleString()}`)
-    if (dndCount > 0) statusText.push(`🔴 ${dndCount.toLocaleString()}`)
-    if (offlineCount > 0) statusText.push(`⚫ ${offlineCount.toLocaleString()}`)
-
-    if (statusText.length > 0) {
+    // Member Status Breakdown
+    const statusBreakdownText = buildStatusBreakdownText(memberStatusBreakdown)
+    if (statusBreakdownText) {
       embed.addFields({
         name: '📊 Member Status Breakdown',
-        value: statusText.join(' • '),
+        value: statusBreakdownText,
         inline: false,
       })
     }
 
     // Channel Breakdown
-    const channelStats = []
-    if (textChannels > 0) channelStats.push(`💬 ${textChannels} Text`)
-    if (voiceChannels > 0) channelStats.push(`🔊 ${voiceChannels} Voice`)
-    if (stageChannels > 0) channelStats.push(`🎭 ${stageChannels} Stage`)
-    if (forumChannels > 0) channelStats.push(`📋 ${forumChannels} Forum`)
-    if (announcementChannels > 0) channelStats.push(`📢 ${announcementChannels} Announcement`)
-    if (categories > 0) channelStats.push(`📁 ${categories} Categories`)
-
+    const channelStatsText = buildChannelStatsText(channelStats)
     embed.addFields(
-      { name: '📺 Channels', value: channelStats.join('\n') || 'None', inline: true },
+      { name: '📺 Channels', value: channelStatsText, inline: true },
       { name: '🎭 Roles', value: guild.roles.cache.size.toString(), inline: true },
       {
         name: '🛡️ Verification',
-        value: verificationLevels[guild.verificationLevel] || 'Unknown',
+        value: VERIFICATION_LEVELS[guild.verificationLevel] || 'Unknown',
         inline: true,
       }
     )
 
     // Role List
+    const roleList = formatRoleList(guild)
     embed.addFields({
       name: '📋 Role List',
       value: roleList,
@@ -209,40 +337,8 @@ module.exports = {
     })
 
     // Server Features (if any)
-    if (hasFeatures) {
-      const featureEmojis = {
-        ANIMATED_BANNER: '🎬',
-        ANIMATED_ICON: '🎭',
-        BANNER: '🏴',
-        COMMUNITY: '🌍',
-        DISCOVERABLE: '🔍',
-        FEATURABLE: '⭐',
-        INVITE_SPLASH: '💫',
-        MEMBER_VERIFICATION_GATE_ENABLED: '✅',
-        NEWS: '📰',
-        PARTNERED: '🤝',
-        PREVIEW_ENABLED: '👁️',
-        VANITY_URL: '🔗',
-        VERIFIED: '✔️',
-        VIP_REGIONS: '👑',
-        WELCOME_SCREEN_ENABLED: '👋',
-      }
-
-      let featureList = features
-        .slice(0, 10)
-        .map((feature) => {
-          const emoji = featureEmojis[feature] || '✨'
-          return `${emoji} ${feature
-            .replace(/_/g, ' ')
-            .toLowerCase()
-            .replace(/\b\w/g, (l) => l.toUpperCase())}`
-        })
-        .join('\n')
-
-      if (features.length > 10) {
-        featureList += `\n... and ${features.length - 10} more`
-      }
-
+    const featureList = formatServerFeatures(features)
+    if (featureList) {
       embed.addFields({
         name: '✨ Server Features',
         value: featureList,
@@ -251,21 +347,10 @@ module.exports = {
     }
 
     // Additional Server Settings
-    const settings = []
-    if (guild.mfaLevel === 1) settings.push('🔐 2FA Required')
-    if (guild.nsfwLevel > 0) settings.push(`🔞 NSFW Level ${guild.nsfwLevel}`)
-    if (guild.explicitContentFilter > 0)
-      settings.push(`🛡️ Content Filter Level ${guild.explicitContentFilter}`)
-    if (guild.defaultMessageNotifications !== 'ALL') settings.push('🔕 Quiet Notifications')
-    if (guild.systemChannelFlags?.suppressJoinNotifications)
-      settings.push('👋 Join Messages Disabled')
-    if (guild.systemChannelFlags?.suppressPremiumSubscriptions)
-      settings.push('🚀 Boost Messages Disabled')
-
-    if (settings.length > 0) {
+    if (serverSettings.length > 0) {
       embed.addFields({
         name: '⚙️ Server Settings',
-        value: settings.join('\n'),
+        value: serverSettings.join('\n'),
         inline: false,
       })
     }
@@ -283,7 +368,7 @@ module.exports = {
       embedSent: true,
       ephemeral: true,
       featuresCount: features.length,
-      channelsCount: channels.size,
+      channelsCount: guild.channels.cache.size,
       rolesCount: guild.roles.cache.size,
     })
   },
