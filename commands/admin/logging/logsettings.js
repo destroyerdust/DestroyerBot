@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  InteractionContextType,
+  MessageFlags,
+} = require('discord.js')
 const {
   setLogMessageCreateAsync,
   getLogMessageCreateAsync,
@@ -46,6 +51,7 @@ module.exports = {
         subcommandGroup,
         subcommand,
         executedBy: interaction.user.tag,
+        userId: interaction.user.id,
       },
       'Updating log settings'
     )
@@ -81,7 +87,7 @@ module.exports = {
     try {
       await interaction.reply({
         content: `✅ ${type} logging ${enable ? 'enabled' : 'disabled'}.\n\n${statusText}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
 
       logger.info(
@@ -90,6 +96,7 @@ module.exports = {
           subcommandGroup,
           subcommand,
           success: true,
+          userId: interaction.user.id,
         },
         'Log settings updated successfully'
       )
@@ -101,13 +108,19 @@ module.exports = {
           guildId,
           subcommandGroup,
           subcommand,
+          userId: interaction.user.id,
         },
         'Error updating log settings'
       )
-      await interaction.reply({
-        content: '❌ An error occurred while updating the settings.',
-        ephemeral: true,
-      })
+
+      try {
+        await interaction.reply({
+          content: '❌ An error occurred while updating the settings.',
+          flags: MessageFlags.Ephemeral,
+        })
+      } catch (replyError) {
+        logger.error({ error: replyError.message }, 'Failed to send error reply')
+      }
     }
   },
 }
