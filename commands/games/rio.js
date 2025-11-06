@@ -7,6 +7,61 @@ const {
 const logger = require('../../logger')
 const raiderIOApiKey = process.env.RAIDER_IO_API_KEY
 
+// Region choices for Discord command options
+const REGION_CHOICES = [
+  { name: '🇺🇸 US', value: 'us' },
+  { name: '🇪🇺 EU', value: 'eu' },
+  { name: '🇰🇷 KR', value: 'kr' },
+  { name: '🇹🇼 TW', value: 'tw' },
+  { name: '🇨🇳 CN', value: 'cn' },
+]
+
+// Class colors for character embeds
+const CLASS_COLORS = {
+  'Death Knight': 0xc41e3a,
+  'Demon Hunter': 0xa330c9,
+  Druid: 0xff7c0a,
+  Hunter: 0xaad372,
+  Mage: 0x3fc7eb,
+  Monk: 0x00ff98,
+  Paladin: 0xf48cba,
+  Priest: 0xffffff,
+  Rogue: 0xfff468,
+  Shaman: 0x0070dd,
+  Warlock: 0x8788ee,
+  Warrior: 0xc69b6d,
+  Evoker: 0x33937f,
+}
+
+// Classes that can tank in WoW
+const TANKING_CLASSES = ['Warrior', 'Paladin', 'Death Knight', 'Monk', 'Druid', 'Demon Hunter']
+
+// Emoji indicators for boss progression
+const BOSS_KILL_EMOJIS = ['✅', '✅✅']
+
+/**
+ * Capitalizes the first letter of a string and lowercases the rest
+ * @param {string} str - The string to capitalize
+ * @returns {string} The capitalized string
+ */
+function capitalize(str) {
+  if (!str || typeof str !== 'string') return str
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+/**
+ * Safely parses JSON from a fetch response
+ * @param {Response} response - The fetch response object
+ * @returns {Promise<Record<string, any>>} Parsed JSON or empty object
+ */
+async function safeParseJson(response) {
+  try {
+    return await response.json()
+  } catch {
+    return {}
+  }
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('rio')
@@ -129,9 +184,8 @@ module.exports = {
     await interaction.deferReply()
 
     try {
-      let url, data, entityType
+      let data
       if (subcommand === 'character') {
-        entityType = 'character'
         const baseUrl = `https://raider.io/api/v1/characters/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=guild,gear,talents,talents:categorized,mythic_plus_scores_by_season:current`
         const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
@@ -148,7 +202,7 @@ module.exports = {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
+          const errorData = await safeParseJson(response)
           logger.warn(`RaiderIO character API error: ${response.status} ${response.statusText}`, {
             status: response.status,
             statusText: response.statusText,
@@ -189,24 +243,7 @@ module.exports = {
           'Character data retrieved successfully'
         )
 
-        // Get class color or use default
-        const classColors = {
-          'Death Knight': 0xc41e3a,
-          'Demon Hunter': 0xa330c9,
-          Druid: 0xff7c0a,
-          Hunter: 0xaad372,
-          Mage: 0x3fc7eb,
-          Monk: 0x00ff98,
-          Paladin: 0xf48cba,
-          Priest: 0xffffff,
-          Rogue: 0xfff468,
-          Shaman: 0x0070dd,
-          Warlock: 0x8788ee,
-          Warrior: 0xc69b6d,
-          Evoker: 0x33937f,
-        }
-
-        const embedColor = classColors[data.class] || 0x0099ff
+        const embedColor = CLASS_COLORS[data.class] || 0x0099ff
 
         const embed = new EmbedBuilder()
           .setTitle(`🗡️ ${data.name} - ${data.realm} (${data.region.toUpperCase()})`)
@@ -217,12 +254,11 @@ module.exports = {
 
         // Basic Character Info
         const guild = data.guild?.name || 'No Guild'
-        const faction = data.faction.charAt(0).toUpperCase() + data.faction.slice(1)
         const factionEmoji = data.faction === 'alliance' ? '🔵' : '🔴'
 
         embed.addFields(
           { name: '🏰 Guild', value: guild, inline: true },
-          { name: `⚔️ Faction`, value: `${factionEmoji} ${faction}`, inline: true }
+          { name: '⚔️ Faction', value: `${factionEmoji} ${capitalize(data.faction)}`, inline: true }
         )
 
         // Mythic+ Scores
@@ -231,17 +267,7 @@ module.exports = {
         const healerScore = data.mythic_plus_scores_by_season?.[0]?.segments?.healer?.score || 0
         const tankScore = data.mythic_plus_scores_by_season?.[0]?.segments?.tank?.score || 0
 
-        // Determine if character can tank based on class (any class with tanking specs)
-        const tankingClasses = [
-          'Warrior',
-          'Paladin',
-          'Death Knight',
-          'Monk',
-          'Druid',
-          'Demon Hunter',
-        ]
-
-        const canTank = tankingClasses.includes(data.class)
+        const canTank = TANKING_CLASSES.includes(data.class)
 
         embed.addFields(
           { name: '⭐ Overall Score', value: mythicScore.toFixed(0), inline: true },
@@ -292,7 +318,6 @@ module.exports = {
           'Character info embed sent'
         )
       } else if (subcommand === 'guild') {
-        entityType = 'guild'
         const baseUrl = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=raid_progression:current-tier,raid_rankings:current-tier`
         const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
@@ -309,7 +334,7 @@ module.exports = {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
+          const errorData = await safeParseJson(response)
           logger.warn(`RaiderIO guild API error: ${response.status} ${response.statusText}`, {
             status: response.status,
             statusText: response.statusText,
@@ -354,19 +379,21 @@ module.exports = {
 
         // Faction-based colors
         const factionColor = data.faction === 'alliance' ? 0x004a93 : 0x8b0000
+        const factionEmoji = data.faction === 'alliance' ? '🔵' : '🔴'
 
         const embed = new EmbedBuilder()
           .setTitle(`🏰 ${data.name} - ${data.realm} (${data.region.toUpperCase()})`)
           .setURL(data.profile_url)
           .setColor(factionColor)
-          .setDescription(`*${data.faction.charAt(0).toUpperCase() + data.faction.slice(1)} Guild*`)
+          .setDescription(`*${capitalize(data.faction)} Guild*`)
 
         // Basic Guild Info
-        const faction = data.faction.charAt(0).toUpperCase() + data.faction.slice(1)
-        const factionEmoji = data.faction === 'alliance' ? '🔵' : '🔴'
-
         embed.addFields(
-          { name: `⚔️ Faction`, value: `${factionEmoji} ${faction}`, inline: true },
+          {
+            name: '⚔️ Faction',
+            value: `${factionEmoji} ${capitalize(data.faction)}`,
+            inline: true,
+          },
           { name: '👥 Members', value: (data.member_count || 'Unknown').toString(), inline: true }
         )
 
@@ -441,7 +468,6 @@ module.exports = {
           'Guild info embed sent'
         )
       } else if (subcommand === 'affixes') {
-        entityType = 'affixes'
         const baseUrl = `https://raider.io/api/v1/mythic-plus/affixes?region=${region}&locale=en`
         const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
 
@@ -458,7 +484,7 @@ module.exports = {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
+          const errorData = await safeParseJson(response)
           logger.warn(`RaiderIO affixes API error: ${response.status} ${response.statusText}`, {
             status: response.status,
             statusText: response.statusText,
