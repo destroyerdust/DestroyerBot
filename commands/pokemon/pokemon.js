@@ -5,31 +5,151 @@ const {
   MessageFlags,
 } = require('discord.js')
 const logger = require('../../logger')
-const pokemonApiKey = process.env.POKEMON_API_KEY
+const TCGDex = require('@tcgdex/sdk').default
+const { Query } = require('@tcgdex/sdk')
 
-// This is a test file for testing different APIs
+// Using TCGDex SDK instead of direct API calls
+const sdk = new TCGDex('en')
+
+// Cache for series data to speed up autocomplete
+let seriesCache = null
+let seriesCacheTime = 0
+const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
+
+// Pre-fetch series data to avoid timeout on first autocomplete request
+let seriesCachePromise = null
+
+const initializeSeriesCache = () => {
+  if (seriesCachePromise) return seriesCachePromise
+
+  seriesCachePromise = sdk.fetch('series').then((series) => {
+    seriesCache = series
+    seriesCacheTime = Date.now()
+    logger.debug({ cacheSize: seriesCache.length }, 'Series cache initialized')
+    return seriesCache
+  }).catch((error) => {
+    logger.error({ error: error.message }, 'Failed to initialize series cache')
+    seriesCache = []
+    return []
+  })
+
+  return seriesCachePromise
+}
+
+const getSeriesCached = async () => {
+  const now = Date.now()
+
+  // If cache exists and is fresh, return it immediately
+  if (seriesCache && now - seriesCacheTime < CACHE_DURATION) {
+    return seriesCache
+  }
+
+  // If currently fetching, wait for that promise
+  if (seriesCachePromise) {
+    return await seriesCachePromise
+  }
+
+  // Otherwise start a new fetch
+  return initializeSeriesCache()
+}
+
+// Initialize cache as soon as module loads (non-blocking background task)
+initializeSeriesCache()
+
+// Attempt to initialize cache with timeout - if it takes too long, try again on first request
+let cacheInitialized = false
+getSeriesCached().then(() => {
+  cacheInitialized = true
+  logger.debug('Series cache ready for use')
+}).catch((error) => {
+  logger.warn({ error: error.message }, 'Initial series cache load failed, will retry on first request')
+})
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('pokemon')
-    .setDescription('Pokemon TCG card information')
-    .setContexts(
-      InteractionContextType.Guild | InteractionContextType.BotDM | InteractionContextType.DM
-    )
+    .setDescription('Testing command for different API experiments')
+    .setContexts(InteractionContextType.Guild | InteractionContextType.BotDM)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('search')
-        .setDescription('Search for a Pokemon card by name')
+        .setDescription('Search for something')
         .addStringOption((option) =>
-          option
-            .setName('query')
-            .setDescription('Card name or partial match (e.g., "charizard")')
-            .setRequired(true)
+          option.setName('query').setDescription('Search query').setRequired(true)
         )
     )
     .addSubcommand((subcommand) =>
-      subcommand.setName('random').setDescription('Get a random Pokemon card')
+      subcommand.setName('random').setDescription('Get something random')
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('series')
+        .setDescription('Get information about a TCGDex series')
+        .addStringOption((option) =>
+          option
+            .setName('series')
+            .setDescription('Select a series')
+            .setRequired(true)
+            .setAutocomplete(true)
+        )
     ),
+  async autocomplete(interaction) {
+    const focusedOption = interaction.options.getFocused(true)
+
+    if (focusedOption.name === 'series') {
+      try {
+        logger.debug(
+          {
+            user: interaction.user.id,
+            focusedValue: focusedOption.value,
+          },
+          'Starting series autocomplete'
+        )
+
+        // Use timeout to ensure response within Discord's 3-second limit
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Autocomplete timeout')), 2800) // Leave 200ms buffer
+        )
+
+        const allSeries = await Promise.race([getSeriesCached(), timeoutPromise])
+
+        const filtered = allSeries
+          .filter((series) => series.name.toLowerCase().includes(focusedOption.value.toLowerCase()))
+          .slice(0, 25) // Discord limits autocomplete to 25 choices
+
+        const choices = filtered.map((series) => ({
+          name: series.name,
+          value: series.id,
+        }))
+
+        logger.debug(
+          {
+            filteredCount: choices.length,
+            searchTerm: focusedOption.value,
+          },
+          'Series autocomplete filtered'
+        )
+
+        await interaction.respond(choices)
+      } catch (error) {
+        logger.error(
+          {
+            error: error.message,
+            user: interaction.user.id,
+          },
+          'Series autocomplete error'
+        )
+        // Try to respond with empty array if possible, otherwise silently fail
+        try {
+          if (!interaction.responded) {
+            await interaction.respond([])
+          }
+        } catch {
+          // Interaction expired, nothing we can do
+        }
+      }
+    }
+  },
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
     const user = interaction.user
@@ -40,153 +160,186 @@ module.exports = {
         requestedByName: user.username,
         subcommand,
       },
-      `${user.username} requested pokemon ${subcommand}`
+      `${user.username} requested test ${subcommand}`
     )
 
     await interaction.deferReply()
 
     try {
-      let apiUrl
-      let searchQuery = ''
+      let item
 
       if (subcommand === 'search') {
         const query = interaction.options.getString('query')
-        searchQuery = query
-        apiUrl = `https://api.pokemontcg.io/v2/cards?q=name:"${encodeURIComponent(
-          query
-        )}*"&order=name&pageSize=1`
-      } else if (subcommand === 'random') {
-        // Note: API doesn't have true random, using a random page approach
-        const randomPage = Math.floor(Math.random() * 500) + 1 // Approximate total pages
-        apiUrl = `https://api.pokemontcg.io/v2/cards?page=${randomPage}&pageSize=1&order=name`
-      }
-
-      const response = await fetch(apiUrl, {
-        headers: {
-          'X-Api-Key': pokemonApiKey,
-        },
-      })
-
-      if (!response.ok) {
-        logger.warn(
+        logger.debug(
           {
-            status: response.status,
-            statusText: response.statusText,
-            apiUrl,
-            subcommand,
-            query: searchQuery,
+            query,
+            user: user.id,
           },
-          `Pokemon TCG API error: ${response.status} ${response.statusText}`
+          'Starting card search'
+        )
+        // const results = await sdk.card.where({ name: query })
+        const results = await sdk.card.list(new Query().equal('name', query))
+        logger.debug(
+          {
+            query,
+            resultsCount: results?.length || 0,
+            user: user.id,
+          },
+          'Card search completed'
+        )
+        if (!results || results.length === 0) {
+          logger.info(
+            {
+              subcommand,
+              query,
+              user: user.id,
+            },
+            'No results found'
+          )
+          return interaction.editReply({
+            content: `No Pokemon card found for "${query}". Please try a different search term.`,
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+        item = await sdk.card.get(results[0].id)
+        logger.debug(
+          {
+            selectedCardId: item.id,
+            selectedCardName: item.name,
+            totalResults: results.length,
+          },
+          'Selected first card from search results'
+        )
+      } else if (subcommand === 'random') {
+        // Get a random card
+        item = await sdk.random.card()
+        if (!item) {
+          return interaction.editReply({
+            content: 'Could not retrieve a random card.',
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+      } else if (subcommand === 'series') {
+        const seriesId = interaction.options.getString('series')
+        logger.debug(
+          {
+            seriesId,
+            user: user.id,
+          },
+          'Starting series fetch'
         )
 
-        if (response.status === 401 || response.status === 403) {
+        const allSeries = await getSeriesCached()
+        const series = allSeries.find((s) => s.id === seriesId)
+
+        if (!series) {
+          logger.info(
+            {
+              subcommand,
+              seriesId,
+              user: user.id,
+            },
+            'Series not found'
+          )
           return interaction.editReply({
-            content: 'Pokemon TCG API key is invalid or missing from .env.',
+            content: `Series with ID "${seriesId}" not found.`,
             flags: MessageFlags.Ephemeral,
           })
         }
 
-        return interaction.editReply({
-          content: `Could not fetch Pokemon card data (${response.status}). Please try again later.`,
-          flags: MessageFlags.Ephemeral,
-        })
-      }
+        logger.debug(
+          {
+            seriesId: series.id,
+            seriesName: series.name,
+            logoUrl: series.logo,
+          },
+          'Series data fetched'
+        )
 
-      const data = await response.json()
+        const embed = new EmbedBuilder()
+          .setTitle(series.name)
+          .setColor(0x00ff00)
+          .addFields({
+            name: 'Series ID',
+            value: series.id,
+            inline: true,
+          })
+          .setFooter({
+            text: `Requested by ${user.username}`,
+          })
 
-      if (!data.data || data.data.length === 0) {
+        if (series.logo) {
+          embed.setImage(`${series.logo}.webp`)
+        }
+
+        await interaction.editReply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+
         logger.info(
           {
-            subcommand,
-            query: searchQuery,
-            user: user.id,
+            seriesName: series.name,
+            seriesId: series.id,
+            seriesLogo: series.logo,
+            user: user.username,
+            embedSent: true,
+            ephemeral: true,
           },
-          'No Pokemon card found'
+          'Series embed sent'
         )
-        return interaction.editReply({
-          content: `No Pokemon card found for "${searchQuery}". Please try a different search term.`,
-          flags: MessageFlags.Ephemeral,
-        })
+        return
       }
 
-      const card = data.data[0]
+      const imageUrl = `${item.image}/high.webp`
 
       logger.debug(
         {
-          cardId: card.id,
-          cardName: card.name,
-          setName: card.set?.name,
+          itemId: item.id,
+          itemName: item.name,
           subcommand,
-          query: searchQuery,
+          setId: item.set?.id,
+          localId: item.localId,
+          imageUrl,
+          variants: item.variants,
+          pricing: item.pricing,
         },
-        'Pokemon card data found'
+        'Data found'
       )
 
       const embed = new EmbedBuilder()
-        .setTitle(`${card.name}${card.supertype === 'Pokémon' ? ` (HP: ${card.hp || 'N/A'})` : ''}`)
-        .setDescription(card.flavorText || 'No flavor text available.')
-        .setColor(card.types && card.types.length > 0 ? getTypeColor(card.types[0]) : 0x00ff00)
-        .addFields(
-          {
-            name: 'Set',
-            value: `${card.set?.name || 'Unknown'} (${card.set?.releaseDate ? new Date(card.set.releaseDate).getFullYear() : 'N/A'})`,
-            inline: true,
-          },
-          {
-            name: 'Rarity',
-            value: card.rarity || 'N/A',
-            inline: true,
-          },
-          {
-            name: 'Card Type',
-            value: card.supertype || 'Unknown',
-            inline: true,
+        .setTitle(item.name)
+        .setDescription(item.set?.name ? `Set: ${item.set.name}` : 'Test result')
+        .setColor(0x00ff00)
+
+      embed.setImage(imageUrl)
+
+      // Add TCGPlayer pricing if available
+      if (item.pricing?.tcgplayer) {
+        const tcgplayer = item.pricing.tcgplayer
+        Object.entries(tcgplayer).forEach(([variant, prices]) => {
+          if (variant !== 'updated' && variant !== 'unit' && prices?.marketPrice) {
+            embed.addFields({
+              name: `${variant.charAt(0).toUpperCase() + variant.slice(1)} Market Price`,
+              value: `\$${prices.marketPrice.toFixed(2)}`,
+              inline: true,
+            })
           }
-        )
-
-      if (card.types && card.types.length > 0) {
-        embed.addFields({
-          name: 'Types',
-          value: card.types.join(', '),
-          inline: true,
         })
-      }
-
-      if (card.evolvesFrom) {
-        embed.addFields({
-          name: 'Evolves From',
-          value: card.evolvesFrom,
-          inline: true,
-        })
-      }
-
-      if (card.cardmarket && card.cardmarket.prices && card.cardmarket.prices.averageSellPrice) {
-        embed.addFields({
-          name: 'Market Price (EUR)',
-          value: `€${card.cardmarket.prices.averageSellPrice.toFixed(2)}`,
-          inline: true,
-        })
-      }
-
-      if (card.images?.large) {
-        embed.setImage(card.images.large)
       }
 
       embed.setFooter({
-        text: `Card ID: ${card.id} • Requested by ${user.username}`,
+        text: `ID: ${item.id} • Requested by ${user.username}`,
       })
 
       await interaction.editReply({ embeds: [embed], flags: MessageFlags.Ephemeral })
 
       logger.info(
         {
-          cardName: card.name,
-          cardId: card.id,
+          itemName: item.name,
+          itemId: item.id,
           user: user.username,
           embedSent: true,
           ephemeral: true,
         },
-        'Pokemon card embed sent'
+        'Test embed sent'
       )
     } catch (error) {
       logger.error(
@@ -197,30 +350,12 @@ module.exports = {
           query: interaction.options.getString('query') || 'random',
           user: user.id,
         },
-        'Pokemon command error'
+        'Test command error'
       )
       await interaction.editReply({
-        content: 'An error occurred while fetching Pokemon card data. Please try again later.',
+        content: 'An error occurred while fetching data. Please try again later.',
         ephemeral: true,
       })
     }
   },
-}
-
-// Helper function to get color based on Pokemon type
-function getTypeColor(type) {
-  const colors = {
-    Grass: 0x78c850,
-    Fire: 0xf08030,
-    Water: 0x6890f0,
-    Lightning: 0xf8d030,
-    Psychic: 0xf85888,
-    Fighting: 0xc03028,
-    Darkness: 0x705848,
-    Metal: 0xb8b8d0,
-    Fairy: 0xfeeae9,
-    Dragon: 0x7038f8,
-    Colorless: 0xa8a878,
-  }
-  return colors[type] || 0x68a090
 }
