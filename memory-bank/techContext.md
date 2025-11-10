@@ -22,6 +22,7 @@
 
 ### Development Tools
 
+- **npm**: Package manager for dependency management
 - **ESLint**: Code linting and style enforcement
 - **Prettier**: Code formatting and consistency
 - **Pino**: Advanced logging library with structured output

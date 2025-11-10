@@ -20,9 +20,17 @@
 
 ## Recent Changes
 
+### Package Manager Switch: Bun → npm
+
+- **Status**: ✅ Completed - November 10, 2025
+- **Scope**: Switched from Bun back to npm for dependency management
+- **Rationale**: Standardization on npm for better ecosystem compatibility and team consistency
+- **Changes**: Removed bun.lock, reinstalled dependencies with npm install
+- **Impact**: No functional changes, maintains all existing npm scripts and workflows
+
 ### Discord.js v14+ Compliance Refactoring Complete
 
-- **Status**: ✅ Completed (Most Recent) - November 6, 2025
+- **Status**: ✅ Completed - November 6, 2025
 - **Scope**: Comprehensive refactoring of weather, utility, gaming, and admin commands
 - **Recent Commits** (Last 15):
   - `bc703c8`: weather command context array format update to v14+ compliance
@@ -32,8 +40,8 @@
   - `68447a5`: logsettings.js updated for v14+ best practices
   - `d8206fc`: setlogchannel.js updated for v14+ best practices
   - `06d2f6a`: Code formatting cleanup
-  - `06d2f6a`: setwelcomechannel.js upgraded to v14+ best practices
-  - `fd86a06`: setwelcomemessage.js updated to v14+ standards
+  - `06d2f6a`: setwelcomechannel.js upgraded to v14+ standards
+  - `fd86a06`: setwelcomemessage.js refactored for enable/disable naming
   - `d77012f`: togglewelcome.js refactored for enable/disable naming
 - **Impact**: All commands now fully compliant with Discord.js v14+ API standards
 - **Verification**: All commands successfully deployed and tested
