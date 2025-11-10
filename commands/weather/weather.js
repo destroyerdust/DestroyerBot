@@ -130,7 +130,7 @@ module.exports = {
       logger.debug(`Fetching weather data: ${latNum},${lonNum} (${units})`)
 
       const weatherResponse = await fetch(
-        `https://api.pirateweather.net/forecast/${pirateWeatherApiKey}/${latNum},${lonNum}?exclude=minutely,hourly,daily,alerts,flags&units=${units}&lang=en`
+        `https://api.pirateweather.net/forecast/${pirateWeatherApiKey}/${latNum},${lonNum}?exclude=minutely,hourly,daily,flags&units=${units}&lang=en`
       )
 
       if (!weatherResponse.ok) {
@@ -174,7 +174,39 @@ module.exports = {
         'Weather data retrieved successfully'
       )
 
+      // Process and filter alerts
+      const getValidAlerts = () => {
+        if (!data.alerts || !Array.isArray(data.alerts)) return []
+        const now = Math.floor(Date.now() / 1000) // Current Unix timestamp in seconds
+        return data.alerts.filter((alert) => alert.expires > now)
+      }
+
+      const getSeverityBadge = (severity) => {
+        const level = severity?.toLowerCase() || ''
+        if (level.includes('extreme')) return '🔴'
+        if (level.includes('high')) return '🟠'
+        if (level.includes('moderate')) return '🟡'
+        return '⚪'
+      }
+
+      const getRelativeTime = (unixTimestamp) => {
+        const now = Date.now()
+        const alertTime = unixTimestamp * 1000 // Convert to milliseconds
+        const diff = alertTime - now
+        const minutes = Math.floor(diff / 60000)
+        const hours = Math.floor(diff / 3600000)
+        const days = Math.floor(diff / 86400000)
+
+        if (days > 0) return `${days}d`
+        if (hours > 0) return `${hours}h`
+        if (minutes > 0) return `${minutes}m`
+        return 'Expired'
+      }
+
+      const validAlerts = getValidAlerts()
+
       // Determine weather icon and color based on conditions
+
       const summary = data.currently?.summary?.toLowerCase() || ''
       let weatherIcon = '🌤️'
       let embedColor = 0x00aaff // Default blue
@@ -204,12 +236,48 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setTitle(`${weatherIcon} Weather in ${display_name}`)
-        .setColor(embedColor)
+        .setColor(validAlerts.length > 0 ? 0xff0000 : embedColor) // Red if alerts exist
         .setTimestamp()
         .setFooter({
           text: 'Powered by Pirate Weather',
           iconURL: 'https://i.imgur.com/placeholder.png', // Could add a weather API icon
         })
+
+      // Add alert fields if alerts exist
+      if (validAlerts.length > 0) {
+        embed.addFields({
+          name: '⚠️ Active Weather Alerts',
+          value: `${validAlerts.length} ${validAlerts.length === 1 ? 'alert' : 'alerts'} active`,
+          inline: false,
+        })
+
+        validAlerts.forEach((alert) => {
+          const severityBadge = getSeverityBadge(alert.severity)
+          const expiresIn = getRelativeTime(alert.expires)
+          const regionCount = alert.regions?.length || 0
+          const regionText =
+            regionCount > 0
+              ? `🔗 Affects ${regionCount} ${regionCount === 1 ? 'region' : 'regions'}`
+              : 'No affected regions'
+
+          const alertValue = `${expiresIn === 'Expired' ? '**EXPIRED**' : `Expires in ${expiresIn}`}\n${regionText}${alert.uri ? `\n[View Details](${alert.uri})` : ''}`
+
+          embed.addFields({
+            name: `${severityBadge} ${alert.title}`,
+            value: alertValue,
+            inline: false,
+          })
+        })
+
+        logger.info(
+          {
+            location: display_name,
+            alertCount: validAlerts.length,
+            user: interaction.user.id,
+          },
+          'Weather alerts included in response'
+        )
+      }
 
       if (data.currently) {
         const currently = data.currently

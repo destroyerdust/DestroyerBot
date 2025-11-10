@@ -16,7 +16,7 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 2. Install dependencies:
 
    ```bash
-   npm install
+   bun install
    ```
 
 3. Copy `.env.example` to `.env` and fill in your Discord bot details and API keys:
@@ -32,7 +32,7 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 1. Deploy slash commands:
 
    ```bash
-   node deploy-commands.js
+   bun deploy-commands.js
    ```
 
    The deployment script now supports multiple guilds as configured in `.env`.
@@ -40,9 +40,9 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 2. Start the bot:
 
    ```bash
-   npm run dev  # For development with PM2 watch
-   npm start    # For production with PM2
-   npm stop     # To stop the bot
+   bun run dev  # For development with PM2 watch
+   bun start    # For production with PM2
+   bun stop     # To stop the bot
    ```
 
 3. Invite the bot to your server with the required permissions.
@@ -156,13 +156,13 @@ An automated moderation logging system that tracks message activities in Discord
 
 ### Scripts
 
-- `npm run dev` - Start the bot with PM2 watch mode
-- `npm run dev-win` / `npm run dev-unix` - Platform-specific development commands
-- `npm start` - Start the bot in production mode with PM2
-- `npm stop` - Stop the bot
-- `npm run format` - Format code with Prettier
-- `npm run format:check` - Check code formatting with Prettier
-- `npm test` - Run tests (placeholder script)
+- `bun run dev` - Start the bot with PM2 watch mode
+- `bun run dev-win` / `bun run dev-unix` - Platform-specific development commands
+- `bun start` - Start the bot in production mode with PM2
+- `bun stop` - Stop the bot
+- `bun run format` - Format code with Prettier
+- `bun run format:check` - Check code formatting with Prettier
+- `bun test` - Run tests (placeholder script)
 
 ### Tools
 
