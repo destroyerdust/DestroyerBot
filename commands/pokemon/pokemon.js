@@ -22,16 +22,19 @@ let seriesCachePromise = null
 const initializeSeriesCache = () => {
   if (seriesCachePromise) return seriesCachePromise
 
-  seriesCachePromise = sdk.fetch('series').then((series) => {
-    seriesCache = series
-    seriesCacheTime = Date.now()
-    logger.debug({ cacheSize: seriesCache.length }, 'Series cache initialized')
-    return seriesCache
-  }).catch((error) => {
-    logger.error({ error: error.message }, 'Failed to initialize series cache')
-    seriesCache = []
-    return []
-  })
+  seriesCachePromise = sdk
+    .fetch('series')
+    .then((series) => {
+      seriesCache = series
+      seriesCacheTime = Date.now()
+      logger.debug({ cacheSize: seriesCache.length }, 'Series cache initialized')
+      return seriesCache
+    })
+    .catch((error) => {
+      logger.error({ error: error.message }, 'Failed to initialize series cache')
+      seriesCache = []
+      return []
+    })
 
   return seriesCachePromise
 }
@@ -58,12 +61,17 @@ initializeSeriesCache()
 
 // Attempt to initialize cache with timeout - if it takes too long, try again on first request
 let cacheInitialized = false
-getSeriesCached().then(() => {
-  cacheInitialized = true
-  logger.debug('Series cache ready for use')
-}).catch((error) => {
-  logger.warn({ error: error.message }, 'Initial series cache load failed, will retry on first request')
-})
+getSeriesCached()
+  .then(() => {
+    cacheInitialized = true
+    logger.debug('Series cache ready for use')
+  })
+  .catch((error) => {
+    logger.warn(
+      { error: error.message },
+      'Initial series cache load failed, will retry on first request'
+    )
+  })
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -107,8 +115,8 @@ module.exports = {
         )
 
         // Use timeout to ensure response within Discord's 3-second limit
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Autocomplete timeout')), 2800) // Leave 200ms buffer
+        const timeoutPromise = new Promise(
+          (_, reject) => setTimeout(() => reject(new Error('Autocomplete timeout')), 2800) // Leave 200ms buffer
         )
 
         const allSeries = await Promise.race([getSeriesCached(), timeoutPromise])
