@@ -216,7 +216,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('server-info')
     .setDescription('Display comprehensive information about this server.')
-    .setContexts(InteractionContextType.Guild),
+    .setContexts([InteractionContextType.Guild]),
   async execute(interaction) {
     const guild = interaction.guild
 
