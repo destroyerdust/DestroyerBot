@@ -94,6 +94,7 @@ Provide your review as a structured report with:
 **Self-Verification:**
 
 Before completing your review, ask yourself:
+
 - Have I checked all security-critical aspects?
 - Are my recommendations aligned with project patterns?
 - Have I provided enough context for the developer to understand and fix issues?
