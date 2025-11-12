@@ -93,7 +93,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('user-info')
     .setDescription('Display detailed information about a user')
-    .setContexts(InteractionContextType.Guild | InteractionContextType.BotDM)
+    .setContexts([InteractionContextType.Guild, InteractionContextType.BotDM])
     .addUserOption((option) =>
       option.setName('user').setDescription('The user to get info about').setRequired(false)
     ),
@@ -119,7 +119,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setTitle(`👤 User Info: ${user.username}`)
-      .setThumbnail(user.displayAvatarURL({ dynamic: true, size: 256 }))
+      .setThumbnail(user.displayAvatarURL({ size: 256 }))
       .setColor(member?.displayColor || user.hexAccentColor || 0x00ff00)
 
     // Basic user information
