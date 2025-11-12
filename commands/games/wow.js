@@ -119,9 +119,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('wow')
     .setDescription('🗡️ World of Warcraft information and utilities')
-    .setContexts(
-      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
-    )
+    .setContexts([
+      InteractionContextType.Guild,
+      InteractionContextType.DM,
+      InteractionContextType.BotDM,
+    ])
     .addSubcommand((subcommand) =>
       subcommand
         .setName('realm')
@@ -625,9 +627,6 @@ async function getBlizzardAccessToken() {
     },
     'Blizzard API authentication successful'
   )
-
-  // DEBUG: Output access token to console (REMOVE IN PRODUCTION)
-  console.log('🔑 Blizzard Access Token:', authData.access_token)
 
   return authData.access_token
 }
