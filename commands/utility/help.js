@@ -103,28 +103,30 @@ module.exports = {
         'server-info': 'Utility',
         'user-info': 'Utility',
         'bot-stats': 'Utility',
-        stats: 'Utility',
-        health: 'Utility',
-        errors: 'Utility',
-        guildstats: 'Utility',
+        'avatar-info': 'Utility',
+        'channel-info': 'Utility',
+        'role-info': 'Utility',
+        'role-list': 'Utility',
         clean: 'Utility',
         help: 'Utility',
 
         // Moderation commands
         kick: 'Moderation',
+        setnick: 'Moderation',
 
         // Weather commands
         weather: 'Weather',
 
         // Game commands
         rio: 'Games',
+        wow: 'Games',
+        roll: 'Games',
 
         // Hardware commands
         '3d-print-status': 'Hardware',
 
         // Pokemon commands
         pokemon: 'Pokemon',
-        test: 'Pokemon',
 
         // Admin commands
         listpermissions: 'Admin',
@@ -133,6 +135,10 @@ module.exports = {
         resetpermissions: 'Admin',
         setcommandrole: 'Admin',
         setlogchannel: 'Admin',
+        setwelcomechannel: 'Admin',
+        setwelcomemessage: 'Admin',
+        togglewelcome: 'Admin',
+        togglecommand: 'Admin',
       }
 
       // Group commands by category with dynamic discovery
@@ -170,11 +176,7 @@ module.exports = {
         .setColor(0x5865f2) // Discord blurple
         .setFooter({
           text: `Total commands: ${totalCommands} • Requested by ${interaction.user.username}`,
-          iconURL: interaction.user.displayAvatarURL({
-            dynamic: true,
-            size: 16,
-            extension: 'png',
-          }),
+          iconURL: interaction.user.displayAvatarURL({ size: 16 }),
         })
         .setTimestamp()
 
