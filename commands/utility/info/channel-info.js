@@ -178,11 +178,7 @@ module.exports = {
         .setColor(0x5865f2)
         .setFooter({
           text: `Requested by ${interaction.user.username}`,
-          iconURL: interaction.user.displayAvatarURL({
-            dynamic: true,
-            size: 16,
-            extension: 'png',
-          }),
+          iconURL: interaction.user.displayAvatarURL({ size: 64 }),
         })
         .setTimestamp()
 
