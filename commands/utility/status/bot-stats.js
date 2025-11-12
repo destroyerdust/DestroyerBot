@@ -67,16 +67,12 @@ module.exports = {
         .setTitle('🤖 Bot Statistics')
         .setDescription('Current bot status and system information')
         .setColor(0x0099ff)
-
-      // Add thumbnail with error handling
-      if (client.user.displayAvatarURL()) {
-        embed.setThumbnail(
+        .setThumbnail(
           client.user.displayAvatarURL({
             size: 128,
             extension: 'png',
           })
         )
-      }
 
       // Basic stats
       embed.addFields(
