@@ -4,6 +4,7 @@ const {
   MessageFlags,
   InteractionContextType,
   ApplicationIntegrationType,
+  version: discordJsVersion,
 } = require('discord.js')
 const logger = require('../../../logger')
 const os = require('node:os')
@@ -12,7 +13,10 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('bot-stats')
     .setDescription('Display bot statistics and status')
-    .setIntegrationTypes([ApplicationIntegrationType.GuildInstall])
+    .setIntegrationTypes([
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ])
     .setContexts([InteractionContextType.Guild, InteractionContextType.BotDM]),
   async execute(interaction) {
     // Defer immediately to avoid timeout on slow operations
@@ -108,7 +112,7 @@ module.exports = {
         { name: '🟢 Node.js', value: process.version, inline: true },
         {
           name: '🔷 Discord.js',
-          value: require('discord.js').version,
+          value: discordJsVersion,
           inline: true,
         },
         { name: '🖥️ System', value: systemInfo, inline: true }
@@ -145,14 +149,7 @@ module.exports = {
       try {
         const errorMessage = '❌ Failed to retrieve bot statistics. Please try again.'
 
-        if (interaction.replied || interaction.deferred) {
-          await interaction.editReply({ content: errorMessage })
-        } else {
-          await interaction.reply({
-            content: errorMessage,
-            flags: MessageFlags.Ephemeral,
-          })
-        }
+        await interaction.editReply({ content: errorMessage })
       } catch (replyError) {
         logger.error({ error: replyError.message }, 'Failed to send error response')
       }
