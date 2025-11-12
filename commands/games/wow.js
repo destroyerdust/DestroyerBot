@@ -119,11 +119,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('wow')
     .setDescription('🗡️ World of Warcraft information and utilities')
-    .setContexts([
-      InteractionContextType.Guild,
-      InteractionContextType.DM,
-      InteractionContextType.BotDM,
-    ])
+    .setContexts(
+      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
+    )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('realm')
