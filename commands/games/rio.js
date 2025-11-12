@@ -5,7 +5,12 @@ const {
   MessageFlags,
 } = require('discord.js')
 const logger = require('../../logger')
-const raiderIOApiKey = process.env.RAIDER_IO_API_KEY
+const {
+  getCharacterProfile,
+  getGuildProfile,
+  getAffixes,
+  RaiderIOError,
+} = require('../../utils/raiderioApi')
 
 // Region choices for Discord command options
 const REGION_CHOICES = [
@@ -49,19 +54,6 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-/**
- * Safely parses JSON from a fetch response
- * @param {Response} response - The fetch response object
- * @returns {Promise<Record<string, any>>} Parsed JSON or empty object
- */
-async function safeParseJson(response) {
-  try {
-    return await response.json()
-  } catch {
-    return {}
-  }
-}
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('rio')
@@ -87,13 +79,7 @@ module.exports = {
             .setName('region')
             .setDescription('The region the character is on')
             .setRequired(false)
-            .addChoices(
-              { name: '🇺🇸 US', value: 'us' },
-              { name: '🇪🇺 EU', value: 'eu' },
-              { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' },
-              { name: '🇨🇳 CN', value: 'cn' }
-            )
+            .addChoices(...REGION_CHOICES)
         )
     )
     .addSubcommand((subcommand) =>
@@ -114,13 +100,7 @@ module.exports = {
             .setName('region')
             .setDescription('The region the guild is on')
             .setRequired(false)
-            .addChoices(
-              { name: '🇺🇸 US', value: 'us' },
-              { name: '🇪🇺 EU', value: 'eu' },
-              { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' },
-              { name: '🇨🇳 CN', value: 'cn' }
-            )
+            .addChoices(...REGION_CHOICES)
         )
     )
     .addSubcommand((subcommand) =>
@@ -132,13 +112,7 @@ module.exports = {
             .setName('region')
             .setDescription('Region for affix data')
             .setRequired(false)
-            .addChoices(
-              { name: '🇺🇸 US', value: 'us' },
-              { name: '🇪🇺 EU', value: 'eu' },
-              { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' },
-              { name: '🇨🇳 CN', value: 'cn' }
-            )
+            .addChoices(...REGION_CHOICES)
         )
     ),
   async execute(interaction) {
@@ -186,61 +160,11 @@ module.exports = {
     try {
       let data
       if (subcommand === 'character') {
-        const baseUrl = `https://raider.io/api/v1/characters/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=guild,gear,talents,talents:categorized,mythic_plus_scores_by_season:current`
-        const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
-
-        logger.debug(`Fetching character data: ${region}/${cleanRealm}/${cleanName}`)
-        logger.debug(`API Key configured: ${!!raiderIOApiKey}`)
-        logger.debug(
-          `Final API URL: ${raiderIOApiKey ? apiUrl.replace(raiderIOApiKey, '[REDACTED]') : apiUrl}`
-        )
-
-        const response = await fetch(apiUrl, {
-          headers: {
-            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
-          },
-        })
-
-        if (!response.ok) {
-          const errorData = await safeParseJson(response)
-          logger.warn(`RaiderIO character API error: ${response.status} ${response.statusText}`, {
-            status: response.status,
-            statusText: response.statusText,
-            region,
-            realm: cleanRealm,
-            name: cleanName,
-            apiUrl,
-            errorData,
-          })
-
-          let errorMessage = '❌ Character not found or API error.'
-          if (response.status === 404) {
-            errorMessage = `❌ Character "${cleanName}" not found on realm "${cleanRealm}" in region ${region.toUpperCase()}.`
-          } else if (response.status === 429) {
-            errorMessage = '⚠️ Raider.IO API rate limit exceeded. Please try again later.'
-          } else if (response.status >= 500) {
-            errorMessage =
-              '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
-          }
-
-          return interaction.editReply(errorMessage)
-        }
-
-        data = await response.json()
-
-        logger.info(
-          {
-            characterName: data.name,
-            realm: data.realm,
-            region: data.region,
-            race: data.race,
-            class: data.class,
-            spec: data.active_spec_name,
-            guild: data.guild?.name,
-            mythicScore: data.mythic_plus_scores_by_season?.[0]?.segments?.all?.score || 0,
-            itemLevel: data.gear?.item_level_equipped,
-          },
-          'Character data retrieved successfully'
+        data = await getCharacterProfile(
+          region,
+          cleanRealm,
+          cleanName,
+          'guild,gear,talents,talents:categorized,mythic_plus_scores_by_season:current'
         )
 
         const embedColor = CLASS_COLORS[data.class] || 0x0099ff
@@ -318,64 +242,15 @@ module.exports = {
           'Character info embed sent'
         )
       } else if (subcommand === 'guild') {
-        const baseUrl = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${encodeURIComponent(cleanRealm)}&name=${encodeURIComponent(cleanName)}&fields=raid_progression:current-tier,raid_rankings:current-tier`
-        const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
-
-        logger.debug(`Fetching guild data: ${region}/${cleanRealm}/${cleanName}`)
-        logger.debug(`API Key configured: ${!!raiderIOApiKey}`)
-        logger.debug(
-          `Final API URL: ${raiderIOApiKey ? apiUrl.replace(raiderIOApiKey, '[REDACTED]') : apiUrl}`
+        data = await getGuildProfile(
+          region,
+          cleanRealm,
+          cleanName,
+          'raid_progression:current-tier,raid_rankings:current-tier'
         )
-
-        const response = await fetch(apiUrl, {
-          headers: {
-            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
-          },
-        })
-
-        if (!response.ok) {
-          const errorData = await safeParseJson(response)
-          logger.warn(`RaiderIO guild API error: ${response.status} ${response.statusText}`, {
-            status: response.status,
-            statusText: response.statusText,
-            region,
-            realm: cleanRealm,
-            name: cleanName,
-            apiUrl,
-            errorData,
-          })
-
-          let errorMessage = '❌ Guild not found or API error.'
-          if (response.status === 404) {
-            errorMessage = `❌ Guild "${cleanName}" not found on realm "${cleanRealm}" in region ${region.toUpperCase()}.`
-          } else if (response.status === 429) {
-            errorMessage = '⚠️ Raider.IO API rate limit exceeded. Please try again later.'
-          } else if (response.status >= 500) {
-            errorMessage =
-              '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
-          }
-
-          return interaction.editReply(errorMessage)
-        }
-
-        data = await response.json()
 
         // Get the current raid tier (first key in raid_progression object)
         const currentRaidTier = data.raid_progression ? Object.keys(data.raid_progression)[0] : null
-
-        logger.info(
-          {
-            guildName: data.name,
-            realm: data.realm,
-            region: data.region,
-            faction: data.faction,
-            raidProgression: data.raid_progression?.[currentRaidTier]?.summary,
-            memberCount: data.member_count,
-            achievementPoints: data.achievement_points,
-            currentRaidTier,
-          },
-          'Guild data retrieved successfully'
-        )
 
         // Faction-based colors
         const factionColor = data.faction === 'alliance' ? 0x004a93 : 0x8b0000
@@ -468,52 +343,7 @@ module.exports = {
           'Guild info embed sent'
         )
       } else if (subcommand === 'affixes') {
-        const baseUrl = `https://raider.io/api/v1/mythic-plus/affixes?region=${region}&locale=en`
-        const apiUrl = raiderIOApiKey ? `${baseUrl}&access_key=${raiderIOApiKey}` : baseUrl
-
-        logger.debug(`Fetching affixes data: ${region}`)
-        logger.debug(`API Key configured: ${!!raiderIOApiKey}`)
-        logger.debug(
-          `Final API URL: ${raiderIOApiKey ? apiUrl.replace(raiderIOApiKey, '[REDACTED]') : apiUrl}`
-        )
-
-        const response = await fetch(apiUrl, {
-          headers: {
-            'User-Agent': 'DestroyerBot/1.0 (https://github.com/destroyerdust/DestroyerBot)',
-          },
-        })
-
-        if (!response.ok) {
-          const errorData = await safeParseJson(response)
-          logger.warn(`RaiderIO affixes API error: ${response.status} ${response.statusText}`, {
-            status: response.status,
-            statusText: response.statusText,
-            region,
-            apiUrl,
-            errorData,
-          })
-
-          let errorMessage = '❌ Unable to fetch affix data.'
-          if (response.status === 429) {
-            errorMessage = '⚠️ Raider.IO API rate limit exceeded. Please try again later.'
-          } else if (response.status >= 500) {
-            errorMessage =
-              '🔧 Raider.IO API is currently experiencing issues. Please try again later.'
-          }
-
-          return interaction.editReply(errorMessage)
-        }
-
-        data = await response.json()
-
-        logger.info(
-          {
-            title: data.title,
-            affixCount: data.affix_details?.length || 0,
-            region: data.region,
-          },
-          'Affixes data retrieved successfully'
-        )
+        data = await getAffixes(region, 'en')
 
         const embed = new EmbedBuilder()
           .setTitle("🎯 This Week's Mythic+ Affixes")
@@ -553,6 +383,12 @@ module.exports = {
         )
       }
     } catch (error) {
+      // Handle RaiderIO API errors with user-friendly messages
+      if (error instanceof RaiderIOError) {
+        return interaction.editReply(error.userMessage)
+      }
+
+      // Handle unexpected errors
       logger.error(
         {
           error: error.message,

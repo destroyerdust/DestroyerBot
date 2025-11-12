@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
   InteractionContextType,
+  ApplicationIntegrationType,
   MessageFlags,
 } = require('discord.js')
 const logger = require('../../logger')
@@ -76,18 +77,22 @@ getSeriesCached()
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('pokemon')
-    .setDescription('Testing command for different API experiments')
-    .setContexts(InteractionContextType.Guild | InteractionContextType.BotDM)
+    .setDescription('Search and view Pokemon Trading Card Game cards')
+    .setIntegrationTypes([
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ])
+    .setContexts([InteractionContextType.Guild, InteractionContextType.BotDM])
     .addSubcommand((subcommand) =>
       subcommand
         .setName('search')
-        .setDescription('Search for something')
+        .setDescription('Search for a Pokemon TCG card by name')
         .addStringOption((option) =>
-          option.setName('query').setDescription('Search query').setRequired(true)
+          option.setName('query').setDescription('Card name to search for').setRequired(true)
         )
     )
     .addSubcommand((subcommand) =>
-      subcommand.setName('random').setDescription('Get something random')
+      subcommand.setName('random').setDescription('Get a random Pokemon TCG card')
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -168,16 +173,24 @@ module.exports = {
         requestedByName: user.username,
         subcommand,
       },
-      `${user.username} requested test ${subcommand}`
+      `${user.username} requested pokemon ${subcommand}`
     )
 
-    await interaction.deferReply()
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
       let item
 
       if (subcommand === 'search') {
         const query = interaction.options.getString('query')
+
+        // Validate search query
+        if (!query || query.trim().length === 0) {
+          return interaction.editReply({
+            content: 'Please provide a valid search term.',
+          })
+        }
+
         logger.debug(
           {
             query,
@@ -185,7 +198,6 @@ module.exports = {
           },
           'Starting card search'
         )
-        // const results = await sdk.card.where({ name: query })
         const results = await sdk.card.list(new Query().equal('name', query))
         logger.debug(
           {
@@ -206,7 +218,6 @@ module.exports = {
           )
           return interaction.editReply({
             content: `No Pokemon card found for "${query}". Please try a different search term.`,
-            flags: MessageFlags.Ephemeral,
           })
         }
         item = await sdk.card.get(results[0].id)
@@ -224,7 +235,6 @@ module.exports = {
         if (!item) {
           return interaction.editReply({
             content: 'Could not retrieve a random card.',
-            flags: MessageFlags.Ephemeral,
           })
         }
       } else if (subcommand === 'series') {
@@ -251,7 +261,6 @@ module.exports = {
           )
           return interaction.editReply({
             content: `Series with ID "${seriesId}" not found.`,
-            flags: MessageFlags.Ephemeral,
           })
         }
 
@@ -280,7 +289,7 @@ module.exports = {
           embed.setImage(`${series.logo}.webp`)
         }
 
-        await interaction.editReply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+        await interaction.editReply({ embeds: [embed] })
 
         logger.info(
           {
@@ -314,7 +323,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setTitle(item.name)
-        .setDescription(item.set?.name ? `Set: ${item.set.name}` : 'Test result')
+        .setDescription(item.set?.name ? `Set: ${item.set.name}` : 'Pokemon TCG Card')
         .setColor(0x00ff00)
 
       embed.setImage(imageUrl)
@@ -337,7 +346,7 @@ module.exports = {
         text: `ID: ${item.id} • Requested by ${user.username}`,
       })
 
-      await interaction.editReply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+      await interaction.editReply({ embeds: [embed] })
 
       logger.info(
         {
@@ -347,7 +356,7 @@ module.exports = {
           embedSent: true,
           ephemeral: true,
         },
-        'Test embed sent'
+        'Pokemon card embed sent'
       )
     } catch (error) {
       logger.error(
@@ -358,11 +367,10 @@ module.exports = {
           query: interaction.options.getString('query') || 'random',
           user: user.id,
         },
-        'Test command error'
+        'Pokemon command error'
       )
       await interaction.editReply({
         content: 'An error occurred while fetching data. Please try again later.',
-        ephemeral: true,
       })
     }
   },
