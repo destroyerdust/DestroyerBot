@@ -41,9 +41,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('roll')
     .setDescription('🎲 Roll dice of various types')
-    .setContexts(
-      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
-    )
+    .setContexts([
+      InteractionContextType.Guild,
+      InteractionContextType.DM,
+      InteractionContextType.BotDM,
+    ])
     .addStringOption((option) =>
       option
         .setName('size')
