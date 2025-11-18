@@ -66,7 +66,7 @@ for (const file of eventFiles) {
 
 logger.info(`Loaded ${eventFiles.length} events.`)
 
-client.once('clientReady', async () => {
+client.once('ready', async () => {
   const { user, guilds, ws } = client
 
   logger.info(

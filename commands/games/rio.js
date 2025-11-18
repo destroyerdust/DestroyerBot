@@ -58,9 +58,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('rio')
     .setDescription('🗡️ Get World of Warcraft character and guild information from Raider.IO')
-    .setContexts(
-      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
-    )
+    .setContexts([
+      InteractionContextType.Guild,
+      InteractionContextType.PrivateChannel,
+      InteractionContextType.BotDM,
+    ])
     .addSubcommand((subcommand) =>
       subcommand
         .setName('character')

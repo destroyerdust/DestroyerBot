@@ -43,7 +43,7 @@ module.exports = {
     .setDescription('🎲 Roll dice of various types')
     .setContexts([
       InteractionContextType.Guild,
-      InteractionContextType.DM,
+      InteractionContextType.PrivateChannel,
       InteractionContextType.BotDM,
     ])
     .addStringOption((option) =>
