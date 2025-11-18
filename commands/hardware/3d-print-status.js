@@ -12,9 +12,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('3d-print-status')
     .setDescription('Replies with 3D Print Status!')
-    .setContexts(
-      InteractionContextType.Guild | InteractionContextType.DM | InteractionContextType.BotDM
-    ),
+    .setContexts([
+      InteractionContextType.Guild,
+      InteractionContextType.PrivateChannel,
+      InteractionContextType.BotDM,
+    ]),
   async execute(interaction) {
     // Check if the user is authorized
     if (interaction.user.id !== ownerId) {

@@ -121,7 +121,7 @@ module.exports = {
     .setDescription('🗡️ World of Warcraft information and utilities')
     .setContexts([
       InteractionContextType.Guild,
-      InteractionContextType.DM,
+      InteractionContextType.PrivateChannel,
       InteractionContextType.BotDM,
     ])
     .addSubcommand((subcommand) =>
