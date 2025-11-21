@@ -70,7 +70,17 @@ const rest = new REST().setToken(token)
           `Successfully reloaded ${guildData.length} guild (/) commands for guild ${guildId}.`
         )
       } catch (error) {
-        logger.error(`Failed to deploy guild commands for guild ${guildId}:`, error.message)
+        logger.error(
+          {
+            guildId,
+            status: error.status,
+            code: error.code,
+            message: error.message,
+            raw: error.rawError,
+            response: error.response?.data,
+          },
+          `Failed to deploy guild commands for guild ${guildId}`
+        )
       }
     }
 
@@ -81,6 +91,16 @@ const rest = new REST().setToken(token)
     logger.info(`Successfully reloaded ${globalData.length} global (/) commands.`)
   } catch (error) {
     // And of course, make sure you catch and log any errors!
-    logger.error('Deploy commands error:', error.message, error.stack)
+    logger.error(
+      {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+        raw: error.rawError,
+        response: error.response?.data,
+        stack: error.stack,
+      },
+      'Deploy commands error'
+    )
   }
 })()

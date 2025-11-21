@@ -135,6 +135,11 @@ An automated moderation logging system that tracks message activities in Discord
   - `character` subcommand with required `realm` option
   - `guild` subcommand with required `realm` option
 
+- `/archidekt` - Archidekt deck lookup and card search
+  - `deck` subcommand with optional `deck_id` or `alias` (uses your default linked deck if omitted): Show deck summary, owner, and card count
+  - `search` subcommand with required `query` and optional `deck_id` or `alias`: Find cards by `oracleCard.name` (case-insensitive) with safe, truncated results
+  - `link` (with optional alias + default flag) / `unlink` (by deck_id or alias) / `default` (show or set) / `list` to manage multiple linked decks per user
+
 - `/wow` - World of Warcraft information and utilities
   - `realm` subcommand with required `realm` option and optional `region` option: Get realm status, population, and connected realm information
   - `token` subcommand with optional `region` option: Get current WoW Token prices and market data
@@ -186,6 +191,7 @@ An automated moderation logging system that tracks message activities in Discord
 - **ESLint**: Code linting with `.eslintrc.json` configuration
 - **Prettier**: Code formatting with `.prettierrc.json` configuration
 - **Pino**: Advanced logging library for better log management
+- **Husky**: Pre-commit hook runs `bun format` to enforce Prettier before commits (installed via the `prepare` script run during `bun install`; if the hook is missing, run `bun run prepare`)
 
 ### Project Documentation
 
