@@ -182,7 +182,7 @@ module.exports = {
           `Message: ${message ? truncate(message, 80) : 'Not set'}`,
         ]
         return interaction.reply({
-          content: `✅ Welcome messages ${enabled ? 'enabled' : 'disabled'}.\n${statusLines.join('\n')}`,
+          content: `Welcome messages ${enabled ? 'enabled' : 'disabled'}.\n${statusLines.join('\n')}`,
           flags: MessageFlags.Ephemeral,
         })
       }
