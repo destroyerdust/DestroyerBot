@@ -134,9 +134,7 @@ module.exports = {
         removecommandrole: 'Admin',
         resetpermissions: 'Admin',
         setcommandrole: 'Admin',
-        setwelcomechannel: 'Admin',
-        setwelcomemessage: 'Admin',
-        togglewelcome: 'Admin',
+        welcome: 'Admin',
         togglecommand: 'Admin',
       }
 

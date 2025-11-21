@@ -15,6 +15,7 @@ const PROTECTED_COMMANDS = new Set([
   'listpermissions',
   'resetpermissions',
   'log',
+  'welcome',
 ])
 
 module.exports = {

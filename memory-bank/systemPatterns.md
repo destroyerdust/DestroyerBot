@@ -15,9 +15,7 @@ DestroyerBot/
 │   │   ├── log/           # Message logging commands
 │   │   │   └── log.js
 │   │   ├── welcome/       # Welcome system commands
-│   │   │   ├── setwelcomechannel.js
-│   │   │   ├── setwelcomemessage.js
-│   │   │   └── togglewelcome.js
+│   │   │   └── welcome.js
 │   │   └── permissions/   # Permission management
 │   │       ├── listpermissions.js
 │   │       ├── removecommandrole.js
