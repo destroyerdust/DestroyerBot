@@ -20,13 +20,13 @@
 
 ## Recent Changes
 
-### Package Manager Switch: Bun → npm
+### Package Manager Standardization: Bun
 
-- **Status**: ✅ Completed - November 10, 2025
-- **Scope**: Switched from Bun back to npm for dependency management
-- **Rationale**: Standardization on npm for better ecosystem compatibility and team consistency
-- **Changes**: Removed bun.lock, reinstalled dependencies with npm install
-- **Impact**: No functional changes, maintains all existing npm scripts and workflows
+- **Status**: ? Completed - November 10, 2025
+- **Scope**: Standardized on Bun for dependency management and scripts
+- **Rationale**: Faster installs/runs and consistent tooling across environments
+- **Changes**: Use `bun install` and `bun run` for all bot scripts
+- **Impact**: No functional changes; documentation and scripts reference Bun going forward
 
 ### Discord.js v14+ Compliance Refactoring Complete
 

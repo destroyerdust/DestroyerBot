@@ -382,7 +382,7 @@ You have two options for removing role restrictions:
 ### Permissions not working after update
 
 1. Redeploy commands: `node deploy-commands.js`
-2. Restart the bot: `npm stop` then `npm start`
+2. Restart the bot: `bun stop` then `bun start`
 3. Check if `data/guildSettings.json` exists
 
 ### JSON file is missing

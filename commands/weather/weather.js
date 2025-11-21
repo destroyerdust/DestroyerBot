@@ -55,7 +55,23 @@ module.exports = {
       // Geocode the location to get lat/lon
       logger.debug(`Geocoding location: ${location}`)
 
-      const contact = process.env.NOMINATIM_CONTACT || 'destroyerdust@gmail.com'
+      const rawContact = (process.env.NOMINATIM_CONTACT || '').trim()
+      const contactEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+      if (!rawContact || !contactEmailRegex.test(rawContact)) {
+        const errorMessage =
+          'NOMINATIM_CONTACT is required and must be a valid email (example: support@example.com). Please set it in your environment before using /weather.'
+        logger.error(
+          { providedContact: rawContact || null },
+          'Missing or invalid NOMINATIM_CONTACT for Nominatim requests'
+        )
+        return interaction.editReply({
+          content: errorMessage,
+          flags: MessageFlags.Ephemeral,
+        })
+      }
+
+      const contact = rawContact
       const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
         location
       )}&format=json&limit=1&accept-language=en-US&email=${encodeURIComponent(contact)}`

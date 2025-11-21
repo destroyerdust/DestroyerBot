@@ -20,32 +20,32 @@ DestroyerBot is a personal Discord bot built with Discord.js v14. Features inclu
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Deploy slash commands to Discord (required after any command changes)
-node deploy-commands.js
+bun deploy-commands.js
 
 # Run bot in development (PM2 watch mode)
-npm run dev
+bun run dev
 
 # Run bot without PM2 (useful for debugging)
 node .
 
 # Start bot in production (PM2)
-npm start
+bun start
 
 # Stop bot
-npm stop
+bun stop
 
 # Format code
-npm run format
+bun run format
 ```
 
 ### Running Individual Commands
 
 - **Direct execution:** `node .` (no PM2, good for immediate testing)
-- **Windows dev with pretty logs:** `npm run dev-win` (pipes to pino-pretty)
-- **Unix dev with pretty logs:** `npm run dev-unix`
+- **Windows dev with pretty logs:** `bun run dev-win` (pipes to pino-pretty)
+- **Unix dev with pretty logs:** `bun run dev-unix`
 
 ### Command Deployment
 
@@ -305,8 +305,8 @@ Optional (feature-specific):
 
 - **ESLint:** Configuration in `.eslintrc.json`
 - **Prettier:** Configuration in `.prettierrc.json`
-- Run `npm run format` before committing
-- Check formatting with `npm run format:check`
+- Run `bun run format` before committing
+- Check formatting with `bun run format:check`
 
 ## Additional Documentation
 

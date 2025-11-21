@@ -390,7 +390,7 @@
 
 ### Technical Improvements
 
-1. **Package Manager Standardization** (November 2025): Switched from Bun back to npm for better ecosystem compatibility
+1. **Package Manager Standardization** (November 2025): Standardized on Bun for faster installs and consistent tooling
 2. **v14+ Compliance** (November 2025): Full refactoring for latest Discord.js
 3. **Database Indexing** (2024): Performance optimization with 9 strategic indexes
 4. **Error Handling** (Progressive): Enhanced throughout 2024
