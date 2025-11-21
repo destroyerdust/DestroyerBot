@@ -95,10 +95,7 @@ async function getUserDecksAsync(discordUserId) {
         const decks = migrateLegacyPayload({ decks: record.decks, deckId: record.deckId })
         if (!record.decks || record.decks.length === 0) {
           // migrate legacy single deck document forward
-          await ArchidektUserDeck.updateOne(
-            { discordUserId },
-            { discordUserId, decks }
-          )
+          await ArchidektUserDeck.updateOne({ discordUserId }, { discordUserId, decks })
         }
         return decks
       }
@@ -106,7 +103,10 @@ async function getUserDecksAsync(discordUserId) {
       logger.warn('MongoDB not connected, using JSON fallback for Archidekt user decks')
     }
   } catch (error) {
-    logger.error({ error: error.message, discordUserId }, 'Error loading Archidekt user deck from MongoDB')
+    logger.error(
+      { error: error.message, discordUserId },
+      'Error loading Archidekt user deck from MongoDB'
+    )
   }
 
   const mappings = loadMappings()
@@ -135,7 +135,10 @@ async function persistDecks(discordUserId, decks) {
     { discordUserId, decks },
     { upsert: true, new: true }
   )
-  logger.info({ discordUserId, deckCount: decks.length }, 'Archidekt user decks saved (MongoDB + JSON)')
+  logger.info(
+    { discordUserId, deckCount: decks.length },
+    'Archidekt user decks saved (MongoDB + JSON)'
+  )
 }
 
 function normalizeAlias(alias) {

@@ -158,10 +158,7 @@ module.exports = {
             .setDescription('Archidekt deck ID (defaults to your linked deck)')
         )
         .addStringOption((option) =>
-          option
-            .setName('alias')
-            .setDescription('Alias of a linked deck to use')
-            .setMaxLength(50)
+          option.setName('alias').setDescription('Alias of a linked deck to use').setMaxLength(50)
         )
     )
     .addSubcommand((subcommand) =>
@@ -181,10 +178,7 @@ module.exports = {
             .setDescription('Archidekt deck ID (defaults to your linked deck)')
         )
         .addStringOption((option) =>
-          option
-            .setName('alias')
-            .setDescription('Alias of a linked deck to use')
-            .setMaxLength(50)
+          option.setName('alias').setDescription('Alias of a linked deck to use').setMaxLength(50)
         )
     )
     .addSubcommand((subcommand) =>
