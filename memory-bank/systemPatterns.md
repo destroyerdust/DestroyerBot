@@ -12,9 +12,8 @@ DestroyerBot/
 ├── commands/               # Command modules by category
 │   ├── admin/             # Administrative commands
 │   │   ├── togglecommand.js
-│   │   ├── logging/       # Message logging commands
-│   │   │   ├── logsettings.js
-│   │   │   └── setlogchannel.js
+│   │   ├── log/           # Message logging commands
+│   │   │   └── log.js
 │   │   ├── welcome/       # Welcome system commands
 │   │   │   ├── setwelcomechannel.js
 │   │   │   ├── setwelcomemessage.js

@@ -14,8 +14,7 @@ const PROTECTED_COMMANDS = new Set([
   'removecommandrole',
   'listpermissions',
   'resetpermissions',
-  'logsettings',
-  'setlogchannel',
+  'log',
 ])
 
 module.exports = {

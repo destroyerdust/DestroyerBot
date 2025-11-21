@@ -147,7 +147,7 @@ module.exports = {
 
 - Commands organized in `commands/<category>/<name>.js`
 - Categories: `admin`, `games`, `hardware`, `moderation`, `pokemon`, `utility`, `weather`
-- Further subdivision: `admin/logging/`, `admin/welcome/`, `admin/permissions/`, `utility/info/`, `utility/status/`
+- Further subdivision: `admin/log/`, `admin/welcome/`, `admin/permissions/`, `utility/info/`, `utility/status/`
 - Loader in `index.js` recursively discovers all `.js` files via `getAllJsFiles()` function
 
 ### Event Handler Contract
@@ -270,7 +270,7 @@ Optional (feature-specific):
 ### Message Logging System
 
 - Events: `messageCreate.js`, `messageDelete.js`, `messageUpdate.js`
-- Configuration via `/setlogchannel` and `/logsettings` commands
+- Configuration via `/log` command (channel/events/test)
 - Requires `Message Content Intent` enabled in Discord Developer Portal (privileged intent)
 - Audit log integration for deletion tracking (requires `View Audit Logs` permission)
 
