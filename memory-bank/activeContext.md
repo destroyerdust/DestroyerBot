@@ -39,9 +39,9 @@
   - `83f4d6d`: rio.js upgraded to v14+ standards
   - `68447a5`: log.js (formerly logsettings.js) updated for v14+ best practices
   - `06d2f6a`: Code formatting cleanup
-  - `06d2f6a`: setwelcomechannel.js upgraded to v14+ standards
-  - `fd86a06`: setwelcomemessage.js refactored for enable/disable naming
-  - `d77012f`: togglewelcome.js refactored for enable/disable naming
+  - `06d2f6a`: setwelcomechannel.js upgraded to v14+ standards (replaced by welcome.js)
+  - `fd86a06`: setwelcomemessage.js refactored for enable/disable naming (replaced by welcome.js)
+  - `d77012f`: togglewelcome.js refactored for enable/disable naming (replaced by welcome.js)
 - **Impact**: All commands now fully compliant with Discord.js v14+ API standards
 - **Verification**: All commands successfully deployed and tested
 
@@ -59,7 +59,7 @@
 - **Status**: ✅ Completed - Commands organized into functional subfolders
 - **Organization**:
   - `log/` - Message logging (1 command)
-  - `welcome/` - Welcome system (3 commands)
+  - `welcome/` - Welcome system (1 command)
   - `permissions/` - Permission management (4 commands)
   - Root level - Command toggles (1 command)
 - **Impact**: Improved code structure and team navigation

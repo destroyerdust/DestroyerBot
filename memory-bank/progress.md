@@ -91,17 +91,12 @@
   - Event enable/disable with autocomplete
   - Test embed helper
 
-**Welcome Subfolder (3)**
+**Welcome Subfolder (1)**
 
-- `/setwelcomechannel` - Configure welcome channel
-  - Channel autocomplete selection
-  - v14+ compliance: Channel handling
-- `/setwelcomemessage` - Set custom welcome message
-  - Custom message text support
-  - v14+ compliance: Message string handling
-- `/togglewelcome` - Enable/disable welcome system
-  - Enable/disable choice options
-  - v14+ compliance: Option selection
+- `/welcome` - Configure welcome system (channel, message, toggle, status, test)
+  - Channel selection/status
+  - Message set/show with previews and placeholders
+  - Enable/disable toggle, status overview, and test send
 
 **Permissions Subfolder (4)**
 

@@ -401,16 +401,17 @@ You have two options for removing role restrictions:
 
 ## Admin Command Overview
 
-The permission system includes **6 admin commands**, all requiring `Manage Server` permission:
+The permission system includes **7 admin commands**, all requiring `Manage Server` permission:
 
-| Command              | Purpose                                   | Guild-Only |
-| -------------------- | ----------------------------------------- | ---------- |
-| `/setcommandrole`    | Add a role to a command                   | ✅ Yes     |
-| `/removecommandrole` | Remove a role from a command              | ✅ Yes     |
-| `/listpermissions`   | View all permissions                      | ✅ Yes     |
-| `/resetpermissions`  | Clear all permissions                     | ✅ Yes     |
-| `/log`               | Configure logging (channel, events, test) | ✅ Yes     |
-| `/togglecommand`     | Enable or disable commands per server     | ✅ Yes     |
+| Command              | Purpose                                         | Guild-Only |
+| -------------------- | ----------------------------------------------- | ---------- |
+| `/setcommandrole`    | Add a role to a command                         | ✅ Yes     |
+| `/removecommandrole` | Remove a role from a command                    | ✅ Yes     |
+| `/listpermissions`   | View all permissions                            | ✅ Yes     |
+| `/resetpermissions`  | Clear all permissions                           | ✅ Yes     |
+| `/welcome`           | Configure welcome system (channel/message/test) | ✅ Yes     |
+| `/log`               | Configure logging (channel, events, test)       | ✅ Yes     |
+| `/togglecommand`     | Enable or disable commands per server           | ✅ Yes     |
 
 **Note:** All admin commands are restricted to servers only and cannot be used in DMs. This is intentional since permissions are server-specific.
 
