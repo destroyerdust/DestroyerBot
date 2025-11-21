@@ -36,86 +36,228 @@ function saveMappings(mappings) {
   }
 }
 
-async function getUserDeckAsync(discordUserId) {
+function normalizeDecks(decks) {
+  const normalized = Array.isArray(decks)
+    ? decks.map((d) => ({
+        deckId: d.deckId,
+        deckName: d.deckName || null,
+        deckOwner: d.deckOwner || null,
+        alias: d.alias || null,
+        isDefault: !!d.isDefault,
+      }))
+    : []
+
+  const hasDefault = normalized.some((d) => d.isDefault)
+  if (!hasDefault && normalized.length > 0) {
+    normalized[0].isDefault = true
+  } else if (hasDefault) {
+    let firstDefaultFound = false
+    for (const deck of normalized) {
+      if (deck.isDefault) {
+        if (!firstDefaultFound) {
+          firstDefaultFound = true
+        } else {
+          deck.isDefault = false
+        }
+      }
+    }
+  }
+
+  return normalized.filter((d) => d.deckId)
+}
+
+function migrateLegacyPayload(payload) {
+  if (!payload) return []
+  if (Array.isArray(payload.decks)) {
+    return normalizeDecks(payload.decks)
+  }
+
+  if (payload.deckId) {
+    return normalizeDecks([
+      {
+        deckId: payload.deckId,
+        deckName: payload.deckName || null,
+        deckOwner: payload.deckOwner || null,
+        alias: null,
+        isDefault: true,
+      },
+    ])
+  }
+
+  return []
+}
+
+async function getUserDecksAsync(discordUserId) {
   try {
     if (getConnectionStatus()) {
       const record = await ArchidektUserDeck.findOne({ discordUserId })
       if (record) {
-        return {
-          deckId: record.deckId,
-          deckName: record.deckName,
-          deckOwner: record.deckOwner,
+        const decks = migrateLegacyPayload({ decks: record.decks, deckId: record.deckId })
+        if (!record.decks || record.decks.length === 0) {
+          // migrate legacy single deck document forward
+          await ArchidektUserDeck.updateOne(
+            { discordUserId },
+            { discordUserId, decks }
+          )
         }
+        return decks
       }
     } else {
       logger.warn('MongoDB not connected, using JSON fallback for Archidekt user decks')
     }
   } catch (error) {
-    logger.error(
-      { error: error.message, discordUserId },
-      'Error loading Archidekt user deck from MongoDB'
-    )
+    logger.error({ error: error.message, discordUserId }, 'Error loading Archidekt user deck from MongoDB')
   }
 
   const mappings = loadMappings()
-  return mappings[discordUserId] || null
+  const payload = mappings[discordUserId]
+  const decks = migrateLegacyPayload(payload)
+  if (payload && !payload.decks) {
+    // migrate JSON legacy shape
+    mappings[discordUserId] = { decks }
+    saveMappings(mappings)
+  }
+  return decks
 }
 
-async function setUserDeckAsync(discordUserId, deckId, deckName, deckOwner) {
-  const payload = { deckId, deckName: deckName || null, deckOwner: deckOwner || null }
+async function persistDecks(discordUserId, decks) {
+  const mappings = loadMappings()
+  mappings[discordUserId] = { decks }
+  saveMappings(mappings)
 
-  try {
-    // Update JSON backup first
-    const mappings = loadMappings()
-    mappings[discordUserId] = payload
-    saveMappings(mappings)
-
-    if (getConnectionStatus()) {
-      await ArchidektUserDeck.findOneAndUpdate(
-        { discordUserId },
-        {
-          discordUserId,
-          deckId,
-          deckName: payload.deckName,
-          deckOwner: payload.deckOwner,
-        },
-        { upsert: true, new: true }
-      )
-      logger.info({ discordUserId, deckId }, 'Archidekt user deck saved (MongoDB + JSON)')
-    } else {
-      logger.warn('MongoDB not connected, saved Archidekt user deck to JSON only')
-    }
-  } catch (error) {
-    logger.error(
-      { error: error.message, discordUserId, deckId },
-      'Error saving Archidekt user deck, saved to JSON only'
-    )
+  if (!getConnectionStatus()) {
+    logger.warn('MongoDB not connected, saved Archidekt user decks to JSON only')
+    return
   }
+
+  await ArchidektUserDeck.findOneAndUpdate(
+    { discordUserId },
+    { discordUserId, decks },
+    { upsert: true, new: true }
+  )
+  logger.info({ discordUserId, deckCount: decks.length }, 'Archidekt user decks saved (MongoDB + JSON)')
 }
 
-async function deleteUserDeckAsync(discordUserId) {
-  try {
-    // Remove from JSON
-    const mappings = loadMappings()
-    delete mappings[discordUserId]
-    saveMappings(mappings)
+function normalizeAlias(alias) {
+  return typeof alias === 'string' && alias.trim().length > 0 ? alias.trim() : null
+}
 
-    if (getConnectionStatus()) {
-      await ArchidektUserDeck.deleteOne({ discordUserId })
-      logger.info({ discordUserId }, 'Archidekt user deck removed (MongoDB + JSON)')
-    } else {
-      logger.warn('MongoDB not connected, removed Archidekt user deck from JSON only')
+async function upsertUserDeckAsync(discordUserId, deckId, deckName, deckOwner, alias, makeDefault) {
+  const decks = await getUserDecksAsync(discordUserId)
+  const normalizedAlias = normalizeAlias(alias)
+  const aliasLower = normalizedAlias ? normalizedAlias.toLowerCase() : null
+
+  let updated = false
+  const nextDecks = decks.map((deck) => {
+    const matchesId = deck.deckId === deckId
+    const matchesAlias = aliasLower && deck.alias && deck.alias.toLowerCase() === aliasLower
+    if (matchesId || matchesAlias) {
+      updated = true
+      return {
+        ...deck,
+        deckName: deckName || deck.deckName || null,
+        deckOwner: deckOwner || deck.deckOwner || null,
+        alias: normalizedAlias || deck.alias || null,
+        isDefault: makeDefault ? true : deck.isDefault,
+      }
     }
-  } catch (error) {
-    logger.error(
-      { error: error.message, discordUserId },
-      'Error deleting Archidekt user deck, removed from JSON only'
-    )
+    return deck
+  })
+
+  if (!updated) {
+    nextDecks.push({
+      deckId,
+      deckName: deckName || null,
+      deckOwner: deckOwner || null,
+      alias: normalizedAlias,
+      isDefault: false,
+    })
   }
+
+  const hasDefault = nextDecks.some((d) => d.isDefault)
+  if (makeDefault) {
+    nextDecks.forEach((d) => {
+      d.isDefault = d.deckId === deckId || (aliasLower && d.alias?.toLowerCase() === aliasLower)
+    })
+  } else if (!hasDefault && nextDecks.length > 0) {
+    nextDecks[0].isDefault = true
+  }
+
+  await persistDecks(discordUserId, nextDecks)
+  return nextDecks
+}
+
+async function removeUserDeckAsync(discordUserId, { deckId, alias }) {
+  const decks = await getUserDecksAsync(discordUserId)
+  const aliasLower = normalizeAlias(alias)?.toLowerCase()
+
+  const filtered = decks.filter((deck) => {
+    const matchId = deckId && deck.deckId === deckId
+    const matchAlias = aliasLower && deck.alias?.toLowerCase() === aliasLower
+    return !(matchId || matchAlias)
+  })
+
+  if (filtered.length === decks.length) {
+    return decks
+  }
+
+  if (!filtered.some((d) => d.isDefault) && filtered.length > 0) {
+    filtered[0].isDefault = true
+  }
+
+  await persistDecks(discordUserId, filtered)
+  return filtered
+}
+
+async function setDefaultUserDeckAsync(discordUserId, { deckId, alias }) {
+  const decks = await getUserDecksAsync(discordUserId)
+  const aliasLower = normalizeAlias(alias)?.toLowerCase()
+
+  let found = false
+  const updated = decks.map((deck) => {
+    const isTarget =
+      (deckId && deck.deckId === deckId) || (aliasLower && deck.alias?.toLowerCase() === aliasLower)
+    if (isTarget) {
+      found = true
+      return { ...deck, isDefault: true }
+    }
+    return { ...deck, isDefault: false }
+  })
+
+  if (!found) {
+    return null
+  }
+
+  await persistDecks(discordUserId, updated)
+  return updated
+}
+
+function resolveDeck(decks, { deckId, alias }) {
+  if (deckId) {
+    const byId = decks.find((d) => d.deckId === deckId)
+    if (byId) return { deck: byId, source: 'explicit' }
+    return { deck: { deckId }, source: 'explicit' }
+  }
+
+  const aliasLower = normalizeAlias(alias)?.toLowerCase()
+  if (aliasLower) {
+    const byAlias = decks.find((d) => d.alias?.toLowerCase() === aliasLower)
+    if (byAlias) return { deck: byAlias, source: 'alias' }
+    return null
+  }
+
+  const defaultDeck = decks.find((d) => d.isDefault) || decks[0]
+  if (defaultDeck) {
+    return { deck: defaultDeck, source: 'default' }
+  }
+
+  return null
 }
 
 module.exports = {
-  getUserDeckAsync,
-  setUserDeckAsync,
-  deleteUserDeckAsync,
+  getUserDecksAsync,
+  upsertUserDeckAsync,
+  removeUserDeckAsync,
+  setDefaultUserDeckAsync,
+  resolveDeck,
 }

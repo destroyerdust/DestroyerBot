@@ -6,9 +6,11 @@ const {
 } = require('discord.js')
 const logger = require('../../logger')
 const {
-  getUserDeckAsync,
-  setUserDeckAsync,
-  deleteUserDeckAsync,
+  getUserDecksAsync,
+  upsertUserDeckAsync,
+  removeUserDeckAsync,
+  setDefaultUserDeckAsync,
+  resolveDeck,
 } = require('../../utils/archidektUserDecks')
 
 const ARCHIDEKT_BASE_URL = 'https://archidekt.com/api/decks'
@@ -16,11 +18,6 @@ const USER_AGENT =
   'DestroyerBot/1.0 (+https://github.com/destroyerdust/DestroyerBot; Archidekt command)'
 const MAX_SEARCH_RESULTS = 15
 
-/**
- * Safely parse JSON from a fetch response
- * @param {Response} response
- * @returns {Promise<Record<string, any>>}
- */
 async function safeParseJson(response) {
   try {
     return await response.json()
@@ -30,11 +27,6 @@ async function safeParseJson(response) {
   }
 }
 
-/**
- * Fetch a deck from Archidekt
- * @param {number} deckId
- * @returns {Promise<Record<string, any>>}
- */
 async function fetchDeck(deckId) {
   const url = `${ARCHIDEKT_BASE_URL}/${deckId}/`
 
@@ -55,11 +47,6 @@ async function fetchDeck(deckId) {
   return data
 }
 
-/**
- * Summarize cards into a compact string for embeds
- * @param {Array} cards
- * @returns {string}
- */
 function summarizeCards(cards) {
   const lines = cards.slice(0, MAX_SEARCH_RESULTS).map((card) => {
     const name = card.card?.oracleCard?.name || 'Unknown card'
@@ -68,7 +55,6 @@ function summarizeCards(cards) {
     return `✦ x${card.quantity} • ${name} ${manaCost} — ${types}`.trim()
   })
 
-  // Keep room for embed limits; trim to ~900 chars to avoid field overflows
   let summary = ''
   for (const line of lines) {
     if (summary.length + line.length + 1 > 900) break
@@ -78,12 +64,6 @@ function summarizeCards(cards) {
   return summary
 }
 
-/**
- * Filter cards by oracleCard name
- * @param {Array} cards
- * @param {string} query
- * @returns {Array}
- */
 function filterCardsByName(cards, query) {
   const search = query.trim().toLowerCase()
   if (!search) return []
@@ -94,11 +74,6 @@ function filterCardsByName(cards, query) {
   })
 }
 
-/**
- * Build a deck summary embed
- * @param {Record<string, any>} deck
- * @returns {EmbedBuilder}
- */
 function buildDeckEmbed(deck) {
   const totalCards = deck.cards?.reduce((sum, card) => sum + (card.quantity || 0), 0) || 0
   const categories = deck.categories?.filter((cat) => cat.includedInDeck) || []
@@ -135,13 +110,6 @@ function buildDeckEmbed(deck) {
   return embed
 }
 
-/**
- * Build a search results embed
- * @param {Record<string, any>} deck
- * @param {string} query
- * @param {Array} matches
- * @returns {EmbedBuilder}
- */
 function buildSearchEmbed(deck, query, matches) {
   const moreCount = Math.max(matches.length - MAX_SEARCH_RESULTS, 0)
   const summary = summarizeCards(matches)
@@ -189,6 +157,12 @@ module.exports = {
             .setName('deck_id')
             .setDescription('Archidekt deck ID (defaults to your linked deck)')
         )
+        .addStringOption((option) =>
+          option
+            .setName('alias')
+            .setDescription('Alias of a linked deck to use')
+            .setMaxLength(50)
+        )
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -206,32 +180,69 @@ module.exports = {
             .setName('deck_id')
             .setDescription('Archidekt deck ID (defaults to your linked deck)')
         )
+        .addStringOption((option) =>
+          option
+            .setName('alias')
+            .setDescription('Alias of a linked deck to use')
+            .setMaxLength(50)
+        )
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('link')
-        .setDescription('Link a default Archidekt deck to your Discord user')
+        .setDescription('Link an Archidekt deck to your Discord user')
         .addIntegerOption((option) =>
           option.setName('deck_id').setDescription('Archidekt deck ID').setRequired(true)
         )
+        .addStringOption((option) =>
+          option.setName('alias').setDescription('Optional alias for this deck').setMaxLength(50)
+        )
+        .addBooleanOption((option) =>
+          option
+            .setName('default')
+            .setDescription('Set this deck as your default')
+            .setRequired(false)
+        )
     )
     .addSubcommand((subcommand) =>
-      subcommand.setName('unlink').setDescription('Remove your linked Archidekt deck')
+      subcommand
+        .setName('unlink')
+        .setDescription('Remove a linked Archidekt deck')
+        .addIntegerOption((option) =>
+          option.setName('deck_id').setDescription('Deck ID to remove').setRequired(false)
+        )
+        .addStringOption((option) =>
+          option.setName('alias').setDescription('Alias to remove').setMaxLength(50)
+        )
     )
     .addSubcommand((subcommand) =>
-      subcommand.setName('default').setDescription('Show your linked Archidekt deck')
+      subcommand
+        .setName('default')
+        .setDescription('Show or set your default Archidekt deck')
+        .addIntegerOption((option) =>
+          option.setName('deck_id').setDescription('Deck ID to set as default')
+        )
+        .addStringOption((option) =>
+          option.setName('alias').setDescription('Alias to set as default').setMaxLength(50)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName('list').setDescription('List your linked Archidekt decks')
     ),
 
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
     const deckId = interaction.options.getInteger('deck_id')
     const query = interaction.options.getString('query')
+    const alias = interaction.options.getString('alias')
+    const makeDefault = interaction.options.getBoolean('default') || false
 
     logger.info(
       {
         command: 'archidekt',
         subcommand,
         deckId,
+        alias,
         query,
         userId: interaction.user.id,
         guildId: interaction.guildId || 'DM',
@@ -243,22 +254,26 @@ module.exports = {
       if (!deckId || deckId <= 0) {
         return interaction.reply({
           content: '❌ Please provide a valid Archidekt deck ID to link.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       }
 
       await interaction.deferReply({ ephemeral: true })
       try {
         const deck = await fetchDeck(deckId)
-        await setUserDeckAsync(
+        await upsertUserDeckAsync(
           interaction.user.id,
           deck.id,
           deck.name || null,
-          deck.owner?.username || null
+          deck.owner?.username || null,
+          alias,
+          makeDefault
         )
 
         await interaction.editReply(
-          `✅ Linked deck **${deck.name || deck.id}** (ID: ${deck.id})${deck.owner?.username ? ` by ${deck.owner.username}` : ''} as your default.`
+          `✅ Linked deck **${deck.name || deck.id}** (ID: ${deck.id})${
+            deck.owner?.username ? ` by ${deck.owner.username}` : ''
+          }${alias ? ` with alias **${alias}**` : ''}${makeDefault ? ' and set as default.' : '.'}`
         )
       } catch (error) {
         logger.error(
@@ -273,30 +288,79 @@ module.exports = {
     }
 
     if (subcommand === 'unlink') {
-      await deleteUserDeckAsync(interaction.user.id)
+      if (!deckId && !alias) {
+        await interaction.reply({
+          content: '❌ Provide a `deck_id` or `alias` to unlink.',
+          flags: MessageFlags.Ephemeral,
+        })
+        return
+      }
+
+      await removeUserDeckAsync(interaction.user.id, { deckId, alias })
       await interaction.reply({
-        content: '🗑️ Removed your linked Archidekt deck (if one was set).',
-        ephemeral: true,
+        content: '🗑️ Updated your linked Archidekt decks.',
+        flags: MessageFlags.Ephemeral,
       })
       return
     }
 
     if (subcommand === 'default') {
-      const mapping = await getUserDeckAsync(interaction.user.id)
-      if (!mapping) {
+      const decks = await getUserDecksAsync(interaction.user.id)
+      if (deckId || alias) {
+        const updated = await setDefaultUserDeckAsync(interaction.user.id, { deckId, alias })
+        if (!updated) {
+          await interaction.reply({
+            content: '❌ No linked deck found matching that deck ID or alias.',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
         await interaction.reply({
-          content:
-            'ℹ️ You do not have a linked Archidekt deck. Use `/archidekt link deck_id:<id>` to set one.',
-          ephemeral: true,
+          content: '✅ Default deck updated.',
+          flags: MessageFlags.Ephemeral,
         })
       } else {
-        const name = mapping.deckName || mapping.deckId
-        const owner = mapping.deckOwner ? ` by ${mapping.deckOwner}` : ''
-        await interaction.reply({
-          content: `✅ Your linked deck is **${name}** (ID: ${mapping.deckId})${owner}.`,
-          ephemeral: true,
-        })
+        const currentDefault = decks.find((d) => d.isDefault)
+        if (!currentDefault) {
+          await interaction.reply({
+            content:
+              'ℹ️ You do not have a linked Archidekt deck. Use `/archidekt link deck_id:<id>` to set one.',
+            flags: MessageFlags.Ephemeral,
+          })
+        } else {
+          const name = currentDefault.deckName || currentDefault.deckId
+          const owner = currentDefault.deckOwner ? ` by ${currentDefault.deckOwner}` : ''
+          await interaction.reply({
+            content: `✅ Your default deck is **${name}** (ID: ${currentDefault.deckId})${owner}.`,
+            flags: MessageFlags.Ephemeral,
+          })
+        }
       }
+      return
+    }
+
+    if (subcommand === 'list') {
+      const decks = await getUserDecksAsync(interaction.user.id)
+      if (!decks || decks.length === 0) {
+        await interaction.reply({
+          content: 'ℹ️ You have no linked decks. Use `/archidekt link deck_id:<id>` to add one.',
+          flags: MessageFlags.Ephemeral,
+        })
+        return
+      }
+
+      const lines = decks.map((d) => {
+        const name = d.deckName || d.deckId
+        const owner = d.deckOwner ? ` by ${d.deckOwner}` : ''
+        const aliasLabel = d.alias ? ` (alias: ${d.alias})` : ''
+        const defaultMark = d.isDefault ? ' ⭐' : ''
+        return `• ${name} (ID: ${d.deckId})${aliasLabel}${owner}${defaultMark}`
+      })
+
+      await interaction.reply({
+        content: lines.join('\n'),
+        flags: MessageFlags.Ephemeral,
+      })
       return
     }
 
@@ -310,29 +374,26 @@ module.exports = {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
-      let resolvedDeckId = deckId
-      let usedDefault = false
+      const decks = await getUserDecksAsync(interaction.user.id)
+      const resolved = resolveDeck(decks, { deckId, alias })
 
-      if (!resolvedDeckId) {
-        const mapping = await getUserDeckAsync(interaction.user.id)
-        if (mapping?.deckId) {
-          resolvedDeckId = mapping.deckId
-          usedDefault = true
-        }
-      }
-
-      if (!resolvedDeckId || resolvedDeckId <= 0) {
+      if (!resolved || !resolved.deck?.deckId) {
         await interaction.editReply(
           '❌ Please provide a valid Archidekt deck ID or link one with `/archidekt link`.'
         )
         return
       }
 
-      const deck = await fetchDeck(resolvedDeckId)
+      const deck = await fetchDeck(resolved.deck.deckId)
 
       if (subcommand === 'deck') {
         const embed = buildDeckEmbed(deck)
-        const content = usedDefault ? 'Using your linked Archidekt deck.' : null
+        const content =
+          resolved.source === 'default'
+            ? 'Using your default Archidekt deck.'
+            : resolved.source === 'alias'
+              ? 'Using your linked deck (alias).'
+              : null
         await interaction.editReply({ content: content || undefined, embeds: [embed] })
         return
       }
@@ -341,7 +402,12 @@ module.exports = {
       const matches = filterCardsByName(cards, query)
 
       if (matches.length === 0) {
-        const prefix = usedDefault ? 'Using your linked deck: ' : ''
+        const prefix =
+          resolved.source === 'default'
+            ? 'Using your default deck: '
+            : resolved.source === 'alias'
+              ? 'Using your linked deck: '
+              : ''
         await interaction.editReply(
           `${prefix}❌ No cards matching "${query}" were found in this deck.`
         )
@@ -349,7 +415,12 @@ module.exports = {
       }
 
       const embed = buildSearchEmbed(deck, query, matches)
-      const content = usedDefault ? 'Using your linked Archidekt deck.' : null
+      const content =
+        resolved.source === 'default'
+          ? 'Using your default Archidekt deck.'
+          : resolved.source === 'alias'
+            ? 'Using your linked deck (alias).'
+            : null
       await interaction.editReply({ content: content || undefined, embeds: [embed] })
     } catch (error) {
       logger.error(
