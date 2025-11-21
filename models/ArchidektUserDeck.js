@@ -28,7 +28,6 @@ const archidektUserDeckSchema = new mongoose.Schema(
   }
 )
 
-archidektUserDeckSchema.index({ discordUserId: 1 }, { unique: true, name: 'user_deck_unique' })
 archidektUserDeckSchema.index({ 'decks.deckId': 1 }, { name: 'deck_lookup' })
 archidektUserDeckSchema.index({ 'decks.alias': 1 }, { name: 'deck_alias_lookup', sparse: true })
 
