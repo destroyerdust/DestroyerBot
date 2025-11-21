@@ -410,6 +410,7 @@ The permission system includes **6 admin commands**, all requiring `Manage Serve
 | `/listpermissions`   | View all permissions                      | ✅ Yes     |
 | `/resetpermissions`  | Clear all permissions                     | ✅ Yes     |
 | `/log`               | Configure logging (channel, events, test) | ✅ Yes     |
+| `/togglecommand`     | Enable or disable commands per server     | ✅ Yes     |
 
 **Note:** All admin commands are restricted to servers only and cannot be used in DMs. This is intentional since permissions are server-specific.
 
