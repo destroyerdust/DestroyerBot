@@ -38,7 +38,6 @@
   - `065d685`: wow.js upgraded to v14+ standards
   - `83f4d6d`: rio.js upgraded to v14+ standards
   - `68447a5`: logsettings.js updated for v14+ best practices
-  - `d8206fc`: setlogchannel.js updated for v14+ best practices
   - `06d2f6a`: Code formatting cleanup
   - `06d2f6a`: setwelcomechannel.js upgraded to v14+ standards
   - `fd86a06`: setwelcomemessage.js refactored for enable/disable naming
@@ -59,7 +58,7 @@
 
 - **Status**: ✅ Completed - Commands organized into functional subfolders
 - **Organization**:
-  - `logging/` - Message logging (2 commands)
+  - `logging/` - Message logging (1 command)
   - `welcome/` - Welcome system (3 commands)
   - `permissions/` - Permission management (4 commands)
   - Root level - Command toggles (1 command)

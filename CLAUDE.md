@@ -270,7 +270,7 @@ Optional (feature-specific):
 ### Message Logging System
 
 - Events: `messageCreate.js`, `messageDelete.js`, `messageUpdate.js`
-- Configuration via `/setlogchannel` and `/logsettings` commands
+- Configuration via `/log` command (channel/events/test)
 - Requires `Message Content Intent` enabled in Discord Developer Portal (privileged intent)
 - Audit log integration for deletion tracking (requires `View Audit Logs` permission)
 

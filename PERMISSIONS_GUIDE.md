@@ -180,62 +180,36 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 ---
 
-### `/setlogchannel`
+### `/log`
 
 **Required Permission:** `Manage Server`  
-**Description:** Set the channel where message logging events will be sent
+**Description:** Configure logging – set the destination channel, toggle events, view status, and send a test log
 
 **Usage:**
 
 ```
-/setlogchannel channel:#logs
-/setlogchannel channel:#moderation
+/log channel set #logs                     # Set the log channel
+/log channel status                        # See which channel is configured
+/log events enable message.create          # Enable message create logging
+/log events disable message.delete         # Disable message delete logging
+/log events status                         # Show status for all events
+/log events status message.create          # Show status for a single event
+/log test                                  # Send a test embed to the log channel
 ```
 
-**Example Output:**
+**Example Output (events status):**
 
 ```
-✅ Log channel set to #logs. Moderation actions will be logged here.
-```
-
-**Notes:**
-
-- Must be a text channel the bot can access
-- Events will only log if both a channel is set and logging is enabled for specific events
-- Each guild can have only one log channel
-- Unset the channel by not specifying any (though currently not supported in command)
-
----
-
-### `/logsettings`
-
-**Required Permission:** `Manage Server`  
-**Description:** Enable or disable automatic logging for message creation and deletion events
-
-**Usage:**
-
-```
-/logsettings messagecreate enable    # Enable message creation logging
-/logsettings messagecreate disable   # Disable message creation logging
-/logsettings messagedelete enable    # Enable message deletion logging
-/logsettings messagedelete disable   # Disable message deletion logging
-```
-
-**Example Output:**
-
-```
-✅ Message create logging enabled.
-
-**Message Create Logging:** ✅ Enabled
-**Message Delete Logging:** ✅ Enabled
+📊 Logging status:
+✅ Message Create `message.create`
+❌ Message Delete `message.delete`
 ```
 
 **Notes:**
 
-- Both creation and deletion logging are enabled by default
-- You can enable/disable them independently
-- Logging only occurs if a log channel is also set with `/setlogchannel`
-- The command shows the status of both settings after each change
+- Events only log if a channel is configured and the event is enabled
+- Add more loggable events by extending the registry in `commands/admin/logging/logsettings.js`
+- The command shows status after each change for quick confirmation
 
 ---
 
@@ -429,14 +403,13 @@ You have two options for removing role restrictions:
 
 The permission system includes **6 admin commands**, all requiring `Manage Server` permission:
 
-| Command              | Purpose                                         | Guild-Only |
-| -------------------- | ----------------------------------------------- | ---------- |
-| `/setcommandrole`    | Add a role to a command                         | ✅ Yes     |
-| `/removecommandrole` | Remove a role from a command                    | ✅ Yes     |
-| `/listpermissions`   | View all permissions                            | ✅ Yes     |
-| `/resetpermissions`  | Clear all permissions                           | ✅ Yes     |
-| `/setlogchannel`     | Set the channel for message logging             | ✅ Yes     |
-| `/logsettings`       | Enable or disable message create/delete logging | ✅ Yes     |
+| Command              | Purpose                                   | Guild-Only |
+| -------------------- | ----------------------------------------- | ---------- |
+| `/setcommandrole`    | Add a role to a command                   | ✅ Yes     |
+| `/removecommandrole` | Remove a role from a command              | ✅ Yes     |
+| `/listpermissions`   | View all permissions                      | ✅ Yes     |
+| `/resetpermissions`  | Clear all permissions                     | ✅ Yes     |
+| `/log`               | Configure logging (channel, events, test) | ✅ Yes     |
 
 **Note:** All admin commands are restricted to servers only and cannot be used in DMs. This is intentional since permissions are server-specific.
 

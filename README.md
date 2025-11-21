@@ -57,7 +57,7 @@ DestroyerBot includes a comprehensive role-based permission system that allows s
 
 - Per-guild configuration with local JSON storage
 - Role-based access control for any command
-- 6 admin commands for managing permissions and logging (requires `Manage Server`)
+- 5 admin commands for managing permissions and logging (requires `Manage Server`)
 - Autocomplete support for easy command selection
 - Guild-only admin commands (cannot be used in DMs)
 
@@ -67,8 +67,7 @@ DestroyerBot includes a comprehensive role-based permission system that allows s
 - `/removecommandrole` - Remove a role from a command
 - `/listpermissions` - View all command permissions for the server
 - `/resetpermissions` - Clear all command permissions
-- `/setlogchannel` - Set the channel for message logging
-- `/logsettings` - Enable or disable message create/delete logging
+- `/log` - Configure logging channels and event toggles (including channel set/status and test)
 
 📖 **[View Complete Permission System Documentation](PERMISSIONS_GUIDE.md)**
 
@@ -99,8 +98,8 @@ An automated moderation logging system that tracks message activities in Discord
 
 **Setup Steps:**
 
-1. Set the log channel: `/setlogchannel channel:#logs`
-2. Enable features: `/logsettings messagecreate enable` and `/logsettings messagedelete enable`
+1. Set the log channel: `/log channel set #logs`
+2. Enable features: `/log events enable message.create` and `/log events enable message.delete`
 3. Enable Message Content Intent in [Discord Developer Portal](https://discord.com/developers/applications) under Bot settings
 4. Restart bot and test by creating/deleting messages
 

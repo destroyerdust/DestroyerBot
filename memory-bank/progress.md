@@ -82,16 +82,14 @@
   - Nickname updates and clearing
   - v14+ compliance: Permission validation
 
-#### Administrative Commands (10) ✅
+#### Administrative Commands (9) ✅
 
-**Logging Subfolder (2)**
+**Logging Subfolder (1)**
 
-- `/setlogchannel` - Configure where message logs go
-  - Channel selection via autocomplete
-  - v14+ compliance: Context interaction handling
-- `/logsettings` - Enable/disable logging features
-  - Fine-grained logging feature control
-  - v14+ compliance: Boolean options handling
+- `/log` - Configure logging (channel, event toggles, status, test)
+  - Channel selection and status
+  - Event enable/disable with autocomplete
+  - Test embed helper
 
 **Welcome Subfolder (3)**
 

@@ -1,105 +1,249 @@
 const {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
+  ChannelType,
+  EmbedBuilder,
   InteractionContextType,
   MessageFlags,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
 } = require('discord.js')
 const {
-  setLogMessageCreateAsync,
+  getLogChannelAsync,
+  setLogChannelAsync,
   getLogMessageCreateAsync,
-  setLogMessageDeleteAsync,
+  setLogMessageCreateAsync,
   getLogMessageDeleteAsync,
+  setLogMessageDeleteAsync,
 } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
+const LOG_EVENTS = [
+  {
+    key: 'message.create',
+    label: 'Message Create',
+    description: 'Log when members create new messages',
+    getStatus: getLogMessageCreateAsync,
+    setStatus: setLogMessageCreateAsync,
+  },
+  {
+    key: 'message.delete',
+    label: 'Message Delete',
+    description: 'Log when messages are deleted',
+    getStatus: getLogMessageDeleteAsync,
+    setStatus: setLogMessageDeleteAsync,
+  },
+]
+
+function getEventConfig(key) {
+  return LOG_EVENTS.find((event) => event.key === key)
+}
+
+async function getStatusText(guildId, eventKeys) {
+  const statuses = []
+  for (const key of eventKeys) {
+    const event = getEventConfig(key)
+    if (!event) continue
+    const enabled = await event.getStatus(guildId)
+    statuses.push(`${enabled ? '✅' : '❌'} ${event.label} \`${event.key}\``)
+  }
+  return statuses.join('\n')
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('logsettings')
-    .setDescription('Enable or disable logging for message events')
+    .setName('log')
+    .setDescription('Configure logging destinations and events')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .setContexts(InteractionContextType.Guild)
     .addSubcommandGroup((group) =>
       group
-        .setName('messagecreate')
-        .setDescription('Settings for message creation logging')
+        .setName('channel')
+        .setDescription('Manage the log destination channel')
         .addSubcommand((subcommand) =>
-          subcommand.setName('enable').setDescription('Enable logging of new messages')
+          subcommand
+            .setName('set')
+            .setDescription('Set the channel used for logging')
+            .addChannelOption((option) =>
+              option
+                .setName('channel')
+                .setDescription('Text channel to send logs to')
+                .setRequired(true)
+                .addChannelTypes(ChannelType.GuildText)
+            )
         )
         .addSubcommand((subcommand) =>
-          subcommand.setName('disable').setDescription('Disable logging of new messages')
+          subcommand.setName('status').setDescription('Show the configured log channel')
         )
     )
     .addSubcommandGroup((group) =>
       group
-        .setName('messagedelete')
-        .setDescription('Settings for message deletion logging')
+        .setName('events')
+        .setDescription('Enable, disable, or view logging for specific events')
         .addSubcommand((subcommand) =>
-          subcommand.setName('enable').setDescription('Enable logging of deleted messages')
+          subcommand
+            .setName('enable')
+            .setDescription('Enable logging for an event')
+            .addStringOption((option) =>
+              option
+                .setName('event')
+                .setDescription('Event to enable logging for')
+                .setRequired(true)
+                .setAutocomplete(true)
+            )
         )
         .addSubcommand((subcommand) =>
-          subcommand.setName('disable').setDescription('Disable logging of deleted messages')
+          subcommand
+            .setName('disable')
+            .setDescription('Disable logging for an event')
+            .addStringOption((option) =>
+              option
+                .setName('event')
+                .setDescription('Event to disable logging for')
+                .setRequired(true)
+                .setAutocomplete(true)
+            )
         )
-    ),
+        .addSubcommand((subcommand) =>
+          subcommand
+            .setName('status')
+            .setDescription('Show logging status for events')
+            .addStringOption((option) =>
+              option
+                .setName('event')
+                .setDescription('Specific event to check (leave empty for all)')
+                .setRequired(false)
+                .setAutocomplete(true)
+            )
+        )
+    )
+    .addSubcommand((subcommand) => subcommand.setName('test').setDescription('Send a test log')),
+
+  async autocomplete(interaction) {
+    const focusedValue = interaction.options.getFocused().toLowerCase()
+    const choices = LOG_EVENTS.filter(
+      (event) =>
+        event.key.toLowerCase().includes(focusedValue) ||
+        event.label.toLowerCase().includes(focusedValue)
+    )
+      .slice(0, 25)
+      .map((event) => ({
+        name: `${event.label} (${event.key})`,
+        value: event.key,
+      }))
+
+    await interaction.respond(choices)
+  },
+
   async execute(interaction) {
-    const subcommandGroup = interaction.options.getSubcommandGroup()
-    const subcommand = interaction.options.getSubcommand()
     const guildId = interaction.guild.id
+    const subcommandGroup = interaction.options.getSubcommandGroup(false)
+    const subcommand = interaction.options.getSubcommand()
 
     logger.info(
       {
         guildId,
-        subcommandGroup,
+        subcommandGroup: subcommandGroup || null,
         subcommand,
         executedBy: interaction.user.tag,
         userId: interaction.user.id,
       },
-      'Updating log settings'
+      'Updating logging configuration'
     )
 
-    let enable = null
-    let type = ''
-
-    if (subcommandGroup === 'messagecreate') {
-      type = 'message create'
-      if (subcommand === 'enable') {
-        enable = true
-        await setLogMessageCreateAsync(guildId, true)
-      } else if (subcommand === 'disable') {
-        enable = false
-        await setLogMessageCreateAsync(guildId, false)
-      }
-    } else if (subcommandGroup === 'messagedelete') {
-      type = 'message delete'
-      if (subcommand === 'enable') {
-        enable = true
-        await setLogMessageDeleteAsync(guildId, true)
-      } else if (subcommand === 'disable') {
-        enable = false
-        await setLogMessageDeleteAsync(guildId, false)
-      }
-    }
-
-    const currentCreate = await getLogMessageCreateAsync(guildId)
-    const currentDelete = await getLogMessageDeleteAsync(guildId)
-
-    const statusText = `**Message Create Logging:** ${currentCreate ? '✅ Enabled' : '❌ Disabled'}\n**Message Delete Logging:** ${currentDelete ? '✅ Enabled' : '❌ Disabled'}`
-
     try {
-      await interaction.reply({
-        content: `✅ ${type} logging ${enable ? 'enabled' : 'disabled'}.\n\n${statusText}`,
+      // Channel configuration
+      if (subcommandGroup === 'channel') {
+        if (subcommand === 'set') {
+          const channel = interaction.options.getChannel('channel')
+          await setLogChannelAsync(guildId, channel.id)
+          return interaction.reply({
+            content: `✅ Log channel set to ${channel}.`,
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+
+        if (subcommand === 'status') {
+          const channelId = await getLogChannelAsync(guildId)
+          const status = channelId ? `<#${channelId}>` : 'Not set'
+          return interaction.reply({
+            content: `📜 Current log channel: ${status}`,
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+      }
+
+      // Event toggles
+      if (subcommandGroup === 'events') {
+        const eventKey = interaction.options.getString('event')
+        const config = eventKey ? getEventConfig(eventKey) : null
+
+        if (eventKey && !config) {
+          return interaction.reply({
+            content: '❌ Unknown event. Please pick from the autocomplete list.',
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+
+        if (subcommand === 'enable' || subcommand === 'disable') {
+          const enable = subcommand === 'enable'
+          await config.setStatus(guildId, enable)
+          const status = await getStatusText(guildId, [config.key])
+          return interaction.reply({
+            content: `✅ ${config.label} logging ${enable ? 'enabled' : 'disabled'}.\n${status}`,
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+
+        if (subcommand === 'status') {
+          const keys = config ? [config.key] : LOG_EVENTS.map((event) => event.key)
+          const status = await getStatusText(guildId, keys)
+          return interaction.reply({
+            content: `📊 Logging status:\n${status}`,
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+      }
+
+      // Test send
+      if (!subcommandGroup && subcommand === 'test') {
+        const channelId = await getLogChannelAsync(guildId)
+        if (!channelId) {
+          return interaction.reply({
+            content: '❌ No log channel set. Configure one with `/logging channel set`.',
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+
+        const channel = interaction.guild.channels.cache.get(channelId)
+        if (!channel) {
+          return interaction.reply({
+            content: '❌ The configured log channel could not be found. Please set it again.',
+            flags: MessageFlags.Ephemeral,
+          })
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle('Logging Test')
+          .setDescription('This is a test log to confirm configuration.')
+          .addFields(
+            { name: 'Triggered by', value: interaction.user.tag, inline: true },
+            { name: 'User ID', value: interaction.user.id, inline: true }
+          )
+          .setColor('#5865f2')
+          .setTimestamp()
+
+        await channel.send({ embeds: [embed] })
+
+        return interaction.reply({
+          content: `✅ Test log sent to ${channel}.`,
+          flags: MessageFlags.Ephemeral,
+        })
+      }
+
+      // Fallback for unhandled paths
+      return interaction.reply({
+        content: '❌ Invalid logging command usage.',
         flags: MessageFlags.Ephemeral,
       })
-
-      logger.info(
-        {
-          guildId,
-          subcommandGroup,
-          subcommand,
-          success: true,
-          userId: interaction.user.id,
-        },
-        'Log settings updated successfully'
-      )
     } catch (error) {
       logger.error(
         {
@@ -110,12 +254,12 @@ module.exports = {
           subcommand,
           userId: interaction.user.id,
         },
-        'Error updating log settings'
+        'Error updating logging configuration'
       )
 
       try {
         await interaction.reply({
-          content: '❌ An error occurred while updating the settings.',
+          content: '❌ An error occurred while updating logging settings.',
           flags: MessageFlags.Ephemeral,
         })
       } catch (replyError) {

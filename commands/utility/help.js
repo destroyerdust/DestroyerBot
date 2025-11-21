@@ -130,11 +130,10 @@ module.exports = {
 
         // Admin commands
         listpermissions: 'Admin',
-        logsettings: 'Admin',
+        log: 'Admin',
         removecommandrole: 'Admin',
         resetpermissions: 'Admin',
         setcommandrole: 'Admin',
-        setlogchannel: 'Admin',
         setwelcomechannel: 'Admin',
         setwelcomemessage: 'Admin',
         togglewelcome: 'Admin',
