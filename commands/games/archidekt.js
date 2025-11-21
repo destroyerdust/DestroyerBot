@@ -97,7 +97,11 @@ function filterCardsByName(cards, query) {
 function buildDeckEmbed(deck) {
   const totalCards = deck.cards?.reduce((sum, card) => sum + (card.quantity || 0), 0) || 0
   const categories = deck.categories?.filter((cat) => cat.includedInDeck) || []
-  const primaryCategories = categories.map((cat) => cat.name).slice(0, 6).join(', ') || 'N/A'
+  const primaryCategories =
+    categories
+      .map((cat) => cat.name)
+      .slice(0, 6)
+      .join(', ') || 'N/A'
 
   const embed = new EmbedBuilder()
     .setTitle(`🃏 ${deck.name || 'Unknown Deck'}`)
@@ -148,7 +152,11 @@ function buildSearchEmbed(deck, query, matches) {
   }
 
   if (moreCount > 0) {
-    embed.addFields({ name: 'More', value: `${moreCount} additional result(s) not shown.`, inline: false })
+    embed.addFields({
+      name: 'More',
+      value: `${moreCount} additional result(s) not shown.`,
+      inline: false,
+    })
   }
 
   if (deck.featured) {
