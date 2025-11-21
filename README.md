@@ -32,7 +32,7 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 1. Deploy slash commands:
 
    ```bash
-   bun deploy-commands.js
+   bun run deploy-commands.js
    ```
 
    The deployment script now supports multiple guilds as configured in `.env`.
@@ -48,6 +48,17 @@ A personal Discord bot built with Discord.js v14, featuring utility commands, ga
 3. Invite the bot to your server with the required permissions.
 
 ## Features
+
+### Welcome System
+
+Let new members know they're in the right place using the `/welcome` command suite.
+
+**Features:**
+
+- Configure welcome channel with `/welcome channel set` plus quick status checks
+- Customize welcome copy with `/welcome message set|show`, including preview output
+- Toggle, status overview, and test sends (`/welcome toggle|status|test`)
+- Per-guild settings persisted to MongoDB with JSON fallback for resilience
 
 ### Permission System
 
@@ -133,6 +144,13 @@ An automated moderation logging system that tracks message activities in Discord
 
 - `/kick` - Select a member and kick them (note: this is a demo command)
 - `/setnick` - Set a member's nickname in the server (server owner only by default, configurable via permission system)
+
+### Administrative Commands
+
+- `/welcome` - Configure the welcome system (channel, message, toggle, status, test)
+- `/log` - Configure logging (channel, event toggles, status, test)
+- `/togglecommand` - Enable or disable individual commands per guild
+- `/setcommandrole`, `/removecommandrole`, `/listpermissions`, `/resetpermissions` - Manage command-level permissions
 
 ### Global Commands
 

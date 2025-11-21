@@ -22,7 +22,7 @@
 
 ### Package Manager Standardization: Bun
 
-- **Status**: ? Completed - November 10, 2025
+- **Status**: ✅ Completed - November 10, 2025
 - **Scope**: Standardized on Bun for dependency management and scripts
 - **Rationale**: Faster installs/runs and consistent tooling across environments
 - **Changes**: Use `bun install` and `bun run` for all bot scripts
@@ -39,9 +39,7 @@
   - `83f4d6d`: rio.js upgraded to v14+ standards
   - `68447a5`: log.js (formerly logsettings.js) updated for v14+ best practices
   - `06d2f6a`: Code formatting cleanup
-  - `06d2f6a`: setwelcomechannel.js upgraded to v14+ standards (replaced by welcome.js)
-  - `fd86a06`: setwelcomemessage.js refactored for enable/disable naming (replaced by welcome.js)
-  - `d77012f`: togglewelcome.js refactored for enable/disable naming (replaced by welcome.js)
+  - `06d2f6a`: Legacy welcome commands consolidated into unified `/welcome` command (admin/welcome/welcome.js)
 - **Impact**: All commands now fully compliant with Discord.js v14+ API standards
 - **Verification**: All commands successfully deployed and tested
 
