@@ -182,7 +182,7 @@ module.exports = {
           `Message: ${message ? truncate(message, 80) : 'Not set'}`,
         ]
         return interaction.reply({
-          content: `Welcome messages ${enabled ? 'enabled' : 'disabled'}.\n${statusLines.join('\n')}`,
+          content: `${enabled ? '✅' : '❌'} Welcome messages ${enabled ? 'enabled' : 'disabled'}.\n${statusLines.join('\n')}`,
           flags: MessageFlags.Ephemeral,
         })
       }
@@ -240,7 +240,7 @@ module.exports = {
         await channel.send(message)
 
         return interaction.reply({
-          content: `✅ Test welcome message sent to ${channel}.`,
+          content: `✅ Test welcome message sent to ${channel}.\n\n**Sent message:**\n${truncate(message, 300)}`,
           flags: MessageFlags.Ephemeral,
         })
       }

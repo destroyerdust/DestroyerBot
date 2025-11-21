@@ -154,6 +154,12 @@ module.exports = {
       if (subcommandGroup === 'channel') {
         if (subcommand === 'set') {
           const channel = interaction.options.getChannel('channel')
+          if (!channel || !channel.isTextBased()) {
+            return interaction.reply({
+              content: '❌ Log channel must be a text channel.',
+              flags: MessageFlags.Ephemeral,
+            })
+          }
           await setLogChannelAsync(guildId, channel.id)
           return interaction.reply({
             content: `✅ Log channel set to ${channel}.`,
@@ -215,10 +221,31 @@ module.exports = {
 
         const channel = interaction.guild.channels.cache.get(channelId)
         if (!channel) {
-          return interaction.reply({
-            content: '❌ The configured log channel could not be found. Please set it again.',
-            flags: MessageFlags.Ephemeral,
-          })
+          try {
+            const fetched = await interaction.guild.channels.fetch(channelId)
+            if (!fetched || !fetched.isTextBased()) {
+              return interaction.reply({
+                content:
+                  '❌ The configured log channel could not be found or is not a text channel. Please set it again.',
+                flags: MessageFlags.Ephemeral,
+              })
+            }
+            await fetched.send({ embeds: [embed] })
+            return interaction.reply({
+              content: `✅ Test log sent to ${fetched}.`,
+              flags: MessageFlags.Ephemeral,
+            })
+          } catch (fetchError) {
+            logger.error(
+              { error: fetchError.message, guildId, channelId },
+              'Failed to fetch log channel'
+            )
+            return interaction.reply({
+              content:
+                '❌ The configured log channel could not be found or is not a text channel. Please set it again.',
+              flags: MessageFlags.Ephemeral,
+            })
+          }
         }
 
         const embed = new EmbedBuilder()
