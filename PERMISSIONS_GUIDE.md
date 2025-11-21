@@ -208,7 +208,7 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 **Notes:**
 
 - Events only log if a channel is configured and the event is enabled
-- Add more loggable events by extending the registry in `commands/admin/logging/log.js`
+- Add more loggable events by extending the registry in `commands/admin/log/log.js`
 - The command shows status after each change for quick confirmation
 
 ---

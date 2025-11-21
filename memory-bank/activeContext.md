@@ -58,7 +58,7 @@
 
 - **Status**: ✅ Completed - Commands organized into functional subfolders
 - **Organization**:
-  - `logging/` - Message logging (1 command)
+  - `log/` - Message logging (1 command)
   - `welcome/` - Welcome system (3 commands)
   - `permissions/` - Permission management (4 commands)
   - Root level - Command toggles (1 command)

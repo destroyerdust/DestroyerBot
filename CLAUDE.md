@@ -147,7 +147,7 @@ module.exports = {
 
 - Commands organized in `commands/<category>/<name>.js`
 - Categories: `admin`, `games`, `hardware`, `moderation`, `pokemon`, `utility`, `weather`
-- Further subdivision: `admin/logging/`, `admin/welcome/`, `admin/permissions/`, `utility/info/`, `utility/status/`
+- Further subdivision: `admin/log/`, `admin/welcome/`, `admin/permissions/`, `utility/info/`, `utility/status/`
 - Loader in `index.js` recursively discovers all `.js` files via `getAllJsFiles()` function
 
 ### Event Handler Contract
