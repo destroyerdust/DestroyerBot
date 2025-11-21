@@ -55,24 +55,63 @@ module.exports = {
       // Geocode the location to get lat/lon
       logger.debug(`Geocoding location: ${location}`)
 
-      const geoResponse = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1&accept-language=en-US`,
-        {
-          headers: {
-            'User-Agent': 'DestroyerBot WeatherCommand/1.0 (discord-bot@example.com)',
-          },
-        }
-      )
+      const rawContact = (process.env.NOMINATIM_CONTACT || '').trim()
+      const contactEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+      if (!rawContact || !contactEmailRegex.test(rawContact)) {
+        const errorMessage =
+          'NOMINATIM_CONTACT is required and must be a valid email (example: support@example.com). Please set it in your environment before using /weather.'
+        logger.error(
+          { providedContact: rawContact || null },
+          'Missing or invalid NOMINATIM_CONTACT for Nominatim requests'
+        )
+        return interaction.editReply({
+          content: errorMessage,
+          flags: MessageFlags.Ephemeral,
+        })
+      }
+
+      const contact = rawContact
+      const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        location
+      )}&format=json&limit=1&accept-language=en-US&email=${encodeURIComponent(contact)}`
+      const geoResponse = await fetch(geoUrl, {
+        headers: {
+          // Provide a descriptive UA per Nominatim usage policy
+          'User-Agent': `DestroyerBot WeatherCommand/1.0 (contact: ${contact})`,
+        },
+      })
 
       if (!geoResponse.ok) {
+        // Capture body for diagnostics without blowing up on non-text bodies
+        let errorBody = ''
+        try {
+          errorBody = await geoResponse.text()
+          if (errorBody.length > 500) {
+            errorBody = `${errorBody.slice(0, 500)}...`
+          }
+        } catch (readError) {
+          errorBody = `Failed to read response body: ${readError.message}`
+        }
+
         logger.warn(
           {
             status: geoResponse.status,
             statusText: geoResponse.statusText,
             location,
+            geoUrl,
+            errorBody,
+            responseHeaders: Object.fromEntries(geoResponse.headers.entries()),
           },
           `Geocoding API error: ${geoResponse.status} ${geoResponse.statusText}`
         )
+        if (geoResponse.status === 403 || geoResponse.status === 429) {
+          return interaction.editReply({
+            content:
+              'Geocoding service temporarily refused the request (rate limited or blocked). Please wait a moment and try again.',
+            flags: MessageFlags.Ephemeral,
+          })
+        }
         return interaction.editReply({
           content: 'Failed to geocode the location. Please try a different city name.',
           flags: MessageFlags.Ephemeral,

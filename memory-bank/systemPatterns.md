@@ -163,9 +163,9 @@ DestroyerBot/
   - Development watch mode for testing changes
   - Cluster mode support for scaling
 - **Implementation**:
-  - `npm run dev` watches for file changes (development)
-  - `npm start` runs production instance
-  - `npm stop` cleanly stops the bot
+  - `bun run dev` watches for file changes (development)
+  - `bun start` runs production instance
+  - `bun stop` cleanly stops the bot
   - PM2 logs accessible via `pm2 logs`
 - **Impact**:
   - Platform integration for process management

@@ -381,8 +381,8 @@ You have two options for removing role restrictions:
 
 ### Permissions not working after update
 
-1. Redeploy commands: `node deploy-commands.js`
-2. Restart the bot: `npm stop` then `npm start`
+1. Redeploy commands: `bun run deploy-commands.js`
+2. Restart the bot: `bun stop` then `bun start`
 3. Check if `data/guildSettings.json` exists
 
 ### JSON file is missing
@@ -437,7 +437,7 @@ If you encounter issues:
 
 1. Check the bot logs (Pino logger output)
 2. Verify `data/guildSettings.json` is properly formatted
-3. Ensure commands are deployed: `node deploy-commands.js`
+3. Ensure commands are deployed: `bun run deploy-commands.js`
 4. Confirm you have `Manage Server` permission
 
 ---

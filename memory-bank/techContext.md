@@ -22,7 +22,7 @@
 
 ### Development Tools
 
-- **npm**: Package manager for dependency management
+- **Bun**: Package manager/runtime for dependency management and scripts
 - **ESLint**: Code linting and style enforcement
 - **Prettier**: Code formatting and consistency
 - **Pino**: Advanced logging library with structured output
@@ -41,7 +41,7 @@
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Configure environment
 cp .env.example .env
@@ -51,17 +51,17 @@ cp .env.example .env
 node deploy-commands.js
 
 # Start development server
-npm run dev  # PM2 watch mode
+bun run dev  # PM2 watch mode
 ```
 
 ### Production Deployment
 
 ```bash
 # Start production server
-npm start  # PM2 production mode
+bun start  # PM2 production mode
 
 # Stop server
-npm stop
+bun stop
 ```
 
 ## Technical Constraints
@@ -106,8 +106,8 @@ npm stop
 
 ### Code Quality
 
-- **ESLint**: Run automatically on file changes, fix issues with `npm run format`
-- **Prettier**: Format all code with `npm run format`, check with `npm run format:check`
+- **ESLint**: Run automatically on file changes, fix issues with `bun run format`
+- **Prettier**: Format all code with `bun run format`, check with `bun run format:check`
 - **Git Hooks**: Pre-commit hooks ensure code quality before commits
 
 ### Logging Strategy
