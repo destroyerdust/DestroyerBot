@@ -28,6 +28,11 @@ async function safeParseJson(response) {
 }
 
 async function fetchDeck(deckId) {
+  const parsedId = typeof deckId === 'string' ? Number(deckId) : deckId
+  if (!Number.isInteger(parsedId) || parsedId <= 0) {
+    throw new Error('Invalid deck ID. Please provide a positive deck ID.')
+  }
+
   const url = `${ARCHIDEKT_BASE_URL}/${deckId}/`
 
   const response = await fetch(url, {
