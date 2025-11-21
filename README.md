@@ -136,8 +136,9 @@ An automated moderation logging system that tracks message activities in Discord
   - `guild` subcommand with required `realm` option
 
 - `/archidekt` - Archidekt deck lookup and card search
-  - `deck` subcommand with required `deck_id` option: Show deck summary, owner, and card count
-  - `search` subcommand with required `deck_id` and `query` options: Find cards by `oracleCard.name` (case-insensitive) with safe, truncated results
+  - `deck` subcommand with optional `deck_id` (uses your linked deck if omitted): Show deck summary, owner, and card count
+  - `search` subcommand with optional `deck_id` and required `query` options: Find cards by `oracleCard.name` (case-insensitive) with safe, truncated results
+  - `link` / `unlink` / `default` to manage a saved deck ID so you can run `deck` or `search` without specifying `deck_id`
 
 - `/wow` - World of Warcraft information and utilities
   - `realm` subcommand with required `realm` option and optional `region` option: Get realm status, population, and connected realm information

@@ -5,6 +5,11 @@ const {
   MessageFlags,
 } = require('discord.js')
 const logger = require('../../logger')
+const {
+  getUserDeckAsync,
+  setUserDeckAsync,
+  deleteUserDeckAsync,
+} = require('../../utils/archidektUserDecks')
 
 const ARCHIDEKT_BASE_URL = 'https://archidekt.com/api/decks'
 const USER_AGENT =
@@ -180,16 +185,15 @@ module.exports = {
         .setName('deck')
         .setDescription('Get a quick summary for a deck')
         .addIntegerOption((option) =>
-          option.setName('deck_id').setDescription('Archidekt deck ID').setRequired(true)
+          option
+            .setName('deck_id')
+            .setDescription('Archidekt deck ID (defaults to your linked deck)')
         )
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('search')
         .setDescription('Search for a card name in a deck')
-        .addIntegerOption((option) =>
-          option.setName('deck_id').setDescription('Archidekt deck ID').setRequired(true)
-        )
         .addStringOption((option) =>
           option
             .setName('query')
@@ -197,6 +201,25 @@ module.exports = {
             .setRequired(true)
             .setMinLength(2)
         )
+        .addIntegerOption((option) =>
+          option
+            .setName('deck_id')
+            .setDescription('Archidekt deck ID (defaults to your linked deck)')
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('link')
+        .setDescription('Link a default Archidekt deck to your Discord user')
+        .addIntegerOption((option) =>
+          option.setName('deck_id').setDescription('Archidekt deck ID').setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName('unlink').setDescription('Remove your linked Archidekt deck')
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName('default').setDescription('Show your linked Archidekt deck')
     ),
 
   async execute(interaction) {
@@ -216,11 +239,65 @@ module.exports = {
       `${interaction.user.username} invoked /archidekt ${subcommand}`
     )
 
-    if (!deckId || deckId <= 0) {
-      return interaction.reply({
-        content: '❌ Please provide a valid Archidekt deck ID.',
-        flags: MessageFlags.Ephemeral,
+    if (subcommand === 'link') {
+      if (!deckId || deckId <= 0) {
+        return interaction.reply({
+          content: '❌ Please provide a valid Archidekt deck ID to link.',
+          ephemeral: true,
+        })
+      }
+
+      await interaction.deferReply({ ephemeral: true })
+      try {
+        const deck = await fetchDeck(deckId)
+        await setUserDeckAsync(
+          interaction.user.id,
+          deck.id,
+          deck.name || null,
+          deck.owner?.username || null
+        )
+
+        await interaction.editReply(
+          `✅ Linked deck **${deck.name || deck.id}** (ID: ${deck.id})${deck.owner?.username ? ` by ${deck.owner.username}` : ''} as your default.`
+        )
+      } catch (error) {
+        logger.error(
+          { error: error.message, deckId, userId: interaction.user.id },
+          'Archidekt link command error'
+        )
+        await interaction.editReply(
+          '❌ Unable to link that deck. Please confirm the deck ID is correct and try again.'
+        )
+      }
+      return
+    }
+
+    if (subcommand === 'unlink') {
+      await deleteUserDeckAsync(interaction.user.id)
+      await interaction.reply({
+        content: '🗑️ Removed your linked Archidekt deck (if one was set).',
+        ephemeral: true,
       })
+      return
+    }
+
+    if (subcommand === 'default') {
+      const mapping = await getUserDeckAsync(interaction.user.id)
+      if (!mapping) {
+        await interaction.reply({
+          content:
+            'ℹ️ You do not have a linked Archidekt deck. Use `/archidekt link deck_id:<id>` to set one.',
+          ephemeral: true,
+        })
+      } else {
+        const name = mapping.deckName || mapping.deckId
+        const owner = mapping.deckOwner ? ` by ${mapping.deckOwner}` : ''
+        await interaction.reply({
+          content: `✅ Your linked deck is **${name}** (ID: ${mapping.deckId})${owner}.`,
+          ephemeral: true,
+        })
+      }
+      return
     }
 
     if (subcommand === 'search' && (!query || query.trim().length === 0)) {
@@ -230,14 +307,33 @@ module.exports = {
       })
     }
 
-    await interaction.deferReply()
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
-      const deck = await fetchDeck(deckId)
+      let resolvedDeckId = deckId
+      let usedDefault = false
+
+      if (!resolvedDeckId) {
+        const mapping = await getUserDeckAsync(interaction.user.id)
+        if (mapping?.deckId) {
+          resolvedDeckId = mapping.deckId
+          usedDefault = true
+        }
+      }
+
+      if (!resolvedDeckId || resolvedDeckId <= 0) {
+        await interaction.editReply(
+          '❌ Please provide a valid Archidekt deck ID or link one with `/archidekt link`.'
+        )
+        return
+      }
+
+      const deck = await fetchDeck(resolvedDeckId)
 
       if (subcommand === 'deck') {
         const embed = buildDeckEmbed(deck)
-        await interaction.editReply({ embeds: [embed] })
+        const content = usedDefault ? 'Using your linked Archidekt deck.' : null
+        await interaction.editReply({ content: content || undefined, embeds: [embed] })
         return
       }
 
@@ -245,12 +341,16 @@ module.exports = {
       const matches = filterCardsByName(cards, query)
 
       if (matches.length === 0) {
-        await interaction.editReply(`❌ No cards matching "${query}" were found in this deck.`)
+        const prefix = usedDefault ? 'Using your linked deck: ' : ''
+        await interaction.editReply(
+          `${prefix}❌ No cards matching "${query}" were found in this deck.`
+        )
         return
       }
 
       const embed = buildSearchEmbed(deck, query, matches)
-      await interaction.editReply({ embeds: [embed] })
+      const content = usedDefault ? 'Using your linked Archidekt deck.' : null
+      await interaction.editReply({ content: content || undefined, embeds: [embed] })
     } catch (error) {
       logger.error(
         {
