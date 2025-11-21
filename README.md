@@ -203,6 +203,7 @@ POKEMON_API_KEY=your_pokemon_tcg_api_key
 RAIDER_IO_API_KEY=your_raider_io_api_key
 BLIZZARD_CLIENT_ID=your_blizzard_api_client_id
 BLIZZARD_CLIENT_SECRET=your_blizzard_api_client_secret
+NOMINATIM_CONTACT=your_contact_email_for_geocoding
 MONGO_CONNECTION_STRING=mongodb+srv://username:password@cluster.mongodb.net/
 MONGO_DATABASE_NAME=database_name
 LOG_LEVEL=debug
@@ -223,6 +224,7 @@ LOG_LEVEL=debug
 - `MONGO_CONNECTION_STRING`: MongoDB connection string for database storage
 - `MONGO_DATABASE_NAME`: Name of the MongoDB database to use
 - `LOG_LEVEL`: Set the logging level (default: info, options: trace, debug, info, warn, error, fatal)
+- `NOMINATIM_CONTACT`: Contact email used with the Nominatim geocoding API (per their usage policy)
 
 ## Database
 
