@@ -208,7 +208,7 @@ module.exports = {
         const channelId = await getLogChannelAsync(guildId)
         if (!channelId) {
           return interaction.reply({
-            content: '❌ No log channel set. Configure one with `/logging channel set`.',
+            content: '❌ No log channel set. Configure one with `/log channel set`.',
             flags: MessageFlags.Ephemeral,
           })
         }

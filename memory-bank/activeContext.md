@@ -37,7 +37,7 @@
   - `7b803a0`: utility commands refactored for v14+ best practices
   - `065d685`: wow.js upgraded to v14+ standards
   - `83f4d6d`: rio.js upgraded to v14+ standards
-  - `68447a5`: logsettings.js updated for v14+ best practices
+  - `68447a5`: log.js (formerly logsettings.js) updated for v14+ best practices
   - `06d2f6a`: Code formatting cleanup
   - `06d2f6a`: setwelcomechannel.js upgraded to v14+ standards
   - `fd86a06`: setwelcomemessage.js refactored for enable/disable naming

@@ -13,7 +13,7 @@ DestroyerBot/
 │   ├── admin/             # Administrative commands
 │   │   ├── togglecommand.js
 │   │   ├── logging/       # Message logging commands
-│   │   │   └── logsettings.js
+│   │   │   └── log.js
 │   │   ├── welcome/       # Welcome system commands
 │   │   │   ├── setwelcomechannel.js
 │   │   │   ├── setwelcomemessage.js
