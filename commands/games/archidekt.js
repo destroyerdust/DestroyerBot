@@ -151,6 +151,227 @@ function buildSearchEmbed(deck, query, matches) {
   return embed
 }
 
+async function handleLink(interaction, deckId, alias, makeDefault) {
+  if (!deckId || deckId <= 0) {
+    return interaction.reply({
+      content: '❌ Please provide a valid Archidekt deck ID to link.',
+      flags: MessageFlags.Ephemeral,
+    })
+  }
+
+  await interaction.deferReply({ ephemeral: true })
+  try {
+    const deck = await fetchDeck(deckId)
+    await upsertUserDeckAsync(
+      interaction.user.id,
+      deck.id,
+      deck.name || null,
+      deck.owner?.username || null,
+      alias,
+      makeDefault
+    )
+
+    await interaction.editReply(
+      `✅ Linked deck **${deck.name || deck.id}** (ID: ${deck.id})${
+        deck.owner?.username ? ` by ${deck.owner.username}` : ''
+      }${alias ? ` with alias **${alias}**` : ''}${makeDefault ? ' and set as default.' : '.'}`
+    )
+  } catch (error) {
+    logger.error(
+      { error: error.message, deckId, userId: interaction.user.id },
+      'Archidekt link command error'
+    )
+    await interaction.editReply(
+      '❌ Unable to link that deck. Please confirm the deck ID is correct and try again.'
+    )
+  }
+}
+
+async function handleUnlink(interaction, deckId, alias) {
+  if (!deckId && !alias) {
+    await interaction.reply({
+      content: '❌ Provide a `deck` (ID or alias) to unlink.',
+      flags: MessageFlags.Ephemeral,
+    })
+    return
+  }
+
+  await removeUserDeckAsync(interaction.user.id, {
+    deckId,
+    alias,
+  })
+  await interaction.reply({
+    content: '🗑️ Updated your linked Archidekt decks.',
+    flags: MessageFlags.Ephemeral,
+  })
+}
+
+async function handleDefault(interaction, deckId, alias) {
+  const decks = await getUserDecksAsync(interaction.user.id)
+  if (deckId || alias) {
+    const updated = await setDefaultUserDeckAsync(interaction.user.id, {
+      deckId,
+      alias,
+    })
+    if (!updated) {
+      await interaction.reply({
+        content: '❌ No linked deck found matching that deck ID or alias.',
+        flags: MessageFlags.Ephemeral,
+      })
+      return
+    }
+    await interaction.reply({
+      content: '✅ Default deck updated.',
+      flags: MessageFlags.Ephemeral,
+    })
+  } else {
+    const currentDefault = decks.find((d) => d.isDefault)
+    if (!currentDefault) {
+      await interaction.reply({
+        content:
+          'ℹ️ You do not have a linked Archidekt deck. Use `/archidekt link deck_id:<id>` to set one.',
+        flags: MessageFlags.Ephemeral,
+      })
+    } else {
+      const name = currentDefault.deckName || currentDefault.deckId
+      const owner = currentDefault.deckOwner ? ` by ${currentDefault.deckOwner}` : ''
+      await interaction.reply({
+        content: `✅ Your default deck is **${name}** (ID: ${currentDefault.deckId})${owner}.`,
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+  }
+}
+
+async function handleList(interaction) {
+  const decks = await getUserDecksAsync(interaction.user.id)
+  if (!decks || decks.length === 0) {
+    await interaction.reply({
+      content: 'ℹ️ You have no linked decks. Use `/archidekt link deck_id:<id>` to add one.',
+      flags: MessageFlags.Ephemeral,
+    })
+    return
+  }
+
+  const lines = decks.map((d) => {
+    const name = d.deckName || d.deckId
+    const owner = d.deckOwner ? ` by ${d.deckOwner}` : ''
+    const aliasLabel = d.alias ? ` (alias: ${d.alias})` : ''
+    const defaultMark = d.isDefault ? ' ⭐' : ''
+    return `• ${name} (ID: ${d.deckId})${aliasLabel}${owner}${defaultMark}`
+  })
+
+  await interaction.reply({
+    content: lines.join('\n'),
+    flags: MessageFlags.Ephemeral,
+  })
+}
+
+async function handleDeck(interaction, deckId, alias) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral })
+
+  try {
+    const decks = await getUserDecksAsync(interaction.user.id)
+    const resolved = resolveDeck(decks, { deckId, alias })
+
+    if (!resolved || !resolved.deck?.deckId) {
+      await interaction.editReply(
+        '❌ Please provide a valid Archidekt deck ID or link one with `/archidekt link`.'
+      )
+      return
+    }
+
+    const deck = await fetchDeck(resolved.deck.deckId)
+    const embed = buildDeckEmbed(deck)
+    const content =
+      resolved.source === 'default'
+        ? 'Using your default Archidekt deck.'
+        : resolved.source === 'alias'
+          ? 'Using your linked deck (alias).'
+          : null
+    await interaction.editReply({ content: content || undefined, embeds: [embed] })
+  } catch (error) {
+    handleError(interaction, error, deckId, 'deck')
+  }
+}
+
+async function handleSearch(interaction, query, deckId, alias) {
+  if (!query || query.trim().length === 0) {
+    return interaction.reply({
+      content: '❌ Please provide a card name to search for.',
+      flags: MessageFlags.Ephemeral,
+    })
+  }
+
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral })
+
+  try {
+    const decks = await getUserDecksAsync(interaction.user.id)
+    const resolved = resolveDeck(decks, { deckId, alias })
+
+    if (!resolved || !resolved.deck?.deckId) {
+      await interaction.editReply(
+        '❌ Please provide a valid Archidekt deck ID or link one with `/archidekt link`.'
+      )
+      return
+    }
+
+    const deck = await fetchDeck(resolved.deck.deckId)
+    const cards = Array.isArray(deck.cards) ? deck.cards : []
+    const matches = filterCardsByName(cards, query)
+
+    if (matches.length === 0) {
+      const prefix =
+        resolved.source === 'default'
+          ? 'Using your default deck: '
+          : resolved.source === 'alias'
+            ? 'Using your linked deck: '
+            : ''
+      await interaction.editReply(
+        `${prefix}❌ No cards matching "${query}" were found in this deck.`
+      )
+      return
+    }
+
+    const embed = buildSearchEmbed(deck, query, matches)
+    const content =
+      resolved.source === 'default'
+        ? 'Using your default Archidekt deck.'
+        : resolved.source === 'alias'
+          ? 'Using your linked deck (alias).'
+          : null
+    await interaction.editReply({ content: content || undefined, embeds: [embed] })
+  } catch (error) {
+    handleError(interaction, error, deckId, 'search')
+  }
+}
+
+async function handleError(interaction, error, deckId, subcommand) {
+  logger.error(
+    {
+      error: error.message,
+      stack: error.stack,
+      deckId,
+      subcommand,
+      userId: interaction.user.id,
+    },
+    'Archidekt command error'
+  )
+
+  const errorMessage =
+    '❌ Unable to fetch Archidekt data right now. Please check the deck ID and try again.'
+
+  try {
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply(errorMessage)
+    } else {
+      await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral })
+    }
+  } catch (replyError) {
+    logger.error({ error: replyError.message }, 'Failed to send Archidekt error reply')
+  }
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('archidekt')
@@ -301,208 +522,31 @@ module.exports = {
       `${interaction.user.username} invoked /archidekt ${subcommand}`
     )
 
-    if (subcommand === 'link') {
-      if (!effectiveDeckId || effectiveDeckId <= 0) {
-        return interaction.reply({
-          content: '❌ Please provide a valid Archidekt deck ID to link.',
-          flags: MessageFlags.Ephemeral,
-        })
-      }
-
-      await interaction.deferReply({ ephemeral: true })
-      try {
-        const deck = await fetchDeck(effectiveDeckId)
-        await upsertUserDeckAsync(
-          interaction.user.id,
-          deck.id,
-          deck.name || null,
-          deck.owner?.username || null,
-          effectiveAlias,
-          makeDefault
-        )
-
-        await interaction.editReply(
-          `✅ Linked deck **${deck.name || deck.id}** (ID: ${deck.id})${
-            deck.owner?.username ? ` by ${deck.owner.username}` : ''
-          }${effectiveAlias ? ` with alias **${effectiveAlias}**` : ''}${makeDefault ? ' and set as default.' : '.'}`
-        )
-      } catch (error) {
-        logger.error(
-          { error: error.message, deckId: effectiveDeckId, userId: interaction.user.id },
-          'Archidekt link command error'
-        )
-        await interaction.editReply(
-          '❌ Unable to link that deck. Please confirm the deck ID is correct and try again.'
-        )
-      }
-      return
-    }
-
-    if (subcommand === 'unlink') {
-      if (!effectiveDeckId && !effectiveAlias) {
+    switch (subcommand) {
+      case 'link':
+        await handleLink(interaction, effectiveDeckId, effectiveAlias, makeDefault)
+        break
+      case 'unlink':
+        await handleUnlink(interaction, effectiveDeckId, effectiveAlias)
+        break
+      case 'default':
+        await handleDefault(interaction, effectiveDeckId, effectiveAlias)
+        break
+      case 'list':
+        await handleList(interaction)
+        break
+      case 'deck':
+        await handleDeck(interaction, effectiveDeckId, effectiveAlias)
+        break
+      case 'search':
+        await handleSearch(interaction, query, effectiveDeckId, effectiveAlias)
+        break
+      default:
+        logger.warn({ subcommand }, 'Unknown Archidekt subcommand')
         await interaction.reply({
-          content: '❌ Provide a `deck` (ID or alias) to unlink.',
+          content: '❌ Unknown subcommand.',
           flags: MessageFlags.Ephemeral,
         })
-        return
-      }
-
-      await removeUserDeckAsync(interaction.user.id, {
-        deckId: effectiveDeckId,
-        alias: effectiveAlias,
-      })
-      await interaction.reply({
-        content: '🗑️ Updated your linked Archidekt decks.',
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
-
-    if (subcommand === 'default') {
-      const decks = await getUserDecksAsync(interaction.user.id)
-      if (effectiveDeckId || effectiveAlias) {
-        const updated = await setDefaultUserDeckAsync(interaction.user.id, {
-          deckId: effectiveDeckId,
-          alias: effectiveAlias,
-        })
-        if (!updated) {
-          await interaction.reply({
-            content: '❌ No linked deck found matching that deck ID or alias.',
-            flags: MessageFlags.Ephemeral,
-          })
-          return
-        }
-        await interaction.reply({
-          content: '✅ Default deck updated.',
-          flags: MessageFlags.Ephemeral,
-        })
-      } else {
-        const currentDefault = decks.find((d) => d.isDefault)
-        if (!currentDefault) {
-          await interaction.reply({
-            content:
-              'ℹ️ You do not have a linked Archidekt deck. Use `/archidekt link deck_id:<id>` to set one.',
-            flags: MessageFlags.Ephemeral,
-          })
-        } else {
-          const name = currentDefault.deckName || currentDefault.deckId
-          const owner = currentDefault.deckOwner ? ` by ${currentDefault.deckOwner}` : ''
-          await interaction.reply({
-            content: `✅ Your default deck is **${name}** (ID: ${currentDefault.deckId})${owner}.`,
-            flags: MessageFlags.Ephemeral,
-          })
-        }
-      }
-      return
-    }
-
-    if (subcommand === 'list') {
-      const decks = await getUserDecksAsync(interaction.user.id)
-      if (!decks || decks.length === 0) {
-        await interaction.reply({
-          content: 'ℹ️ You have no linked decks. Use `/archidekt link deck_id:<id>` to add one.',
-          flags: MessageFlags.Ephemeral,
-        })
-        return
-      }
-
-      const lines = decks.map((d) => {
-        const name = d.deckName || d.deckId
-        const owner = d.deckOwner ? ` by ${d.deckOwner}` : ''
-        const aliasLabel = d.alias ? ` (alias: ${d.alias})` : ''
-        const defaultMark = d.isDefault ? ' ⭐' : ''
-        return `• ${name} (ID: ${d.deckId})${aliasLabel}${owner}${defaultMark}`
-      })
-
-      await interaction.reply({
-        content: lines.join('\n'),
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
-
-    if (subcommand === 'search' && (!query || query.trim().length === 0)) {
-      return interaction.reply({
-        content: '❌ Please provide a card name to search for.',
-        flags: MessageFlags.Ephemeral,
-      })
-    }
-
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
-
-    try {
-      const decks = await getUserDecksAsync(interaction.user.id)
-      const resolved = resolveDeck(decks, { deckId: effectiveDeckId, alias: effectiveAlias })
-
-      if (!resolved || !resolved.deck?.deckId) {
-        await interaction.editReply(
-          '❌ Please provide a valid Archidekt deck ID or link one with `/archidekt link`.'
-        )
-        return
-      }
-
-      const deck = await fetchDeck(resolved.deck.deckId)
-
-      if (subcommand === 'deck') {
-        const embed = buildDeckEmbed(deck)
-        const content =
-          resolved.source === 'default'
-            ? 'Using your default Archidekt deck.'
-            : resolved.source === 'alias'
-              ? 'Using your linked deck (alias).'
-              : null
-        await interaction.editReply({ content: content || undefined, embeds: [embed] })
-        return
-      }
-
-      const cards = Array.isArray(deck.cards) ? deck.cards : []
-      const matches = filterCardsByName(cards, query)
-
-      if (matches.length === 0) {
-        const prefix =
-          resolved.source === 'default'
-            ? 'Using your default deck: '
-            : resolved.source === 'alias'
-              ? 'Using your linked deck: '
-              : ''
-        await interaction.editReply(
-          `${prefix}❌ No cards matching "${query}" were found in this deck.`
-        )
-        return
-      }
-
-      const embed = buildSearchEmbed(deck, query, matches)
-      const content =
-        resolved.source === 'default'
-          ? 'Using your default Archidekt deck.'
-          : resolved.source === 'alias'
-            ? 'Using your linked deck (alias).'
-            : null
-      await interaction.editReply({ content: content || undefined, embeds: [embed] })
-    } catch (error) {
-      logger.error(
-        {
-          error: error.message,
-          stack: error.stack,
-          deckId: effectiveDeckId,
-          subcommand,
-          userId: interaction.user.id,
-        },
-        'Archidekt command error'
-      )
-
-      const errorMessage =
-        '❌ Unable to fetch Archidekt data right now. Please check the deck ID and try again.'
-
-      try {
-        if (interaction.deferred || interaction.replied) {
-          await interaction.editReply(errorMessage)
-        } else {
-          await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral })
-        }
-      } catch (replyError) {
-        logger.error({ error: replyError.message }, 'Failed to send Archidekt error reply')
-      }
     }
   },
 }
