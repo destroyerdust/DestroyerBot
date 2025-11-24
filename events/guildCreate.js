@@ -1,5 +1,7 @@
+const { Events } = require('discord.js')
+
 module.exports = {
-  name: 'guildCreate',
+  name: Events.GuildCreate,
   once: false,
   execute(guild) {
     const logger = require('../logger')

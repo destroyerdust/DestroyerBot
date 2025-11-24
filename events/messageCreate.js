@@ -1,9 +1,9 @@
-const { EmbedBuilder } = require('discord.js')
+const { EmbedBuilder, Events } = require('discord.js')
 const { getLogChannelAsync, getLogMessageCreateAsync } = require('../utils/guildSettings')
 const logger = require('../logger')
 
 module.exports = {
-  name: 'messageCreate',
+  name: Events.MessageCreate,
   once: false,
   async execute(message) {
     logger.debug('Message create event fired', {

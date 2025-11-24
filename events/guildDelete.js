@@ -1,5 +1,7 @@
+const { Events } = require('discord.js')
+
 module.exports = {
-  name: 'guildDelete',
+  name: Events.GuildDelete,
   once: false,
   execute(guild) {
     const logger = require('../logger')

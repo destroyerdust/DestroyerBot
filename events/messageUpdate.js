@@ -1,5 +1,7 @@
+const { Events } = require('discord.js')
+
 module.exports = {
-  name: 'messageUpdate',
+  name: Events.MessageUpdate,
   once: false,
   execute(oldMessage, newMessage) {
     const logger = require('../logger')

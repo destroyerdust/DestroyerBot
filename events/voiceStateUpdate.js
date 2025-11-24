@@ -1,5 +1,7 @@
+const { Events } = require('discord.js')
+
 module.exports = {
-  name: 'voiceStateUpdate',
+  name: Events.VoiceStateUpdate,
   once: false,
   execute(oldState, newState) {
     const logger = require('../logger')
