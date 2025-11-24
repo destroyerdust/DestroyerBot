@@ -7,7 +7,7 @@ const {
 } = require('discord.js')
 const logger = require('../../logger')
 const { Query } = require('@tcgdex/sdk')
-const { sdk, getSeriesCached } = require('../../utils/pokemonApi')
+const { sdk, getSeriesCached, getLatestSetCached } = require('../../utils/pokemonApi')
 
 const COLORS = {
   SUCCESS: 0x00ff00,
@@ -16,9 +16,11 @@ const COLORS = {
 
 const TIMEOUTS = {
   AUTOCOMPLETE: 2800, // Leave 200ms buffer for Discord's 3s limit
+  API_FETCH: 8000, // 8 second timeout for API calls
 }
 
 const FALLBACK = '—'
+const INVALID_DATE_TIMESTAMP = 0
 
 const truncate = (text, limit = 1024) => {
   if (!text) return FALLBACK
@@ -65,6 +67,19 @@ const summarizeCardCounts = (sets) =>
     { total: 0, official: 0 }
   )
 
+/**
+ * Wraps an SDK fetch call with timeout protection
+ * @param {Promise} fetchPromise - The SDK fetch promise
+ * @param {number} timeout - Timeout in milliseconds
+ * @returns {Promise}
+ */
+const fetchWithTimeout = (fetchPromise, timeout = TIMEOUTS.API_FETCH) => {
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('API fetch timeout')), timeout)
+  )
+  return Promise.race([fetchPromise, timeoutPromise])
+}
+
 const formatSetPreview = (sets) => {
   if (!sets || sets.length === 0) return FALLBACK
 
@@ -88,7 +103,7 @@ const getSetReleaseTimestamp = (set) => {
   const release =
     set.releaseDate || set.releasedAt || set.release || set.released || set.serieReleaseDate
   const parsed = release ? Date.parse(release) : Number.NaN
-  return Number.isNaN(parsed) ? 0 : parsed
+  return Number.isNaN(parsed) ? INVALID_DATE_TIMESTAMP : parsed
 }
 
 /**
@@ -98,6 +113,27 @@ const getSetReleaseTimestamp = (set) => {
  */
 const getSetReleaseLabel = (set) =>
   set.releaseDate || set.releasedAt || set.release || set.released || FALLBACK
+
+/**
+ * Extract and format card count information from a set object
+ * @param {Object} set - The set object containing card count data
+ * @returns {{total: number|undefined, official: number|undefined, label: string}}
+ */
+const getCardCountInfo = (set) => {
+  const total = set.cardCount?.total ?? set.cardCount?.official ?? set.cardCount?.legal ?? undefined
+  const official = set.cardCount?.official ?? set.cardCount?.legal ?? undefined
+
+  let label = FALLBACK
+  if (total !== undefined && total !== null) {
+    if (official && official !== total) {
+      label = `${total} (${official} official)`
+    } else {
+      label = total.toString()
+    }
+  }
+
+  return { total, official, label }
+}
 
 /**
  * Handle error responses
@@ -252,98 +288,44 @@ async function handleSeries(interaction) {
 async function handleLatest(interaction) {
   const user = interaction.user
 
-  const seriesList = await getSeriesCached()
-
-  if (!seriesList || seriesList.length === 0) {
-    logger.info({ user: user.id }, 'No series found for latest command')
-    return interaction.editReply({
-      content: 'No series data available to determine the latest set.',
-    })
-  }
-
-  const latestSeries = seriesList[seriesList.length - 1]
-  if (!latestSeries?.id) {
-    logger.warn({ user: user.id }, 'Latest series missing id')
-    return interaction.editReply({
-      content: 'Series data is missing required identifiers.',
-    })
-  }
-  let seriesDetails = null
+  let seriesDetails, latestSet, latestSetDetails
 
   try {
-    seriesDetails = await sdk.fetch('series', latestSeries.id)
+    // Get cached latest set data (handles all the fetching and caching logic)
+    const latestData = await getLatestSetCached()
+    seriesDetails = latestData.seriesDetails
+    latestSet = latestData.latestSet
+    latestSetDetails = latestData.latestSetDetails
   } catch (error) {
+    // Handle all possible errors from the caching layer
     logger.warn(
-      { error: error.message, seriesId: latestSeries.id, user: user.id },
-      'Failed to fetch latest series details'
+      {
+        error: error.message,
+        stack: error.stack,
+        user: user.id,
+      },
+      'Failed to fetch latest set data'
     )
-    return interaction.editReply({
-      content: 'Unable to fetch the latest series details right now.',
-    })
-  }
 
-  const sets = seriesDetails?.sets ?? []
-  const now = Date.now()
-
-  let latestSet = seriesDetails?.lastSet || sets[sets.length - 1]
-
-  if (sets.length > 0) {
-    const releasedSets = sets
-      .map((set) => ({ set, release: getSetReleaseTimestamp(set) }))
-      .filter(({ release }) => release > 0 && release <= now)
-      .sort((a, b) => b.release - a.release)
-
-    if (releasedSets.length > 0) {
-      // Prefer the most recent released set to avoid future/upcoming entries
-      latestSet = releasedSets[0].set
+    // Map specific error types to user-friendly messages
+    const errorMessages = {
+      'API fetch timeout':
+        'The request timed out. The Pokemon TCG API may be slow right now. Please try again in a moment.',
+      'No series data available': 'No series data available to determine the latest set.',
+      'Latest series missing ID': 'Series data is missing required identifiers.',
+      'No sets found in latest series': 'No sets found for the latest series.',
+      'Latest set missing ID': 'Latest set data is incomplete. Please try again later.',
     }
-  }
 
-  if (!latestSet) {
-    logger.info(
-      { user: user.id, seriesId: latestSeries.id },
-      'No sets found in latest series for latest command'
-    )
-    return interaction.editReply({
-      content: 'No sets found for the latest series.',
-    })
-  }
+    const userMessage =
+      errorMessages[error.message] ??
+      'Unable to fetch the latest set details right now. Please try again later.'
 
-  if (!latestSet.id) {
-    logger.warn(
-      { user: user.id, seriesId: latestSeries.id },
-      'Latest set missing id for latest command'
-    )
-    return interaction.editReply({
-      content: 'Latest set data is incomplete. Please try again later.',
-    })
-  }
-
-  let latestSetDetails = latestSet
-
-  try {
-    latestSetDetails = await sdk.fetch('sets', latestSet.id)
-  } catch (error) {
-    logger.warn(
-      { error: error.message, setId: latestSet.id, user: user.id },
-      'Failed to fetch latest set details'
-    )
+    return interaction.editReply({ content: userMessage })
   }
 
   const releaseLabel = getSetReleaseLabel(latestSetDetails)
-  const cardCountTotal =
-    latestSetDetails.cardCount?.total ??
-    latestSetDetails.cardCount?.official ??
-    latestSetDetails.cardCount?.legal ??
-    undefined
-  const cardCountOfficial =
-    latestSetDetails.cardCount?.official ?? latestSetDetails.cardCount?.legal ?? undefined
-  const cardCountLabel =
-    cardCountTotal !== undefined && cardCountTotal !== null
-      ? cardCountOfficial && cardCountOfficial !== cardCountTotal
-        ? `${cardCountTotal} (${cardCountOfficial} official)`
-        : cardCountTotal.toString()
-      : FALLBACK
+  const { label: cardCountLabel } = getCardCountInfo(latestSetDetails)
   const abbreviation = latestSetDetails.abbreviation?.official ?? latestSetDetails.abbreviation?.id
   const sampleCards =
     latestSetDetails.cards && latestSetDetails.cards.length > 0
@@ -365,8 +347,8 @@ async function handleLatest(interaction) {
         value:
           latestSetDetails.serie?.name ??
           latestSetDetails.series?.name ??
-          latestSeries.name ??
-          latestSeries.id ??
+          seriesDetails.name ??
+          seriesDetails.id ??
           FALLBACK,
         inline: true,
       },
