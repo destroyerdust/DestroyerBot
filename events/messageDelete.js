@@ -1,9 +1,9 @@
-const { EmbedBuilder, AuditLogEvent, PermissionFlagsBits } = require('discord.js')
+const { EmbedBuilder, AuditLogEvent, PermissionFlagsBits, Events } = require('discord.js')
 const { getLogChannelAsync, getLogMessageDeleteAsync } = require('../utils/guildSettings')
 const logger = require('../logger')
 
 module.exports = {
-  name: 'messageDelete',
+  name: Events.MessageDelete,
   once: false,
   async execute(message) {
     logger.debug('Message delete event fired', {

@@ -1,9 +1,9 @@
-const { MessageFlags } = require('discord.js')
+const { MessageFlags, Events } = require('discord.js')
 const logger = require('../logger')
 const { hasCommandPermissionAsync } = require('../utils/guildSettings')
 
 module.exports = {
-  name: 'interactionCreate',
+  name: Events.InteractionCreate,
   once: false,
   async execute(interaction) {
     const client = interaction.client
@@ -67,10 +67,17 @@ module.exports = {
       await command.execute(interaction)
     } catch (error) {
       logger.error(error)
-      await interaction.reply({
-        content: 'There was an error while executing this command!',
-        flags: MessageFlags.Ephemeral,
-      })
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+          content: 'There was an error while executing this command!',
+          flags: MessageFlags.Ephemeral,
+        })
+      } else {
+        await interaction.reply({
+          content: 'There was an error while executing this command!',
+          flags: MessageFlags.Ephemeral,
+        })
+      }
     }
   },
 }

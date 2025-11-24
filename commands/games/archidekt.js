@@ -54,11 +54,13 @@ async function fetchDeck(deckId) {
 
 function summarizeCards(cards) {
   const lines = cards.slice(0, MAX_SEARCH_RESULTS).map((card) => {
-    const name = card.card?.oracleCard?.name || 'Unknown card'
-    const uid = card.card?.uid || 'Unknown UID'
+    const rawName = card.card?.oracleCard?.name
+    const uid = card.card?.uid
+    const name = rawName || 'Unknown card'
+    const safeName = name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')
     const link =
-      name && uid
-        ? `[${name}](https://archidekt.com/card?name=${encodeURIComponent(name)}&uid=${encodeURIComponent(uid)})`
+      rawName && uid
+        ? `[${safeName}](https://archidekt.com/card?name=${encodeURIComponent(rawName)}&uid=${encodeURIComponent(uid)})`
         : name
     const manaCost = card.card?.oracleCard?.manaCost || ''
     const types = card.card?.oracleCard?.types?.join(', ') || 'Unknown type'
