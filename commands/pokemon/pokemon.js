@@ -79,6 +79,27 @@ const formatSetPreview = (sets) => {
 }
 
 /**
+ * Normalize a set's release date to a timestamp (ms) for sorting.
+ * Accepts multiple possible property names from TCGdex responses.
+ * @param {Object} set
+ * @returns {number}
+ */
+const getSetReleaseTimestamp = (set) => {
+  const release =
+    set.releaseDate || set.releasedAt || set.release || set.released || set.serieReleaseDate
+  const parsed = release ? Date.parse(release) : Number.NaN
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+/**
+ * Get a display-friendly release date label for a set.
+ * @param {Object} set
+ * @returns {string}
+ */
+const getSetReleaseLabel = (set) =>
+  set.releaseDate || set.releasedAt || set.release || set.released || FALLBACK
+
+/**
  * Handle error responses
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
  * @param {Error} error
@@ -225,6 +246,155 @@ async function handleSeries(interaction) {
 }
 
 /**
+ * Handle latest subcommand to show recently released sets.
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ */
+async function handleLatest(interaction) {
+  const user = interaction.user
+
+  const seriesList = await getSeriesCached()
+
+  if (!seriesList || seriesList.length === 0) {
+    logger.info({ user: user.id }, 'No series found for latest command')
+    return interaction.editReply({
+      content: 'No series data available to determine the latest set.',
+    })
+  }
+
+  const latestSeries = seriesList[seriesList.length - 1]
+  if (!latestSeries?.id) {
+    logger.warn({ user: user.id }, 'Latest series missing id')
+    return interaction.editReply({
+      content: 'Series data is missing required identifiers.',
+    })
+  }
+  let seriesDetails = null
+
+  try {
+    seriesDetails = await sdk.fetch('series', latestSeries.id)
+  } catch (error) {
+    logger.warn(
+      { error: error.message, seriesId: latestSeries.id, user: user.id },
+      'Failed to fetch latest series details'
+    )
+    return interaction.editReply({
+      content: 'Unable to fetch the latest series details right now.',
+    })
+  }
+
+  const sets = seriesDetails?.sets ?? []
+  const now = Date.now()
+
+  let latestSet = seriesDetails?.lastSet || sets[sets.length - 1]
+
+  if (sets.length > 0) {
+    const releasedSets = sets
+      .map((set) => ({ set, release: getSetReleaseTimestamp(set) }))
+      .filter(({ release }) => release > 0 && release <= now)
+      .sort((a, b) => b.release - a.release)
+
+    if (releasedSets.length > 0) {
+      // Prefer the most recent released set to avoid future/upcoming entries
+      latestSet = releasedSets[0].set
+    }
+  }
+
+  if (!latestSet) {
+    logger.info(
+      { user: user.id, seriesId: latestSeries.id },
+      'No sets found in latest series for latest command'
+    )
+    return interaction.editReply({
+      content: 'No sets found for the latest series.',
+    })
+  }
+
+  if (!latestSet.id) {
+    logger.warn(
+      { user: user.id, seriesId: latestSeries.id },
+      'Latest set missing id for latest command'
+    )
+    return interaction.editReply({
+      content: 'Latest set data is incomplete. Please try again later.',
+    })
+  }
+
+  let latestSetDetails = latestSet
+
+  try {
+    latestSetDetails = await sdk.fetch('sets', latestSet.id)
+  } catch (error) {
+    logger.warn(
+      { error: error.message, setId: latestSet.id, user: user.id },
+      'Failed to fetch latest set details'
+    )
+  }
+
+  const releaseLabel = getSetReleaseLabel(latestSetDetails)
+  const cardCountTotal =
+    latestSetDetails.cardCount?.total ??
+    latestSetDetails.cardCount?.official ??
+    latestSetDetails.cardCount?.legal ??
+    undefined
+  const cardCountOfficial =
+    latestSetDetails.cardCount?.official ?? latestSetDetails.cardCount?.legal ?? undefined
+  const cardCountLabel =
+    cardCountTotal !== undefined && cardCountTotal !== null
+      ? cardCountOfficial && cardCountOfficial !== cardCountTotal
+        ? `${cardCountTotal} (${cardCountOfficial} official)`
+        : cardCountTotal.toString()
+      : FALLBACK
+  const abbreviation = latestSetDetails.abbreviation?.official ?? latestSetDetails.abbreviation?.id
+  const sampleCards =
+    latestSetDetails.cards && latestSetDetails.cards.length > 0
+      ? latestSetDetails.cards
+          .slice(0, 5)
+          .map((card) => `${card.localId ?? '?'} — ${card.name ?? 'Unknown'}`)
+          .join('\n')
+      : null
+
+  const embed = new EmbedBuilder()
+    .setTitle(latestSetDetails.name ?? latestSet.name ?? 'Unknown Set')
+    .setColor(COLORS.SUCCESS)
+    .addFields(
+      { name: 'Set ID', value: latestSetDetails.id ?? latestSet.id ?? FALLBACK, inline: true },
+      { name: 'Release', value: releaseLabel, inline: true },
+      { name: 'Cards', value: cardCountLabel, inline: true },
+      {
+        name: 'Series',
+        value:
+          latestSetDetails.serie?.name ??
+          latestSetDetails.series?.name ??
+          latestSeries.name ??
+          latestSeries.id ??
+          FALLBACK,
+        inline: true,
+      },
+      {
+        name: 'Abbreviation',
+        value: abbreviation ?? FALLBACK,
+        inline: true,
+      }
+    )
+    .setFooter({ text: `Latest set • Requested by ${user.username}` })
+
+  if (sampleCards) {
+    embed.addFields({
+      name: 'Sample Cards',
+      value: truncate(sampleCards, 1024),
+    })
+  }
+
+  if (latestSetDetails.logo || latestSet.logo) {
+    embed.setImage(`${latestSetDetails.logo || latestSet.logo}.webp`)
+  } else if (latestSetDetails.symbol || latestSet.symbol) {
+    embed.setThumbnail(`${latestSetDetails.symbol || latestSet.symbol}.webp`)
+  }
+
+  await interaction.editReply({ embeds: [embed] })
+}
+
+/**
  * Send card embed
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
  * @param {Object} item
@@ -353,6 +523,9 @@ module.exports = {
       subcommand.setName('random').setDescription('Get a random Pokemon TCG card')
     )
     .addSubcommand((subcommand) =>
+      subcommand.setName('latest').setDescription('Show the most recent Pokemon TCG set')
+    )
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('series')
         .setDescription('Get information about a TCGDex series')
@@ -429,6 +602,9 @@ module.exports = {
           break
         case 'random':
           await handleRandom(interaction)
+          break
+        case 'latest':
+          await handleLatest(interaction)
           break
         case 'series':
           await handleSeries(interaction)

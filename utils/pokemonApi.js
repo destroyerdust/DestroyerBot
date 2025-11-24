@@ -7,7 +7,7 @@ const sdk = new TCGDex('en')
 // Cache for series data to speed up autocomplete
 let seriesCache = null
 let seriesCacheTime = 0
-const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
+const SERIES_CACHE_DURATION = 60 * 60 * 1000 // 1 hour
 
 // Pre-fetch series data to avoid timeout on first autocomplete request
 let seriesCachePromise = null
@@ -36,7 +36,7 @@ const getSeriesCached = async () => {
   const now = Date.now()
 
   // If cache exists and is fresh, return it immediately
-  if (seriesCache && now - seriesCacheTime < CACHE_DURATION) {
+  if (seriesCache && now - seriesCacheTime < SERIES_CACHE_DURATION) {
     return seriesCache
   }
 
