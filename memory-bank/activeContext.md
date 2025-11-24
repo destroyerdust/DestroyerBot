@@ -44,6 +44,13 @@
 - **Impact**: All commands now fully compliant with Discord.js v14+ API standards
 - **Verification**: All commands successfully deployed and tested
 
+### Archidekt Command Refactoring
+
+- **Status**: ✅ Completed - November 24, 2025
+- **Scope**: Combined `deck_id` and `alias` into single `deck` argument with autocomplete
+- **Rationale**: Simplified user interface and improved usability
+- **Impact**: `deck`, `search`, `unlink`, and `default` subcommands now use unified `deck` argument
+
 ### Utility Commands Reorganization
 
 - **Status**: ✅ Completed - Commands organized into logical subfolders
