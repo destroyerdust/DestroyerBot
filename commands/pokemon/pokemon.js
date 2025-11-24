@@ -55,6 +55,29 @@ const formatAttacks = (attacks) => {
   return truncate(formatted)
 }
 
+const summarizeCardCounts = (sets) =>
+  sets.reduce(
+    (acc, set) => {
+      acc.total += set.cardCount?.total ?? 0
+      acc.official += set.cardCount?.official ?? 0
+      return acc
+    },
+    { total: 0, official: 0 }
+  )
+
+const formatSetPreview = (sets) => {
+  if (!sets || sets.length === 0) return FALLBACK
+
+  const preview = sets
+    .slice(0, 5)
+    .map((set, idx) => `${idx + 1}. ${set.name}`)
+    .join('\n')
+
+  const remaining = sets.length > 5 ? `\n...and ${sets.length - 5} more` : ''
+
+  return truncate(`${preview}${remaining}`)
+}
+
 /**
  * Handle error responses
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
@@ -140,6 +163,8 @@ async function handleSeries(interaction) {
 
   const allSeries = await getSeriesCached()
   const series = allSeries.find((s) => s.id === seriesId)
+  let seriesDetails = null
+  let sets = []
 
   if (!series) {
     return interaction.editReply({
@@ -147,17 +172,50 @@ async function handleSeries(interaction) {
     })
   }
 
+  try {
+    seriesDetails = await sdk.fetch('series', seriesId)
+    sets = seriesDetails?.sets ?? []
+  } catch (error) {
+    logger.warn({ error: error.message, seriesId, user: user.id }, 'Failed to fetch series details')
+  }
+
+  const { total: totalCards, official: officialCards } = summarizeCardCounts(sets)
+  const totalCardsValue =
+    totalCards || officialCards
+      ? `${totalCards}${officialCards ? ` (${officialCards} official)` : ''}`
+      : FALLBACK
+
   const embed = new EmbedBuilder()
     .setTitle(series.name)
     .setColor(COLORS.SUCCESS)
-    .addFields({
-      name: 'Series ID',
-      value: series.id,
-      inline: true,
-    })
+    .addFields(
+      {
+        name: 'Series ID',
+        value: series.id,
+        inline: true,
+      },
+      {
+        name: 'Sets',
+        value: sets.length ? sets.length.toString() : FALLBACK,
+        inline: true,
+      },
+      {
+        name: 'Total Cards',
+        value: totalCardsValue,
+        inline: true,
+      }
+    )
     .setFooter({
       text: `Requested by ${user.username}`,
     })
+
+  if (sets.length > 0) {
+    const setPreview = formatSetPreview(sets)
+    embed.addFields({
+      name: 'Set Preview',
+      value: setPreview,
+    })
+  }
 
   if (series.logo) {
     embed.setImage(`${series.logo}.webp`)
