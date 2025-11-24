@@ -74,7 +74,6 @@ const getSeriesCached = async () => {
 // Initialize cache as soon as module loads (non-blocking background task)
 // We use getSeriesCached() to handle the promise and logging, rather than calling initializeSeriesCache directly
 
-
 // Attempt to initialize cache with timeout - if it takes too long, try again on first request
 getSeriesCached()
   .then(() => {
