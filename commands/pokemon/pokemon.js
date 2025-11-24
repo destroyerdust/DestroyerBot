@@ -327,14 +327,6 @@ async function handleLatest(interaction) {
   const releaseLabel = getSetReleaseLabel(latestSetDetails)
   const { label: cardCountLabel } = getCardCountInfo(latestSetDetails)
   const abbreviation = latestSetDetails.abbreviation?.official ?? latestSetDetails.abbreviation?.id
-  const sampleCards =
-    latestSetDetails.cards && latestSetDetails.cards.length > 0
-      ? latestSetDetails.cards
-          .slice(0, 5)
-          .map((card) => `${card.localId ?? '?'} — ${card.name ?? 'Unknown'}`)
-          .join('\n')
-      : null
-
   const embed = new EmbedBuilder()
     .setTitle(latestSetDetails.name ?? latestSet.name ?? 'Unknown Set')
     .setColor(COLORS.SUCCESS)
@@ -359,13 +351,6 @@ async function handleLatest(interaction) {
       }
     )
     .setFooter({ text: `Latest set • Requested by ${user.username}` })
-
-  if (sampleCards) {
-    embed.addFields({
-      name: 'Sample Cards',
-      value: truncate(sampleCards, 1024),
-    })
-  }
 
   if (latestSetDetails.logo || latestSet.logo) {
     embed.setImage(`${latestSetDetails.logo || latestSet.logo}.webp`)

@@ -50,7 +50,11 @@ const initializeSeriesCache = () => {
     .catch((error) => {
       logger.error({ error: error.message }, 'Failed to initialize series cache')
       seriesCache = []
+      seriesCacheTime = Date.now()
       return []
+    })
+    .finally(() => {
+      seriesCachePromise = null
     })
 
   return seriesCachePromise
