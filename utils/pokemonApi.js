@@ -47,12 +47,6 @@ const initializeSeriesCache = () => {
       logger.debug({ cacheSize: seriesCache.length }, 'Series cache initialized')
       return seriesCache
     })
-    .catch((error) => {
-      logger.error({ error: error.message }, 'Failed to initialize series cache')
-      seriesCache = []
-      seriesCacheTime = Date.now()
-      return []
-    })
     .finally(() => {
       seriesCachePromise = null
     })
@@ -78,7 +72,8 @@ const getSeriesCached = async () => {
 }
 
 // Initialize cache as soon as module loads (non-blocking background task)
-initializeSeriesCache()
+// We use getSeriesCached() to handle the promise and logging, rather than calling initializeSeriesCache directly
+
 
 // Attempt to initialize cache with timeout - if it takes too long, try again on first request
 getSeriesCached()
