@@ -121,6 +121,7 @@ module.exports = {
         rio: 'Games',
         wow: 'Games',
         roll: 'Games',
+        archidekt: 'Games',
 
         // Hardware commands
         '3d-print-status': 'Hardware',
