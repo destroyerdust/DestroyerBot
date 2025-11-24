@@ -164,13 +164,8 @@ module.exports = {
       subcommand
         .setName('deck')
         .setDescription('Get a quick summary for a deck')
-        .addIntegerOption((option) =>
-          option
-            .setName('deck_id')
-            .setDescription('Archidekt deck ID (defaults to your linked deck)')
-        )
         .addStringOption((option) =>
-          option.setName('alias').setDescription('Alias of a linked deck to use').setMaxLength(50)
+          option.setName('deck').setDescription('Deck ID or Alias').setAutocomplete(true)
         )
     )
     .addSubcommand((subcommand) =>
@@ -184,13 +179,8 @@ module.exports = {
             .setRequired(true)
             .setMinLength(2)
         )
-        .addIntegerOption((option) =>
-          option
-            .setName('deck_id')
-            .setDescription('Archidekt deck ID (defaults to your linked deck)')
-        )
         .addStringOption((option) =>
-          option.setName('alias').setDescription('Alias of a linked deck to use').setMaxLength(50)
+          option.setName('deck').setDescription('Deck ID or Alias').setAutocomplete(true)
         )
     )
     .addSubcommand((subcommand) =>
@@ -214,41 +204,96 @@ module.exports = {
       subcommand
         .setName('unlink')
         .setDescription('Remove a linked Archidekt deck')
-        .addIntegerOption((option) =>
-          option.setName('deck_id').setDescription('Deck ID to remove').setRequired(false)
-        )
         .addStringOption((option) =>
-          option.setName('alias').setDescription('Alias to remove').setMaxLength(50)
+          option.setName('deck').setDescription('Deck ID or Alias to remove').setAutocomplete(true)
         )
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('default')
         .setDescription('Show or set your default Archidekt deck')
-        .addIntegerOption((option) =>
-          option.setName('deck_id').setDescription('Deck ID to set as default')
-        )
         .addStringOption((option) =>
-          option.setName('alias').setDescription('Alias to set as default').setMaxLength(50)
+          option
+            .setName('deck')
+            .setDescription('Deck ID or Alias to set as default')
+            .setAutocomplete(true)
         )
     )
     .addSubcommand((subcommand) =>
       subcommand.setName('list').setDescription('List your linked Archidekt decks')
     ),
 
+  async autocomplete(interaction) {
+    const focusedOption = interaction.options.getFocused(true)
+    const userId = interaction.user.id
+
+    if (focusedOption.name !== 'deck') return interaction.respond([])
+
+    try {
+      const decks = await getUserDecksAsync(userId)
+      if (!decks || decks.length === 0) {
+        return interaction.respond([])
+      }
+
+      const value = focusedOption.value.toLowerCase()
+
+      const filtered = decks.filter((deck) => {
+        const idMatch = deck.deckId.toString().includes(value)
+        const nameMatch = deck.deckName && deck.deckName.toLowerCase().includes(value)
+        const aliasMatch = deck.alias && deck.alias.toLowerCase().includes(value)
+        return idMatch || nameMatch || aliasMatch
+      })
+
+      const choices = filtered.slice(0, 25).map((deck) => {
+        const aliasPart = deck.alias ? `Alias: ${deck.alias} | ` : ''
+        return {
+          name: `${deck.deckName || 'Unknown Deck'} (${aliasPart}ID: ${deck.deckId})`,
+          value: deck.deckId.toString(),
+        }
+      })
+
+      await interaction.respond(choices)
+    } catch (error) {
+      logger.error({ error: error.message, userId }, 'Archidekt autocomplete error')
+      try {
+        if (!interaction.responded) await interaction.respond([])
+      } catch {
+        // Ignore
+      }
+    }
+  },
+
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
-    const deckId = interaction.options.getInteger('deck_id')
+    const deckOption = interaction.options.getString('deck')
     const query = interaction.options.getString('query')
-    const alias = interaction.options.getString('alias')
+    const alias = interaction.options.getString('alias') // For link command only now
+    const deckIdArg = interaction.options.getInteger('deck_id') // For link command only now
     const makeDefault = interaction.options.getBoolean('default') || false
+
+    // Parse deck option if present
+    let parsedDeckId = null
+    let parsedAlias = null
+
+    if (deckOption) {
+      if (/^\d+$/.test(deckOption)) {
+        parsedDeckId = parseInt(deckOption, 10)
+      } else {
+        parsedAlias = deckOption
+      }
+    }
+
+    // For link command, we still use specific args
+    const effectiveDeckId = subcommand === 'link' ? deckIdArg : parsedDeckId
+    const effectiveAlias = subcommand === 'link' ? alias : parsedAlias
 
     logger.info(
       {
         command: 'archidekt',
         subcommand,
-        deckId,
-        alias,
+        deckOption,
+        effectiveDeckId,
+        effectiveAlias,
         query,
         userId: interaction.user.id,
         guildId: interaction.guildId || 'DM',
@@ -257,7 +302,7 @@ module.exports = {
     )
 
     if (subcommand === 'link') {
-      if (!deckId || deckId <= 0) {
+      if (!effectiveDeckId || effectiveDeckId <= 0) {
         return interaction.reply({
           content: '❌ Please provide a valid Archidekt deck ID to link.',
           flags: MessageFlags.Ephemeral,
@@ -266,24 +311,24 @@ module.exports = {
 
       await interaction.deferReply({ ephemeral: true })
       try {
-        const deck = await fetchDeck(deckId)
+        const deck = await fetchDeck(effectiveDeckId)
         await upsertUserDeckAsync(
           interaction.user.id,
           deck.id,
           deck.name || null,
           deck.owner?.username || null,
-          alias,
+          effectiveAlias,
           makeDefault
         )
 
         await interaction.editReply(
           `✅ Linked deck **${deck.name || deck.id}** (ID: ${deck.id})${
             deck.owner?.username ? ` by ${deck.owner.username}` : ''
-          }${alias ? ` with alias **${alias}**` : ''}${makeDefault ? ' and set as default.' : '.'}`
+          }${effectiveAlias ? ` with alias **${effectiveAlias}**` : ''}${makeDefault ? ' and set as default.' : '.'}`
         )
       } catch (error) {
         logger.error(
-          { error: error.message, deckId, userId: interaction.user.id },
+          { error: error.message, deckId: effectiveDeckId, userId: interaction.user.id },
           'Archidekt link command error'
         )
         await interaction.editReply(
@@ -294,15 +339,18 @@ module.exports = {
     }
 
     if (subcommand === 'unlink') {
-      if (!deckId && !alias) {
+      if (!effectiveDeckId && !effectiveAlias) {
         await interaction.reply({
-          content: '❌ Provide a `deck_id` or `alias` to unlink.',
+          content: '❌ Provide a `deck` (ID or alias) to unlink.',
           flags: MessageFlags.Ephemeral,
         })
         return
       }
 
-      await removeUserDeckAsync(interaction.user.id, { deckId, alias })
+      await removeUserDeckAsync(interaction.user.id, {
+        deckId: effectiveDeckId,
+        alias: effectiveAlias,
+      })
       await interaction.reply({
         content: '🗑️ Updated your linked Archidekt decks.',
         flags: MessageFlags.Ephemeral,
@@ -312,8 +360,11 @@ module.exports = {
 
     if (subcommand === 'default') {
       const decks = await getUserDecksAsync(interaction.user.id)
-      if (deckId || alias) {
-        const updated = await setDefaultUserDeckAsync(interaction.user.id, { deckId, alias })
+      if (effectiveDeckId || effectiveAlias) {
+        const updated = await setDefaultUserDeckAsync(interaction.user.id, {
+          deckId: effectiveDeckId,
+          alias: effectiveAlias,
+        })
         if (!updated) {
           await interaction.reply({
             content: '❌ No linked deck found matching that deck ID or alias.',
@@ -381,7 +432,7 @@ module.exports = {
 
     try {
       const decks = await getUserDecksAsync(interaction.user.id)
-      const resolved = resolveDeck(decks, { deckId, alias })
+      const resolved = resolveDeck(decks, { deckId: effectiveDeckId, alias: effectiveAlias })
 
       if (!resolved || !resolved.deck?.deckId) {
         await interaction.editReply(
@@ -433,7 +484,7 @@ module.exports = {
         {
           error: error.message,
           stack: error.stack,
-          deckId,
+          deckId: effectiveDeckId,
           subcommand,
           userId: interaction.user.id,
         },
