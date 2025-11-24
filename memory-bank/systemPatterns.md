@@ -22,7 +22,9 @@ DestroyerBot/
 │   │       ├── resetpermissions.js
 │   │       └── setcommandrole.js
 │   ├── games/             # Gaming commands
+│   │   ├── archidekt.js
 │   │   ├── rio.js
+│   │   ├── roll.js
 │   │   └── wow.js
 │   ├── hardware/          # Hardware monitoring
 │   │   └── 3d-print-status.js
@@ -58,10 +60,12 @@ DestroyerBot/
 │   ├── presenceUpdate.js
 │   └── voiceStateUpdate.js
 ├── models/                # Mongoose data models
-│   └── GuildSettings.js
+│   ├── GuildSettings.js
+│   └── ArchidektUserDeck.js
 ├── utils/                 # Shared utility functions
 │   ├── database.js
 │   ├── guildSettings.js
+│   ├── archidektUserDecks.js
 │   ├── migrateLogsToNested.js
 │   └── migrateToMongoDB.js
 ├── memory-bank/           # Project documentation

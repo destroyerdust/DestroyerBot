@@ -17,6 +17,7 @@
 
 - **Raider.IO API**: World of Warcraft character and guild statistics
 - **Pokemon TCG API**: Pokemon card database and information
+- **Archidekt API**: Magic: The Gathering deck data and card search
 - **Pirate Weather API**: Free weather data service (government data)
 - **Discord API**: Core bot functionality and slash commands
 

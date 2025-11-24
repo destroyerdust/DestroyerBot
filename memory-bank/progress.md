@@ -54,13 +54,23 @@
 - `/help` - Comprehensive command documentation
 - `/clean` - Message bulk deletion (owner-only)
 
-#### Gaming Commands (3) ✅
+#### Gaming Commands (5) ✅
 
+- `/archidekt` - Archidekt Magic: The Gathering deck integration
+  - Deck lookup and display
+  - Deck storage and management
+  - User deck associations
+  - v14+ compliance: Complete interaction handling
 - `/rio` - Raider.IO World of Warcraft integration
   - Character and guild statistics
   - Mythic+ dungeon performance
   - Guild roster information
   - v14+ compliance: Complete parameter validation
+- `/roll` - Dice rolling utility
+  - Standard dice notation support
+  - Multiple dice rolling
+  - Random number generation
+  - v14+ compliance: Proper response handling
 - `/wow` - Alternative WoW integration
   - Character information
   - Realm status
@@ -300,7 +310,7 @@
   - Consistent error handling patterns
   - Structured logging implementation
 - **Feature Completeness**: High
-  - 25+ commands across 6 categories
+  - 27+ commands across 6 categories
   - Complete permission system
   - Comprehensive message logging
   - External API integrations
@@ -408,7 +418,7 @@
 
 ### Quantitative Metrics
 
-- **Commands**: 27 slash commands deployed
+- **Commands**: 29 slash commands deployed
 - **Categories**: 6 functional categories (admin, utility, gaming, moderation, hardware, weather)
 - **Supported Guilds**: Unlimited (architecture-based)
 - **External APIs**: 4 integrated services
