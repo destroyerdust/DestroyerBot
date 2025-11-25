@@ -108,20 +108,14 @@
   - Message set/show with previews and placeholders
   - Enable/disable toggle, status overview, and test send
 
-**Permissions Subfolder (4)**
+**Permission Management (1 consolidated command)**
 
-- `/setcommandrole` - Assign role to command
-  - Role and command selection via autocomplete
-  - v14+ compliance: Autocomplete implementation
-- `/removecommandrole` - Remove role from command
-  - Permission removal with validation
-  - v14+ compliance: Proper option handling
-- `/listpermissions` - View server permissions
-  - Detailed permission display
-  - v14+ compliance: Complete formatting
-- `/resetpermissions` - Clear all permissions
-  - Bulk permission reset
-  - v14+ compliance: Confirmation handling
+- `/permission` - Unified permission management with 4 subcommands:
+  - `list` - View all command permissions and disabled commands
+  - `set` - Assign role to command
+  - `remove` - Remove role from command
+  - `reset` - Clear all permissions
+  - v14+ compliance: Subcommands with autocomplete and proper option handling
 
 **Root Level (1)**
 

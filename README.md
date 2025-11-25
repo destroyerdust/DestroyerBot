@@ -74,10 +74,7 @@ DestroyerBot includes a comprehensive role-based permission system that allows s
 
 **Admin Commands:**
 
-- `/setcommandrole` - Assign a role to a command
-- `/removecommandrole` - Remove a role from a command
-- `/listpermissions` - View all command permissions for the server
-- `/resetpermissions` - Clear all command permissions
+- `/permission` - Manage command role permissions (4 subcommands: `list`, `reset`, `set`, `remove`)
 - `/log` - Configure logging channels and event toggles (including channel set/status and test)
 
 📖 **[View Complete Permission System Documentation](PERMISSIONS_GUIDE.md)**
@@ -154,10 +151,14 @@ An automated moderation logging system that tracks message activities in Discord
 
 ### Administrative Commands
 
+- `/permission` - Manage command-level permissions
+  - `list` - View all configured permissions and disabled commands
+  - `reset` - Clear all role restrictions
+  - `set` - Add a role restriction to a command
+  - `remove` - Remove a role restriction from a command
 - `/welcome` - Configure the welcome system (channel, message, toggle, status, test)
 - `/log` - Configure logging (channel, event toggles, status, test)
 - `/togglecommand` - Enable or disable individual commands per guild
-- `/setcommandrole`, `/removecommandrole`, `/listpermissions`, `/resetpermissions` - Manage command-level permissions
 
 ### Global Commands
 

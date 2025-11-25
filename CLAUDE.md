@@ -147,8 +147,9 @@ module.exports = {
 
 - Commands organized in `commands/<category>/<name>.js`
 - Categories: `admin`, `games`, `hardware`, `moderation`, `pokemon`, `utility`, `weather`
-- Further subdivision: `admin/log/`, `admin/welcome/`, `admin/permissions/`, `utility/info/`, `utility/status/`
+- Further subdivision: `admin/log/`, `admin/welcome/`, `utility/info/`, `utility/status/`
 - Loader in `index.js` recursively discovers all `.js` files via `getAllJsFiles()` function
+- Multi-subcommand commands (4+ related operations) are consolidated into single files (e.g., `/permission`, `/log`, `/welcome`)
 
 ### Event Handler Contract
 
@@ -195,8 +196,19 @@ Events in `events/` directory: `guildCreate.js`, `guildDelete.js`, `guildMemberA
 When adding default-restricted commands:
 
 1. Update `DEFAULT_RESTRICTED_COMMANDS` Set in `utils/guildSettings.js:13`
-2. Update any admin commands that reference the same set (e.g., `commands/admin/permissions/listpermissions.js`)
+2. Update any admin commands that reference the same set (e.g., `commands/admin/permission.js` autocomplete exclusion list)
 3. Document the restriction in README.md
+
+### Permission Management Command
+
+The `/permission` command consolidates all permission management functionality into a single command with 4 subcommands:
+
+- `/permission list` - Display all configured command permissions and disabled commands
+- `/permission reset` - Clear all role restrictions (reset to default access)
+- `/permission set <command> <role>` - Add a role restriction to a command
+- `/permission remove <command> <role>` - Remove a role restriction from a command
+
+**File location:** `commands/admin/permission.js`
 
 ### Logging
 

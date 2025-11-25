@@ -7,7 +7,7 @@ Key files to inspect when implementing or changing behavior:
 - `index.js` — command & event bootstrap, runtime permission checks via `utils/guildSettings.js`.
 - `deploy-commands.js` — how commands are discovered and deployed (guild vs global detection).
 - `utils/guildSettings.js` — JSON-backed role-based command permission system (`data/guildSettings.json`).
-- `commands/` — directory structure and examples (e.g. `commands/utility/help.js`, `commands/admin/listpermissions.js`).
+- `commands/` — directory structure and examples (e.g. `commands/utility/help.js`, `commands/admin/permission.js`).
 - `README.md` and `config.json` — development/deployment steps and required config keys.
 
 ## Architecture & data flow (short)
@@ -29,7 +29,7 @@ Why this matters to an AI agent:
 - Files are discovered recursively; place new command modules under `commands/<category>/name.js`.
 - Permission system: `utils/guildSettings.js` contains `DEFAULT_RESTRICTED_COMMANDS` which is also referenced in some admin commands — update both if you change defaults.
 - Logging: use `logger` (Pino wrapper) for structured logs. Respect `LOG_LEVEL` env var in `.env` for verbosity.
-- Ephemeral replies and embeds are used widely (see `help.js` and `listpermissions.js`). Prefer `MessageFlags.Ephemeral` for user-facing private responses.
+- Ephemeral replies and embeds are used widely (see `help.js` and `permission.js`). Prefer `MessageFlags.Ephemeral` for user-facing private responses.
 
 ## Developer workflows & commands
 
@@ -48,7 +48,7 @@ Why this matters to an AI agent:
 
 - If adding a command, ensure: `module.exports = { data: <SlashCommandBuilder>, execute }` and that `data.name` is unique.
 - After modifying `data` (options, names), run `node deploy-commands.js` to push changes to Discord — otherwise slash command shape may be stale in Discord.
-- When changing default-restricted commands, update the `DEFAULT_RESTRICTED_COMMANDS` set in `utils/guildSettings.js` and any admin commands that reference the same set (e.g. `commands/admin/listpermissions.js`).
+- When changing default-restricted commands, update the `DEFAULT_RESTRICTED_COMMANDS` set in `utils/guildSettings.js` and any admin commands that reference the same set (e.g. `commands/admin/permission.js`).
 - Permission checks occur in `index.js` before `command.execute()`. For commands intended to run in DMs, include appropriate `.setContexts(...)` and handle guild-less interactions.
 
 ## Short examples to reference in-code
@@ -72,9 +72,9 @@ Use this quick checklist when reviewing PRs that add or modify commands or permi
 - Unique command name: confirm `data.name` does not collide with an existing command in `commands/` and that loaders use `command.data.name` as the key (`index.js`).
 - Deploy changes: if `data` (options, contexts, names) changed, the author ran `node deploy-commands.js` or documented why it's not necessary (deploys update Discord-side command schema).
 - Contexts & permissions: ensure `.setContexts(...)` and `.setDefaultMemberPermissions(...)` are set when appropriate (guild-only vs DM-capable). If the command must be restricted, confirm updates to `utils/guildSettings.js` if default restrictions changed.
-- DEFAULT_RESTRICTED_COMMANDS parity: if new default-restricted commands are added, update `DEFAULT_RESTRICTED_COMMANDS` in `utils/guildSettings.js` and references in admin commands like `commands/admin/listpermissions.js`.
+- DEFAULT_RESTRICTED_COMMANDS parity: if new default-restricted commands are added, update `DEFAULT_RESTRICTED_COMMANDS` in `utils/guildSettings.js` and references in admin commands like `commands/admin/permission.js`.
 - Data persistence: for changes touching `data/guildSettings.json`, ensure migrations are handled or documented; confirm no secrets are written to repo files (use `config.json` or env for keys).
-- Logging and errors: confirm use of `logger` for important actions and that user-facing errors are ephemeral where appropriate (see `help.js` and `listpermissions.js`).
+- Logging and errors: confirm use of `logger` for important actions and that user-facing errors are ephemeral where appropriate (see `help.js` and `permission.js`).
 - Formatting: run `npm run format` and ensure Prettier/ESLint issues are addressed.
 
 Please review and tell me any missing specifics you'd like included (e.g., more examples, mention of CI, or an explicit PR checklist).

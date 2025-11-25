@@ -8,15 +8,7 @@ const {
 const logger = require('../../logger')
 
 // Commands that cannot be disabled (admin commands)
-const PROTECTED_COMMANDS = new Set([
-  'togglecommand',
-  'setcommandrole',
-  'removecommandrole',
-  'listpermissions',
-  'resetpermissions',
-  'log',
-  'welcome',
-])
+const PROTECTED_COMMANDS = new Set(['togglecommand', 'permission', 'log', 'welcome'])
 
 module.exports = {
   data: new SlashCommandBuilder()

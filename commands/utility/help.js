@@ -130,11 +130,8 @@ module.exports = {
         pokemon: 'Pokemon',
 
         // Admin commands
-        listpermissions: 'Admin',
+        permission: 'Admin',
         log: 'Admin',
-        removecommandrole: 'Admin',
-        resetpermissions: 'Admin',
-        setcommandrole: 'Admin',
         welcome: 'Admin',
         togglecommand: 'Admin',
       }

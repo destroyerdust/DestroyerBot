@@ -25,11 +25,8 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 ### New Files
 
 1. **`utils/guildSettings.js`** - Core permission system utilities
-2. **`commands/admin/setcommandrole.js`** - Set role permissions
-3. **`commands/admin/removecommandrole.js`** - Remove role permissions
-4. **`commands/admin/listpermissions.js`** - View current permissions
-5. **`commands/admin/resetpermissions.js`** - Clear all permissions
-6. **`data/guildSettings.json`** - Stores guild configurations (auto-generated)
+2. **`commands/admin/permission.js`** - Unified permission management command with 4 subcommands
+3. **`data/guildSettings.json`** - Stores guild configurations (auto-generated)
 
 ### Modified Files
 
@@ -76,17 +73,48 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 ## Admin Commands
 
-### `/setcommandrole`
+### `/permission` - Unified Permission Management
 
-**Required Permission:** `Manage Server`  
+**Required Permission:** `Manage Server`
+**Description:** Manage command role permissions with 4 subcommands
+
+#### Subcommand: `list`
+
+**Description:** View all command permissions for the current server
+
+**Usage:**
+
+```
+/permission list
+```
+
+**Example Output:**
+
+```
+📋 Command Permissions & Status
+
+✅ /ping
+✅ Everyone can use this command
+
+🔒 /kick
+🔒 Restricted to: @Moderator, @Admin
+
+🔒 /ban
+🔒 Restricted to: @Admin
+```
+
+---
+
+#### Subcommand: `set`
+
 **Description:** Assign a role to a command
 
 **Usage:**
 
 ```
-/setcommandrole command:kick role:@Moderator
-/setcommandrole command:ban role:@Admin
-/setcommandrole command:weather role:@Member
+/permission set command:kick role:@Moderator
+/permission set command:ban role:@Admin
+/permission set command:weather role:@Member
 ```
 
 **Example Output:**
@@ -104,16 +132,15 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 ---
 
-### `/removecommandrole`
+#### Subcommand: `remove`
 
-**Required Permission:** `Manage Server`  
 **Description:** Remove a specific role from a command's permission list
 
 **Usage:**
 
 ```
-/removecommandrole command:kick role:@Moderator
-/removecommandrole command:weather role:@VIP
+/permission remove command:kick role:@Moderator
+/permission remove command:weather role:@VIP
 ```
 
 **Example Output:**
@@ -131,43 +158,14 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 ---
 
-### `/listpermissions`
+#### Subcommand: `reset`
 
-**Required Permission:** `Manage Server`  
-**Description:** View all command permissions for the current server
-
-**Usage:**
-
-```
-/listpermissions
-```
-
-**Example Output:**
-
-```
-📋 Command Permissions
-
-/kick
-🔒 Restricted to: @Moderator, @Admin
-
-/ban
-🔒 Restricted to: @Admin
-
-/ping
-✅ Everyone can use this command
-```
-
----
-
-### `/resetpermissions`
-
-**Required Permission:** `Manage Server`  
 **Description:** Clear all command permissions for the server
 
 **Usage:**
 
 ```
-/resetpermissions
+/permission reset
 ```
 
 **Example Output:**
@@ -219,7 +217,7 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 
 ## Autocomplete Feature
 
-Both `/setcommandrole` and `/removecommandrole` commands feature **intelligent autocomplete** for command selection:
+The `/permission set` and `/permission remove` subcommands feature **intelligent autocomplete** for command selection:
 
 ### How It Works
 
@@ -231,12 +229,9 @@ Both `/setcommandrole` and `/removecommandrole` commands feature **intelligent a
 
 ### What's Excluded
 
-Admin commands are automatically excluded from autocomplete:
+The permission command itself is automatically excluded from autocomplete:
 
-- `setcommandrole`
-- `removecommandrole`
-- `listpermissions`
-- `resetpermissions`
+- `permission`
 
 This prevents circular permission scenarios and keeps the list focused on manageable commands.
 
@@ -255,40 +250,40 @@ This prevents circular permission scenarios and keeps the list focused on manage
 
 ```bash
 # Only @Moderator and @Admin can kick members
-/setcommandrole command:kick role:@Moderator
-/setcommandrole command:kick role:@Admin
+/permission set command:kick role:@Moderator
+/permission set command:kick role:@Admin
 
 # Remove a role if needed
-/removecommandrole command:kick role:@Moderator
+/permission remove command:kick role:@Moderator
 
 # Only @Admin can use ban commands
-/setcommandrole command:ban role:@Admin
+/permission set command:ban role:@Admin
 ```
 
 ### Example 2: Create VIP-Only Commands
 
 ```bash
 # Only @VIP members can check weather
-/setcommandrole command:weather role:@VIP
+/permission set command:weather role:@VIP
 
 # Change your mind? Remove the restriction
-/removecommandrole command:weather role:@VIP
+/permission remove command:weather role:@VIP
 
 # Only @Premium members can use pokemon commands
-/setcommandrole command:pokemon role:@Premium
+/permission set command:pokemon role:@Premium
 ```
 
 ### Example 3: View and Manage Permissions
 
 ```bash
 # Check current permissions
-/listpermissions
+/permission list
 
 # Remove a specific role from a command
-/removecommandrole command:ping role:@Member
+/permission remove command:ping role:@Member
 
 # Or start fresh and clear everything
-/resetpermissions
+/permission reset
 ```
 
 ---
@@ -339,7 +334,7 @@ if (interaction.guild && interaction.member) {
 
 ### Multiple Roles
 
-- Running `/setcommandrole` multiple times for the same command adds more roles
+- Running `/permission set` multiple times for the same command adds more roles
 - Example: Running it twice with different roles creates an OR condition
 - Members need **ANY** of the configured roles, not all
 
@@ -347,10 +342,10 @@ if (interaction.guild && interaction.member) {
 
 You have two options for removing role restrictions:
 
-1. **Targeted removal:** Use `/removecommandrole` to remove a specific role from a specific command
+1. **Targeted removal:** Use `/permission remove` to remove a specific role from a specific command
    - Only affects one role-command pair
    - Other roles and commands remain unchanged
-2. **Complete reset:** Use `/resetpermissions` to clear ALL role restrictions
+2. **Complete reset:** Use `/permission reset` to clear ALL role restrictions
    - Removes all permissions for the entire server
    - Use when you want to start fresh
 
@@ -366,7 +361,7 @@ You have two options for removing role restrictions:
 - **No roles configured = Only server owner can use**
 - **With roles configured = Users with those roles can use**
 - **Server owner = Always has access** (owner bypass)
-- Add roles using `/setcommandrole` to allow non-owner access
+- Add roles using `/permission set` to allow non-owner access
 
 **Currently default-restricted commands:**
 
@@ -381,7 +376,7 @@ You have two options for removing role restrictions:
 ### "You don't have permission" but you're an admin
 
 - The system checks **roles**, not permissions
-- Add your admin role to the command: `/setcommandrole command:xyz role:@YourRole`
+- Add your admin role to the command: `/permission set command:xyz role:@YourRole`
 
 ### Permissions not working after update
 
@@ -395,27 +390,24 @@ You have two options for removing role restrictions:
 - If deleted, it will be recreated with empty settings
 - All permissions will reset to default (everyone can use everything)
 
-### Command not found in listpermissions
+### Command not found in permission list
 
 - Only commands with configured roles appear
 - If a command isn't listed, it's available to everyone
-- Add a role to make it appear: `/setcommandrole command:name role:@SomeRole`
+- Add a role to make it appear: `/permission set command:name role:@SomeRole`
 
 ---
 
 ## Admin Command Overview
 
-The permission system includes **7 admin commands**, all requiring `Manage Server` permission:
+The permission system includes **4 main admin commands**, all requiring `Manage Server` permission:
 
-| Command              | Purpose                                         | Guild-Only |
-| -------------------- | ----------------------------------------------- | ---------- |
-| `/setcommandrole`    | Add a role to a command                         | ✅ Yes     |
-| `/removecommandrole` | Remove a role from a command                    | ✅ Yes     |
-| `/listpermissions`   | View all permissions                            | ✅ Yes     |
-| `/resetpermissions`  | Clear all permissions                           | ✅ Yes     |
-| `/welcome`           | Configure welcome system (channel/message/test) | ✅ Yes     |
-| `/log`               | Configure logging (channel, events, test)       | ✅ Yes     |
-| `/togglecommand`     | Enable or disable commands per server           | ✅ Yes     |
+| Command          | Purpose                                            | Guild-Only |
+| ---------------- | -------------------------------------------------- | ---------- |
+| `/permission`    | Manage command permissions (list/reset/set/remove) | ✅ Yes     |
+| `/welcome`       | Configure welcome system (channel/message/test)    | ✅ Yes     |
+| `/log`           | Configure logging (channel, events, test)          | ✅ Yes     |
+| `/togglecommand` | Enable or disable commands per server              | ✅ Yes     |
 
 **Note:** All admin commands are restricted to servers only and cannot be used in DMs. This is intentional since permissions are server-specific.
 
