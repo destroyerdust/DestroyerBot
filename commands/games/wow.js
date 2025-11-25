@@ -176,12 +176,7 @@ module.exports = {
             .setName('region')
             .setDescription('The region the realm is on')
             .setRequired(false)
-            .addChoices(
-              { name: '🇺🇸 US', value: 'us' },
-              { name: '🇪🇺 EU', value: 'eu' },
-              { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' }
-            )
+            .addChoices(...REGION_CHOICES)
         )
     )
 
@@ -194,12 +189,7 @@ module.exports = {
             .setName('region')
             .setDescription('The region to check token prices')
             .setRequired(false)
-            .addChoices(
-              { name: '🇺🇸 US', value: 'us' },
-              { name: '🇪🇺 EU', value: 'eu' },
-              { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' }
-            )
+            .addChoices(...REGION_CHOICES)
         )
         .addStringOption((option) =>
           option
