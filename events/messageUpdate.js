@@ -40,7 +40,9 @@ module.exports = {
     const logChannel = newMessage.guild.channels.cache.get(logChannelId)
     if (!logChannel) return
 
-    const oldContent = oldMessage.partial ? 'Unavailable (Message was not cached)' : oldMessage.content || '*No content*'
+    const oldContent = oldMessage.partial
+      ? 'Unavailable (Message was not cached)'
+      : oldMessage.content || '*No content*'
     const newContent = newMessage.content || '*No content*'
 
     const embed = new EmbedBuilder()
