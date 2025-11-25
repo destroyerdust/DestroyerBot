@@ -41,23 +41,9 @@ const POPULATION_EMOJIS = {
 
 // Constants for currency conversion
 const COPPER_PER_GOLD = 10000
-const COPPER_PER_SILVER = 100
 
 // Regex for realm slug conversion
 const REALM_SLUG_REGEX = /[^a-z0-9\s-]/g
-
-/**
- * Safely parses JSON from a fetch response
- * @param {Response} response - The fetch response object
- * @returns {Promise<Record<string, any>>} Parsed JSON or empty object
- */
-async function safeParseJson(response) {
-  try {
-    return await response.json()
-  } catch {
-    return {}
-  }
-}
 
 /**
  * Converts a realm name to URL-safe slug format
@@ -152,6 +138,11 @@ function validateBlizzardCredentials() {
   }
 }
 
+const SUBCOMMAND_HANDLERS = {
+  realm: (interaction, { region }) => handleRealmCommand(interaction, { region }),
+  token: (interaction, { region, version }) => handleTokenCommand(interaction, { region, version }),
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('wow')
@@ -233,6 +224,27 @@ module.exports = {
     const region = interaction.options.getString('region') || 'us'
     const version =
       subcommand === 'token' ? normalizeVersion(interaction.options.getString('version')) : null
+    const handler = SUBCOMMAND_HANDLERS[subcommand]
+    const handlerContext = { region }
+
+    if (subcommand === 'token') {
+      handlerContext.version = version || 'retail'
+    }
+
+    if (!handler) {
+      logger.warn(
+        {
+          userId: interaction.user.id,
+          username: interaction.user.username,
+          subcommand,
+        },
+        'Unknown WoW subcommand received'
+      )
+      return interaction.reply({
+        content: '❌ Unknown WoW subcommand.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
 
     logger.info(
       {
@@ -245,14 +257,8 @@ module.exports = {
       `${interaction.user.username} (#${interaction.user.id}) requested WoW ${subcommand} info`
     )
 
-    await interaction.deferReply()
-
     try {
-      if (subcommand === 'realm') {
-        await handleRealmCommand(interaction, region)
-      } else if (subcommand === 'token') {
-        await handleTokenCommand(interaction, region, version || 'retail')
-      }
+      await handler(interaction, handlerContext)
     } catch (error) {
       logger.error(
         {
@@ -264,12 +270,14 @@ module.exports = {
         },
         'WoW command error'
       )
-      await interaction.editReply('An error occurred while fetching WoW data.')
+      const responseMethod = interaction.deferred || interaction.replied ? 'editReply' : 'reply'
+      await interaction[responseMethod]('An error occurred while fetching WoW data.')
     }
   },
 }
 
-async function handleRealmCommand(interaction, region) {
+async function handleRealmCommand(interaction, { region }) {
+  await interaction.deferReply()
   const realm = interaction.options.getString('realm')
 
   logger.debug(
@@ -487,7 +495,8 @@ async function handleRealmCommand(interaction, region) {
   }
 }
 
-async function handleTokenCommand(interaction, region, version) {
+async function handleTokenCommand(interaction, { region, version }) {
+  await interaction.deferReply()
   const normalizedVersion = normalizeVersion(version)
   logger.debug(
     {
