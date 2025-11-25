@@ -41,23 +41,9 @@ const POPULATION_EMOJIS = {
 
 // Constants for currency conversion
 const COPPER_PER_GOLD = 10000
-const COPPER_PER_SILVER = 100
 
 // Regex for realm slug conversion
 const REALM_SLUG_REGEX = /[^a-z0-9\s-]/g
-
-/**
- * Safely parses JSON from a fetch response
- * @param {Response} response - The fetch response object
- * @returns {Promise<Record<string, any>>} Parsed JSON or empty object
- */
-async function safeParseJson(response) {
-  try {
-    return await response.json()
-  } catch {
-    return {}
-  }
-}
 
 /**
  * Converts a realm name to URL-safe slug format
@@ -233,6 +219,24 @@ module.exports = {
     const region = interaction.options.getString('region') || 'us'
     const version =
       subcommand === 'token' ? normalizeVersion(interaction.options.getString('version')) : null
+
+    try {
+      validateBlizzardCredentials()
+    } catch (error) {
+      logger.error(
+        {
+          error: error.message,
+          subcommand,
+          region,
+          user: interaction.user.id,
+        },
+        'WoW command aborted due to missing Blizzard credentials'
+      )
+      return interaction.reply({
+        content: '❌ Blizzard API credentials are not configured. Please try again later.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
 
     logger.info(
       {
