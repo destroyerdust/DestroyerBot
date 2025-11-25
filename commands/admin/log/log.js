@@ -15,6 +15,10 @@ const {
   setLogMessageDeleteAsync,
   getLogMessageUpdateAsync,
   setLogMessageUpdateAsync,
+  getLogInviteCreateAsync,
+  setLogInviteCreateAsync,
+  getLogInviteDeleteAsync,
+  setLogInviteDeleteAsync,
 } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
@@ -39,6 +43,20 @@ const LOG_EVENTS = [
     description: 'Log when messages are edited',
     getStatus: getLogMessageUpdateAsync,
     setStatus: setLogMessageUpdateAsync,
+  },
+  {
+    key: 'invite.create',
+    label: 'Invite Create',
+    description: 'Log when new invites are created',
+    getStatus: getLogInviteCreateAsync,
+    setStatus: setLogInviteCreateAsync,
+  },
+  {
+    key: 'invite.delete',
+    label: 'Invite Delete',
+    description: 'Log when invites are deleted',
+    getStatus: getLogInviteDeleteAsync,
+    setStatus: setLogInviteDeleteAsync,
   },
 ]
 
