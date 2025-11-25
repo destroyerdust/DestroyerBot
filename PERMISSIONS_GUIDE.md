@@ -192,6 +192,8 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 /log channel status                        # See which channel is configured
 /log events enable message.create          # Enable message create logging
 /log events disable message.delete         # Disable message delete logging
+/log events enable invite.create           # Enable invite create logging
+/log events enable invite.delete           # Enable invite delete logging
 /log events status                         # Show status for all events
 /log events status message.create          # Show status for a single event
 /log test                                  # Send a test embed to the log channel
@@ -203,6 +205,8 @@ Your DestroyerBot now has a complete role-based permission system that allows se
 📊 Logging status:
 ✅ Message Create `message.create`
 ❌ Message Delete `message.delete`
+✅ Invite Create `invite.create`
+✅ Invite Delete `invite.delete`
 ```
 
 **Notes:**
