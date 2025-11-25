@@ -7,7 +7,7 @@ const {
 const {
   getGuildSettingsAsync,
   resetGuildPermissionsAsync,
-  setCommandRole,
+  setCommandRoleAsync,
   removeCommandRoleAsync,
   DEFAULT_RESTRICTED_COMMANDS,
 } = require('../../utils/guildSettings')
@@ -286,7 +286,7 @@ async function handleSet(interaction) {
   )
 
   try {
-    setCommandRole(interaction.guild.id, commandName, role.id)
+    await setCommandRoleAsync(interaction.guild.id, commandName, role.id)
 
     await interaction.reply({
       content: `✅ Role ${role} can now use the \`/${commandName}\` command.`,
