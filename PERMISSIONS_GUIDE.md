@@ -334,7 +334,7 @@ if (interaction.guild && interaction.member) {
 
 ### Multiple Roles
 
-- Running `/setcommandrole` multiple times for the same command adds more roles
+- Running `/permission set` multiple times for the same command adds more roles
 - Example: Running it twice with different roles creates an OR condition
 - Members need **ANY** of the configured roles, not all
 
@@ -342,10 +342,10 @@ if (interaction.guild && interaction.member) {
 
 You have two options for removing role restrictions:
 
-1. **Targeted removal:** Use `/removecommandrole` to remove a specific role from a specific command
+1. **Targeted removal:** Use `/permission remove` to remove a specific role from a specific command
    - Only affects one role-command pair
    - Other roles and commands remain unchanged
-2. **Complete reset:** Use `/resetpermissions` to clear ALL role restrictions
+2. **Complete reset:** Use `/permission reset` to clear ALL role restrictions
    - Removes all permissions for the entire server
    - Use when you want to start fresh
 
@@ -361,7 +361,7 @@ You have two options for removing role restrictions:
 - **No roles configured = Only server owner can use**
 - **With roles configured = Users with those roles can use**
 - **Server owner = Always has access** (owner bypass)
-- Add roles using `/setcommandrole` to allow non-owner access
+- Add roles using `/permission set` to allow non-owner access
 
 **Currently default-restricted commands:**
 
@@ -376,7 +376,7 @@ You have two options for removing role restrictions:
 ### "You don't have permission" but you're an admin
 
 - The system checks **roles**, not permissions
-- Add your admin role to the command: `/setcommandrole command:xyz role:@YourRole`
+- Add your admin role to the command: `/permission set command:xyz role:@YourRole`
 
 ### Permissions not working after update
 

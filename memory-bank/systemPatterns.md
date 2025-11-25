@@ -16,11 +16,7 @@ DestroyerBot/
 │   │   │   └── log.js
 │   │   ├── welcome/       # Welcome system commands
 │   │   │   └── welcome.js
-│   │   └── permissions/   # Permission management
-│   │       ├── listpermissions.js
-│   │       ├── removecommandrole.js
-│   │       ├── resetpermissions.js
-│   │       └── setcommandrole.js
+│   │   └── permission.js   # Unified permission management (list/set/remove/reset)
 │   ├── games/             # Gaming commands
 │   │   ├── archidekt.js
 │   │   ├── rio.js
