@@ -18,6 +18,11 @@ const REGION_CHOICES = [
   { name: '🇹🇼 TW', value: 'tw' },
 ]
 
+const VERSION_CHOICES = [
+  { name: 'Retail', value: 'retail' },
+  { name: 'Mists of Pandaria Classic', value: 'classic' },
+]
+
 // Realm type to color mapping
 const FACTION_COLORS = {
   Normal: 0x3fc7eb,
@@ -36,23 +41,9 @@ const POPULATION_EMOJIS = {
 
 // Constants for currency conversion
 const COPPER_PER_GOLD = 10000
-const COPPER_PER_SILVER = 100
 
 // Regex for realm slug conversion
 const REALM_SLUG_REGEX = /[^a-z0-9\s-]/g
-
-/**
- * Safely parses JSON from a fetch response
- * @param {Response} response - The fetch response object
- * @returns {Promise<Record<string, any>>} Parsed JSON or empty object
- */
-async function safeParseJson(response) {
-  try {
-    return await response.json()
-  } catch {
-    return {}
-  }
-}
 
 /**
  * Converts a realm name to URL-safe slug format
@@ -71,12 +62,11 @@ function generateRealmSlug(realmName) {
 /**
  * Formats copper currency value to human-readable format
  * @param {number} copper - Amount in copper
- * @returns {string} Formatted currency string (e.g., "100 gold 50 silver")
+ * @returns {string} Formatted currency string (e.g., "100 gold")
  */
 function formatCurrency(copper) {
   const gold = Math.floor(copper / COPPER_PER_GOLD)
-  const silver = Math.floor((copper % COPPER_PER_GOLD) / COPPER_PER_SILVER)
-  return `${gold.toLocaleString()} gold ${silver} silver`
+  return `${gold.toLocaleString()} gold`
 }
 
 /**
@@ -95,6 +85,39 @@ function getPopulationEmoji(population) {
  */
 function getRealmColor(category) {
   return FACTION_COLORS[category] || 0x0099ff
+}
+
+/**
+ * Normalizes the version input to one of the supported values, defaulting to retail
+ * @param {string | null} versionInput
+ * @returns {'retail' | 'classic'}
+ */
+function normalizeVersion(versionInput) {
+  if (!versionInput) return 'retail'
+  const normalized = versionInput.toLowerCase()
+  const validValues = VERSION_CHOICES.map((choice) => choice.value)
+  return validValues.includes(normalized) ? normalized : 'retail'
+}
+
+/**
+ * Builds the appropriate namespace for the WoW token API based on version and region
+ * @param {'retail' | 'classic'} version
+ * @param {string} region
+ * @returns {string}
+ */
+function getVersionedNamespace(version, region) {
+  const suffix = version === 'retail' ? '' : `-${version}`
+  return `dynamic${suffix}-${region}`
+}
+
+/**
+ * Retrieves the display label for a version value
+ * @param {'retail' | 'classic'} version
+ * @returns {string}
+ */
+function getVersionLabel(version) {
+  const match = VERSION_CHOICES.find((choice) => choice.value === version)
+  return match ? match.name : 'Retail'
 }
 
 /**
@@ -139,12 +162,7 @@ module.exports = {
             .setName('region')
             .setDescription('The region the realm is on')
             .setRequired(false)
-            .addChoices(
-              { name: '🇺🇸 US', value: 'us' },
-              { name: '🇪🇺 EU', value: 'eu' },
-              { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' }
-            )
+            .addChoices(...REGION_CHOICES)
         )
     )
 
@@ -157,17 +175,68 @@ module.exports = {
             .setName('region')
             .setDescription('The region to check token prices')
             .setRequired(false)
-            .addChoices(
-              { name: '🇺🇸 US', value: 'us' },
-              { name: '🇪🇺 EU', value: 'eu' },
-              { name: '🇰🇷 KR', value: 'kr' },
-              { name: '🇹🇼 TW', value: 'tw' }
-            )
+            .addChoices(...REGION_CHOICES)
+        )
+        .addStringOption((option) =>
+          option
+            .setName('version')
+            .setDescription('Game version (Retail default, Classic optional)')
+            .setRequired(false)
+            .setAutocomplete(true)
         )
     ),
+  async autocomplete(interaction) {
+    const focusedOption = interaction.options.getFocused(true)
+
+    if (focusedOption.name !== 'version') return interaction.respond([])
+
+    const input = (focusedOption.value || '').toLowerCase()
+    const filtered = VERSION_CHOICES.filter(
+      (choice) =>
+        choice.name.toLowerCase().includes(input) || choice.value.toLowerCase().includes(input)
+    ).slice(0, 25)
+
+    try {
+      await interaction.respond(filtered)
+    } catch (error) {
+      logger.error(
+        {
+          error: error.message,
+          stack: error.stack,
+          userId: interaction.user.id,
+        },
+        'WoW version autocomplete error'
+      )
+      try {
+        if (!interaction.responded) await interaction.respond([])
+      } catch {
+        // Ignore respond errors
+      }
+    }
+  },
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
     const region = interaction.options.getString('region') || 'us'
+    const version =
+      subcommand === 'token' ? normalizeVersion(interaction.options.getString('version')) : null
+
+    try {
+      validateBlizzardCredentials()
+    } catch (error) {
+      logger.error(
+        {
+          error: error.message,
+          subcommand,
+          region,
+          user: interaction.user.id,
+        },
+        'WoW command aborted due to missing Blizzard credentials'
+      )
+      return interaction.reply({
+        content: '❌ Blizzard API credentials are not configured. Please try again later.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
 
     logger.info(
       {
@@ -175,6 +244,7 @@ module.exports = {
         requestedByName: interaction.user.username,
         subcommand,
         region,
+        ...(version ? { version } : {}),
       },
       `${interaction.user.username} (#${interaction.user.id}) requested WoW ${subcommand} info`
     )
@@ -185,7 +255,7 @@ module.exports = {
       if (subcommand === 'realm') {
         await handleRealmCommand(interaction, region)
       } else if (subcommand === 'token') {
-        await handleTokenCommand(interaction, region)
+        await handleTokenCommand(interaction, region, version || 'retail')
       }
     } catch (error) {
       logger.error(
@@ -421,11 +491,13 @@ async function handleRealmCommand(interaction, region) {
   }
 }
 
-async function handleTokenCommand(interaction, region) {
+async function handleTokenCommand(interaction, region, version) {
+  const normalizedVersion = normalizeVersion(version)
   logger.debug(
     {
       command: 'wow token',
       region: region,
+      version: normalizedVersion,
       userId: interaction.user.id,
       guildId: interaction.guild?.id,
     },
@@ -438,6 +510,7 @@ async function handleTokenCommand(interaction, region) {
       {
         command: 'wow token',
         region: region,
+        version: normalizedVersion,
       },
       'Requesting Blizzard API access token for token price'
     )
@@ -446,6 +519,7 @@ async function handleTokenCommand(interaction, region) {
       {
         command: 'wow token',
         region: region,
+        version: normalizedVersion,
         tokenLength: token ? token.length : 0,
       },
       'Blizzard API access token obtained for token price'
@@ -456,13 +530,16 @@ async function handleTokenCommand(interaction, region) {
       {
         command: 'wow token',
         region: region,
+        version: normalizedVersion,
         tokenPreview: token ? token.substring(0, 10) + '...' : 'null',
       },
       'Fetching WoW token price data'
     )
 
+    const namespace = getVersionedNamespace(normalizedVersion, region)
+
     const tokenResponse = await fetch(
-      `https://${region}.api.blizzard.com/data/wow/token/?namespace=dynamic-${region}&locale=en_US`,
+      `https://${region}.api.blizzard.com/data/wow/token/?namespace=${namespace}&locale=en_US`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -477,6 +554,7 @@ async function handleTokenCommand(interaction, region) {
         region: region,
         responseStatus: tokenResponse.status,
         responseOk: tokenResponse.ok,
+        version: normalizedVersion,
       },
       'Token API response received'
     )
@@ -486,6 +564,7 @@ async function handleTokenCommand(interaction, region) {
         {
           command: 'wow token',
           region: region,
+          version: normalizedVersion,
           status: tokenResponse.status,
           statusText: tokenResponse.statusText,
         },
@@ -499,6 +578,7 @@ async function handleTokenCommand(interaction, region) {
       {
         command: 'wow token',
         region: region,
+        version: normalizedVersion,
         tokenDataKeys: Object.keys(tokenData),
         hasPrice: !!tokenData.price,
       },
@@ -510,24 +590,19 @@ async function handleTokenCommand(interaction, region) {
     const formattedPrice = formatCurrency(priceInCopper)
     const priceInGold = Math.floor(priceInCopper / COPPER_PER_GOLD)
 
+    const versionLabel = getVersionLabel(normalizedVersion)
+
     // Create embed
     const embed = new EmbedBuilder()
       .setTitle('🪙 WoW Token Price')
       .setColor(0xffd700)
-      .setDescription(`Current price in ${region.toUpperCase()} region`)
+      .setDescription(`Current ${versionLabel} price in ${region.toUpperCase()} region`)
 
-    embed.addFields(
-      {
-        name: '💰 Current Price',
-        value: formattedPrice,
-        inline: true,
-      },
-      {
-        name: '📊 Raw Value',
-        value: `${priceInCopper.toLocaleString()} copper`,
-        inline: true,
-      }
-    )
+    embed.addFields({
+      name: '💰 Current Price',
+      value: formattedPrice,
+      inline: true,
+    })
 
     // Add helpful links
     embed.addFields({
@@ -541,6 +616,7 @@ async function handleTokenCommand(interaction, region) {
       {
         region: region,
         price: priceInGold,
+        version: normalizedVersion,
         requester: interaction.user.username,
       },
       'Token price info embed sent'
@@ -550,6 +626,7 @@ async function handleTokenCommand(interaction, region) {
       {
         error: error.message,
         region: region,
+        version: normalizedVersion,
       },
       'Token command error'
     )
