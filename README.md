@@ -88,7 +88,7 @@ An automated moderation logging system that tracks message activities in Discord
 
 **Features:**
 
-- Automatic logging of message creation and deletion events
+- Automatic logging of message creation, deletion, and invite create/delete events
 - Detailed embeds showing author, channel, timestamp, and content (when available)
 - Audit log integration to identify who deleted messages
 - Per-guild configuration with enable/disable toggles
@@ -105,12 +105,14 @@ An automated moderation logging system that tracks message activities in Discord
 
 - **Message Creations**: Who posted, where, when, and the message content (if bot has proper intents)
 - **Message Deletions**: Who deleted, which message was removed, original author, and content (when cached)
+- **Invite Creations**: Channel, code, inviter, max uses, and expiry
+- **Invite Deletions**: Channel, code, inviter (if available), max uses, and expiry
 - **Filtering**: Bot messages and DMs are automatically excluded
 
 **Setup Steps:**
 
 1. Set the log channel: `/log channel set #logs`
-2. Enable features: `/log events enable message.create` and `/log events enable message.delete`
+2. Enable features: `/log events enable message.create`, `/log events enable message.delete`, `/log events enable invite.create`, `/log events enable invite.delete`
 3. Enable Message Content Intent in [Discord Developer Portal](https://discord.com/developers/applications) under Bot settings
 4. Restart bot and test by creating/deleting messages
 

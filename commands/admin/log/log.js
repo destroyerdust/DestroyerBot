@@ -13,6 +13,12 @@ const {
   setLogMessageCreateAsync,
   getLogMessageDeleteAsync,
   setLogMessageDeleteAsync,
+  getLogMessageUpdateAsync,
+  setLogMessageUpdateAsync,
+  getLogInviteCreateAsync,
+  setLogInviteCreateAsync,
+  getLogInviteDeleteAsync,
+  setLogInviteDeleteAsync,
 } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
@@ -31,6 +37,27 @@ const LOG_EVENTS = [
     getStatus: getLogMessageDeleteAsync,
     setStatus: setLogMessageDeleteAsync,
   },
+  {
+    key: 'message.update',
+    label: 'Message Update',
+    description: 'Log when messages are edited',
+    getStatus: getLogMessageUpdateAsync,
+    setStatus: setLogMessageUpdateAsync,
+  },
+  {
+    key: 'invite.create',
+    label: 'Invite Create',
+    description: 'Log when new invites are created',
+    getStatus: getLogInviteCreateAsync,
+    setStatus: setLogInviteCreateAsync,
+  },
+  {
+    key: 'invite.delete',
+    label: 'Invite Delete',
+    description: 'Log when invites are deleted',
+    getStatus: getLogInviteDeleteAsync,
+    setStatus: setLogInviteDeleteAsync,
+  },
 ]
 
 function getEventConfig(key) {
@@ -46,6 +73,114 @@ async function getStatusText(guildId, eventKeys) {
     statuses.push(`${enabled ? '✅' : '❌'} ${event.label} \`${event.key}\``)
   }
   return statuses.join('\n')
+}
+
+function buildTestEmbed(interaction) {
+  return new EmbedBuilder()
+    .setTitle('Logging Test')
+    .setDescription('This is a test log to confirm configuration.')
+    .addFields(
+      { name: 'Triggered by', value: interaction.user.tag, inline: true },
+      { name: 'User ID', value: interaction.user.id, inline: true }
+    )
+    .setColor('#5865f2')
+    .setTimestamp()
+}
+
+async function handleChannelSet(interaction, guildId) {
+  const channel = interaction.options.getChannel('channel')
+  if (!channel || !channel.isTextBased()) {
+    return interaction.reply({
+      content: '❌ Log channel must be a text channel.',
+      flags: MessageFlags.Ephemeral,
+    })
+  }
+
+  await setLogChannelAsync(guildId, channel.id)
+  return interaction.reply({
+    content: `✅ Log channel set to ${channel}.`,
+    flags: MessageFlags.Ephemeral,
+  })
+}
+
+async function handleChannelStatus(interaction, guildId) {
+  const channelId = await getLogChannelAsync(guildId)
+  const status = channelId ? `<#${channelId}>` : 'Not set'
+  return interaction.reply({
+    content: `📜 Current log channel: ${status}`,
+    flags: MessageFlags.Ephemeral,
+  })
+}
+
+async function handleEventsToggle(interaction, guildId, subcommand, config) {
+  const enable = subcommand === 'enable'
+  await config.setStatus(guildId, enable)
+  const status = await getStatusText(guildId, [config.key])
+  return interaction.reply({
+    content: `📝 ${config.label} logging ${enable ? 'enabled' : 'disabled'}.\n${status}`,
+    flags: MessageFlags.Ephemeral,
+  })
+}
+
+async function handleEventsStatus(interaction, guildId, config) {
+  const keys = config ? [config.key] : LOG_EVENTS.map((event) => event.key)
+  const status = await getStatusText(guildId, keys)
+  return interaction.reply({
+    content: `📊 Logging status:\n${status}`,
+    flags: MessageFlags.Ephemeral,
+  })
+}
+
+async function handleTest(interaction, guildId) {
+  const channelId = await getLogChannelAsync(guildId)
+  if (!channelId) {
+    return interaction.reply({
+      content: '❌ No log channel set. Configure one with `/log channel set`.',
+      flags: MessageFlags.Ephemeral,
+    })
+  }
+
+  const embed = buildTestEmbed(interaction)
+  const channel = interaction.guild.channels.cache.get(channelId)
+  if (!channel) {
+    try {
+      const fetched = await interaction.guild.channels.fetch(channelId)
+      if (!fetched || !fetched.isTextBased()) {
+        return interaction.reply({
+          content:
+            '❌ The configured log channel could not be found or is not a text channel. Please set it again.',
+          flags: MessageFlags.Ephemeral,
+        })
+      }
+      await fetched.send({ embeds: [embed] })
+      return interaction.reply({
+        content: `✅ Test log sent to ${fetched}.`,
+        flags: MessageFlags.Ephemeral,
+      })
+    } catch (fetchError) {
+      logger.error({ error: fetchError.message, guildId, channelId }, 'Failed to fetch log channel')
+      return interaction.reply({
+        content:
+          '❌ The configured log channel could not be found or is not a text channel. Please set it again.',
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+  }
+
+  if (!channel.isTextBased()) {
+    return interaction.reply({
+      content:
+        '❌ The configured log channel could not be found or is not a text channel. Please set it again.',
+      flags: MessageFlags.Ephemeral,
+    })
+  }
+
+  await channel.send({ embeds: [embed] })
+
+  return interaction.reply({
+    content: `✅ Test log sent to ${channel}.`,
+    flags: MessageFlags.Ephemeral,
+  })
 }
 
 module.exports = {
@@ -152,29 +287,8 @@ module.exports = {
     try {
       // Channel configuration
       if (subcommandGroup === 'channel') {
-        if (subcommand === 'set') {
-          const channel = interaction.options.getChannel('channel')
-          if (!channel || !channel.isTextBased()) {
-            return interaction.reply({
-              content: '❌ Log channel must be a text channel.',
-              flags: MessageFlags.Ephemeral,
-            })
-          }
-          await setLogChannelAsync(guildId, channel.id)
-          return interaction.reply({
-            content: `✅ Log channel set to ${channel}.`,
-            flags: MessageFlags.Ephemeral,
-          })
-        }
-
-        if (subcommand === 'status') {
-          const channelId = await getLogChannelAsync(guildId)
-          const status = channelId ? `<#${channelId}>` : 'Not set'
-          return interaction.reply({
-            content: `📜 Current log channel: ${status}`,
-            flags: MessageFlags.Ephemeral,
-          })
-        }
+        if (subcommand === 'set') return handleChannelSet(interaction, guildId)
+        if (subcommand === 'status') return handleChannelStatus(interaction, guildId)
       }
 
       // Event toggles
@@ -189,81 +303,15 @@ module.exports = {
           })
         }
 
-        if (subcommand === 'enable' || subcommand === 'disable') {
-          const enable = subcommand === 'enable'
-          await config.setStatus(guildId, enable)
-          const status = await getStatusText(guildId, [config.key])
-          return interaction.reply({
-            content: `✅ ${config.label} logging ${enable ? 'enabled' : 'disabled'}.\n${status}`,
-            flags: MessageFlags.Ephemeral,
-          })
-        }
+        if (subcommand === 'enable' || subcommand === 'disable')
+          return handleEventsToggle(interaction, guildId, subcommand, config)
 
-        if (subcommand === 'status') {
-          const keys = config ? [config.key] : LOG_EVENTS.map((event) => event.key)
-          const status = await getStatusText(guildId, keys)
-          return interaction.reply({
-            content: `📊 Logging status:\n${status}`,
-            flags: MessageFlags.Ephemeral,
-          })
-        }
+        if (subcommand === 'status') return handleEventsStatus(interaction, guildId, config)
       }
 
       // Test send
       if (!subcommandGroup && subcommand === 'test') {
-        const channelId = await getLogChannelAsync(guildId)
-        if (!channelId) {
-          return interaction.reply({
-            content: '❌ No log channel set. Configure one with `/log channel set`.',
-            flags: MessageFlags.Ephemeral,
-          })
-        }
-
-        const channel = interaction.guild.channels.cache.get(channelId)
-        if (!channel) {
-          try {
-            const fetched = await interaction.guild.channels.fetch(channelId)
-            if (!fetched || !fetched.isTextBased()) {
-              return interaction.reply({
-                content:
-                  '❌ The configured log channel could not be found or is not a text channel. Please set it again.',
-                flags: MessageFlags.Ephemeral,
-              })
-            }
-            await fetched.send({ embeds: [embed] })
-            return interaction.reply({
-              content: `✅ Test log sent to ${fetched}.`,
-              flags: MessageFlags.Ephemeral,
-            })
-          } catch (fetchError) {
-            logger.error(
-              { error: fetchError.message, guildId, channelId },
-              'Failed to fetch log channel'
-            )
-            return interaction.reply({
-              content:
-                '❌ The configured log channel could not be found or is not a text channel. Please set it again.',
-              flags: MessageFlags.Ephemeral,
-            })
-          }
-        }
-
-        const embed = new EmbedBuilder()
-          .setTitle('Logging Test')
-          .setDescription('This is a test log to confirm configuration.')
-          .addFields(
-            { name: 'Triggered by', value: interaction.user.tag, inline: true },
-            { name: 'User ID', value: interaction.user.id, inline: true }
-          )
-          .setColor('#5865f2')
-          .setTimestamp()
-
-        await channel.send({ embeds: [embed] })
-
-        return interaction.reply({
-          content: `✅ Test log sent to ${channel}.`,
-          flags: MessageFlags.Ephemeral,
-        })
+        return handleTest(interaction, guildId)
       }
 
       // Fallback for unhandled paths
