@@ -13,6 +13,10 @@ const logSettingsSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  messageUpdate: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const welcomeSettingsSchema = new mongoose.Schema({

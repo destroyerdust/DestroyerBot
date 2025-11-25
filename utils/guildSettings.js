@@ -86,6 +86,10 @@ function migrateSettings() {
           guild.logs.messageDelete = guild.logMessageDelete
           delete guild.logMessageDelete
         }
+        if (guild.logMessageUpdate !== undefined) {
+          guild.logs.messageUpdate = guild.logMessageUpdate
+          delete guild.logMessageUpdate
+        }
 
         hasChanges = true
         logger.info({ guildId }, 'Migrated log settings from flat to nested structure')
@@ -168,6 +172,9 @@ function getGuildSettings(guildId) {
   }
   if (typeof settings[guildId].logs.messageDelete !== 'boolean') {
     settings[guildId].logs.messageDelete = true
+  }
+  if (typeof settings[guildId].logs.messageUpdate !== 'boolean') {
+    settings[guildId].logs.messageUpdate = true
   }
 
   // Ensure welcome object exists and has defaults
@@ -545,6 +552,67 @@ function getLogMessageDelete(guildId) {
 }
 
 /**
+ * Set whether to log message updates for a guild (saves to both MongoDB and JSON)
+ * @param {string} guildId - Guild ID
+ * @param {boolean} enable - True to enable, false to disable
+ */
+function setLogMessageUpdate(guildId, enable) {
+  // Always save to MongoDB first if connected
+  if (getConnectionStatus()) {
+    GuildSettings.findOrCreate(guildId)
+      .then((guildSettings) => {
+        guildSettings.logs = guildSettings.logs || {}
+        guildSettings.logs.messageUpdate = enable
+        return guildSettings.save()
+      })
+      .then(() => {
+        logger.info({ guildId, enable }, 'Log message update setting updated (MongoDB + JSON)')
+      })
+      .catch((error) => {
+        logger.error(
+          { error: error.message, guildId, enable },
+          'Error saving to MongoDB, JSON backup preserved'
+        )
+      })
+  } else {
+    logger.debug(
+      { guildId, enable },
+      'Log message update setting updated (JSON only - MongoDB not connected)'
+    )
+  }
+
+  // Then save to JSON as backup
+  const settings = loadSettings()
+  if (!settings[guildId]) {
+    settings[guildId] = {
+      guildId: guildId,
+      commandPermissions: {},
+      logs: {
+        channelId: null,
+        messageCreate: true,
+        messageDelete: true,
+        messageUpdate: true,
+      },
+    }
+  }
+  settings[guildId].logs = settings[guildId].logs || {}
+  settings[guildId].logs.messageUpdate = enable
+  saveSettings(settings)
+
+  logger.info({ guildId, enable }, 'Log message update setting updated')
+}
+
+/**
+ * Get whether to log message updates for a guild
+ * @param {string} guildId - Guild ID
+ * @returns {boolean} True if enabled
+ */
+function getLogMessageUpdate(guildId) {
+  const guildSettings = getGuildSettings(guildId)
+  return guildSettings.logs?.messageUpdate ?? true
+}
+
+/**
  * Set whether welcome messages are enabled for a guild (saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {boolean} enable - True to enable, false to disable
@@ -752,6 +820,7 @@ async function getGuildSettingsAsync(guildId) {
         logChannel: settings.logs?.channelId,
         logMessageCreate: settings.logs?.messageCreate,
         logMessageDelete: settings.logs?.messageDelete,
+        logMessageUpdate: settings.logs?.messageUpdate,
         welcomeEnabled: settings.welcome?.enabled,
         welcomeChannel: settings.welcome?.channelId,
         welcomeMessage: settings.welcome?.message,
@@ -863,13 +932,43 @@ async function removeCommandRoleAsync(guildId, commandName, roleId) {
     } else {
       logger.warn('MongoDB not connected, saved to JSON only')
     }
+
+    // Then update JSON backup
+    removeCommandRole(guildId, commandName, roleId)
   } catch (error) {
     logger.error(
       { error: error.message, guildId, commandName, roleId },
-      'Error removing command role, saved to JSON only'
+      'Error removing command role (async)'
     )
-    // Ensure JSON is updated even if MongoDB fails
+    // Fallback to sync version which handles JSON
     removeCommandRole(guildId, commandName, roleId)
+  }
+}
+
+/**
+ * Reset all permissions for a guild (async, saves to both MongoDB and JSON)
+ * @param {string} guildId - Guild ID
+ */
+async function resetGuildPermissionsAsync(guildId) {
+  try {
+    // Save to MongoDB first if connected
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOne({ guildId })
+      if (settings) {
+        settings.commandPermissions = new Map()
+        await settings.save()
+      }
+      logger.info({ guildId }, 'Guild permissions reset (MongoDB + JSON)')
+    } else {
+      logger.warn('MongoDB not connected, saved to JSON only')
+    }
+
+    // Then update JSON backup
+    resetGuildPermissions(guildId)
+  } catch (error) {
+    logger.error({ error: error.message, guildId }, 'Error resetting guild permissions (async)')
+    // Fallback to sync version which handles JSON
+    resetGuildPermissions(guildId)
   }
 }
 
@@ -1237,6 +1336,60 @@ async function getLogMessageDeleteAsync(guildId) {
 }
 
 /**
+ * Set whether to log message updates for a guild (async, saves to both MongoDB and JSON)
+ * @param {string} guildId - Guild ID
+ * @param {boolean} enable - True to enable, false to disable
+ */
+async function setLogMessageUpdateAsync(guildId, enable) {
+  try {
+    // Always update JSON backup first
+    setLogMessageUpdate(guildId, enable)
+
+    // Then update MongoDB if connected
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOrCreate(guildId)
+      settings.logs = settings.logs || {}
+      settings.logs.messageUpdate = enable
+      await settings.save()
+      logger.info({ guildId, enable }, 'Log message update setting updated (MongoDB + JSON)')
+    } else {
+      logger.warn('MongoDB not connected, saved to JSON only')
+    }
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId, enable },
+      'Error setting log message update, saved to JSON only'
+    )
+    // Ensure JSON is updated even if MongoDB fails
+    setLogMessageUpdate(guildId, enable)
+  }
+}
+
+/**
+ * Get whether to log message updates for a guild (async, MongoDB primary)
+ * @param {string} guildId - Guild ID
+ * @returns {Promise<boolean>} True if enabled
+ */
+async function getLogMessageUpdateAsync(guildId) {
+  try {
+    if (getConnectionStatus()) {
+      const settings = await GuildSettings.findOne({ guildId })
+      return settings?.logs?.messageUpdate ?? true
+    } else {
+      // Fallback to JSON
+      logger.warn('MongoDB not connected, using JSON fallback')
+      return getLogMessageUpdate(guildId)
+    }
+  } catch (error) {
+    logger.error(
+      { error: error.message, guildId },
+      'Error getting log message update from MongoDB, falling back to JSON'
+    )
+    return getLogMessageUpdate(guildId)
+  }
+}
+
+/**
  * Set whether welcome messages are enabled for a guild (async, saves to both MongoDB and JSON)
  * @param {string} guildId - Guild ID
  * @param {boolean} enable - True to enable, false to disable
@@ -1458,6 +1611,7 @@ async function getGuildSettingsOptimized(guildId) {
         'logs.channelId': 1,
         'logs.messageCreate': 1,
         'logs.messageDelete': 1,
+        'logs.messageUpdate': 1,
         'welcome.enabled': 1,
         'welcome.channelId': 1,
         'welcome.message': 1,
@@ -1617,6 +1771,7 @@ async function getMultipleGuildSettings(guildIds) {
         'logs.channelId': 1,
         'logs.messageCreate': 1,
         'logs.messageDelete': 1,
+        'logs.messageUpdate': 1,
         'welcome.enabled': 1,
         'welcome.channelId': 1,
         'welcome.message': 1,
@@ -1668,6 +1823,8 @@ module.exports = {
   getLogMessageCreate,
   setLogMessageDelete,
   getLogMessageDelete,
+  setLogMessageUpdate,
+  getLogMessageUpdate,
   setWelcomeEnabled,
   getWelcomeEnabled,
   setWelcomeChannel,
@@ -1690,6 +1847,8 @@ module.exports = {
   getLogMessageCreateAsync,
   setLogMessageDeleteAsync,
   getLogMessageDeleteAsync,
+  setLogMessageUpdateAsync,
+  getLogMessageUpdateAsync,
   setWelcomeEnabledAsync,
   getWelcomeEnabledAsync,
   setWelcomeChannelAsync,

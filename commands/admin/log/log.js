@@ -13,6 +13,8 @@ const {
   setLogMessageCreateAsync,
   getLogMessageDeleteAsync,
   setLogMessageDeleteAsync,
+  getLogMessageUpdateAsync,
+  setLogMessageUpdateAsync,
 } = require('../../../utils/guildSettings')
 const logger = require('../../../logger')
 
@@ -30,6 +32,13 @@ const LOG_EVENTS = [
     description: 'Log when messages are deleted',
     getStatus: getLogMessageDeleteAsync,
     setStatus: setLogMessageDeleteAsync,
+  },
+  {
+    key: 'message.update',
+    label: 'Message Update',
+    description: 'Log when messages are edited',
+    getStatus: getLogMessageUpdateAsync,
+    setStatus: setLogMessageUpdateAsync,
   },
 ]
 
@@ -194,7 +203,7 @@ module.exports = {
           await config.setStatus(guildId, enable)
           const status = await getStatusText(guildId, [config.key])
           return interaction.reply({
-            content: `✅ ${config.label} logging ${enable ? 'enabled' : 'disabled'}.\n${status}`,
+            content: `📝 ${config.label} logging ${enable ? 'enabled' : 'disabled'}.\n${status}`,
             flags: MessageFlags.Ephemeral,
           })
         }
