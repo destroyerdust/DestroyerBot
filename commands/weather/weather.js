@@ -35,6 +35,11 @@ module.exports = {
           { name: 'Canadian (Celsius + km/h)', value: 'ca' }
         )
     ),
+  /**
+   * Execute the weather command to fetch and display weather data for a location
+   * @param {Interaction} interaction - Discord command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const location = interaction.options.getString('location')
     const units = interaction.options.getString('units') || 'us' // Default to Fahrenheit
@@ -213,13 +218,21 @@ module.exports = {
         'Weather data retrieved successfully'
       )
 
-      // Process and filter alerts
+      /**
+       * Get only non-expired weather alerts
+       * @returns {Array<Object>} Array of active alert objects
+       */
       const getValidAlerts = () => {
         if (!data.alerts || !Array.isArray(data.alerts)) return []
         const now = Math.floor(Date.now() / 1000) // Current Unix timestamp in seconds
         return data.alerts.filter((alert) => alert.expires > now)
       }
 
+      /**
+       * Get a colored emoji badge based on alert severity level
+       * @param {string} severity - The severity level of the alert
+       * @returns {string} Emoji badge representing the severity
+       */
       const getSeverityBadge = (severity) => {
         const level = severity?.toLowerCase() || ''
         if (level.includes('extreme')) return '🔴'
@@ -228,6 +241,11 @@ module.exports = {
         return '⚪'
       }
 
+      /**
+       * Convert a Unix timestamp to a relative time string (e.g., "2h", "30m")
+       * @param {number} unixTimestamp - Unix timestamp in seconds
+       * @returns {string} Relative time string or 'Expired' if time has passed
+       */
       const getRelativeTime = (unixTimestamp) => {
         const now = Date.now()
         const alertTime = unixTimestamp * 1000 // Convert to milliseconds
