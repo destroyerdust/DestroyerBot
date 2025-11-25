@@ -2097,4 +2097,7 @@ module.exports = {
   hasCommandPermissionFromSettings,
   batchUpdateGuildSettings,
   getMultipleGuildSettings,
+
+  // Constants
+  DEFAULT_RESTRICTED_COMMANDS,
 }

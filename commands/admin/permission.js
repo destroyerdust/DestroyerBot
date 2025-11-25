@@ -6,13 +6,12 @@ const {
 } = require('discord.js')
 const {
   getGuildSettingsAsync,
-  resetGuildPermissions,
+  resetGuildPermissionsAsync,
   setCommandRole,
-  removeCommandRole,
+  removeCommandRoleAsync,
+  DEFAULT_RESTRICTED_COMMANDS,
 } = require('../../utils/guildSettings')
 const logger = require('../../logger')
-
-const DEFAULT_RESTRICTED_COMMANDS = new Set(['kick', 'clean', 'setnick'])
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -241,7 +240,7 @@ async function handleReset(interaction) {
   )
 
   try {
-    resetGuildPermissions(interaction.guild.id)
+    await resetGuildPermissionsAsync(interaction.guild.id)
 
     await interaction.reply({
       content: '✅ All command permissions have been reset. Everyone can now use all commands.',
@@ -337,7 +336,7 @@ async function handleRemove(interaction) {
   )
 
   try {
-    removeCommandRole(interaction.guild.id, commandName, role.id)
+    await removeCommandRoleAsync(interaction.guild.id, commandName, role.id)
 
     await interaction.reply({
       content: `✅ Role ${role} has been removed from the \`/${commandName}\` command.`,
