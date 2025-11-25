@@ -18,6 +18,11 @@ const USER_AGENT =
   'DestroyerBot/1.0 (+https://github.com/destroyerdust/DestroyerBot; Archidekt command)'
 const MAX_SEARCH_RESULTS = 15
 
+/**
+ * Safely parse JSON from a fetch response with error handling
+ * @param {Response} response - The fetch response object
+ * @returns {Promise<Object>} Parsed JSON object or empty object if parsing fails
+ */
 async function safeParseJson(response) {
   try {
     return await response.json()
@@ -27,6 +32,12 @@ async function safeParseJson(response) {
   }
 }
 
+/**
+ * Fetch a deck from the Archidekt API
+ * @param {number|string} deckId - The Archidekt deck ID
+ * @returns {Promise<Object>} Deck data object from Archidekt API
+ * @throws {Error} If deck ID is invalid or API request fails
+ */
 async function fetchDeck(deckId) {
   const parsedId = typeof deckId === 'string' ? Number(deckId) : deckId
   if (!Number.isInteger(parsedId) || parsedId <= 0) {
@@ -52,6 +63,11 @@ async function fetchDeck(deckId) {
   return data
 }
 
+/**
+ * Create a formatted summary of cards with limited output
+ * @param {Array<Object>} cards - Array of card objects from Archidekt API
+ * @returns {string} Formatted card summary with links, capped at 900 characters
+ */
 function summarizeCards(cards) {
   const lines = cards.slice(0, MAX_SEARCH_RESULTS).map((card) => {
     const rawName = card.card?.oracleCard?.name
@@ -76,6 +92,12 @@ function summarizeCards(cards) {
   return summary
 }
 
+/**
+ * Filter cards by name match
+ * @param {Array<Object>} cards - Array of card objects
+ * @param {string} query - Search query string
+ * @returns {Array<Object>} Filtered cards matching the query
+ */
 function filterCardsByName(cards, query) {
   const search = query.trim().toLowerCase()
   if (!search) return []
@@ -86,6 +108,11 @@ function filterCardsByName(cards, query) {
   })
 }
 
+/**
+ * Build a Discord embed displaying deck information
+ * @param {Object} deck - Deck object from Archidekt API
+ * @returns {EmbedBuilder} Formatted embed with deck details
+ */
 function buildDeckEmbed(deck) {
   const totalCards = deck.cards?.reduce((sum, card) => sum + (card.quantity || 0), 0) || 0
   const categories = deck.categories?.filter((cat) => cat.includedInDeck) || []
@@ -122,6 +149,13 @@ function buildDeckEmbed(deck) {
   return embed
 }
 
+/**
+ * Build a Discord embed displaying search results for cards in a deck
+ * @param {Object} deck - Deck object from Archidekt API
+ * @param {string} query - Search query string
+ * @param {Array<Object>} matches - Filtered card objects matching the query
+ * @returns {EmbedBuilder} Formatted embed with search results
+ */
 function buildSearchEmbed(deck, query, matches) {
   const moreCount = Math.max(matches.length - MAX_SEARCH_RESULTS, 0)
   const summary = summarizeCards(matches)
@@ -151,6 +185,14 @@ function buildSearchEmbed(deck, query, matches) {
   return embed
 }
 
+/**
+ * Handle the `/archidekt link` subcommand
+ * @param {Interaction} interaction - Discord interaction object
+ * @param {number} deckId - Archidekt deck ID to link
+ * @param {string|null} alias - Optional alias for the deck
+ * @param {boolean} makeDefault - Whether to set as default deck
+ * @returns {Promise<void>}
+ */
 async function handleLink(interaction, deckId, alias, makeDefault) {
   if (!deckId || deckId <= 0) {
     return interaction.reply({
@@ -187,6 +229,13 @@ async function handleLink(interaction, deckId, alias, makeDefault) {
   }
 }
 
+/**
+ * Handle the `/archidekt unlink` subcommand
+ * @param {Interaction} interaction - Discord interaction object
+ * @param {number|null} deckId - Archidekt deck ID to unlink
+ * @param {string|null} alias - Deck alias to unlink
+ * @returns {Promise<void>}
+ */
 async function handleUnlink(interaction, deckId, alias) {
   if (!deckId && !alias) {
     await interaction.reply({
@@ -206,6 +255,13 @@ async function handleUnlink(interaction, deckId, alias) {
   })
 }
 
+/**
+ * Handle the `/archidekt default` subcommand
+ * @param {Interaction} interaction - Discord interaction object
+ * @param {number|null} deckId - Archidekt deck ID to set as default
+ * @param {string|null} alias - Deck alias to set as default
+ * @returns {Promise<void>}
+ */
 async function handleDefault(interaction, deckId, alias) {
   const decks = await getUserDecksAsync(interaction.user.id)
   if (deckId || alias) {
@@ -243,6 +299,11 @@ async function handleDefault(interaction, deckId, alias) {
   }
 }
 
+/**
+ * Handle the `/archidekt list` subcommand
+ * @param {Interaction} interaction - Discord interaction object
+ * @returns {Promise<void>}
+ */
 async function handleList(interaction) {
   const decks = await getUserDecksAsync(interaction.user.id)
   if (!decks || decks.length === 0) {
@@ -267,6 +328,13 @@ async function handleList(interaction) {
   })
 }
 
+/**
+ * Handle the `/archidekt deck` subcommand
+ * @param {Interaction} interaction - Discord interaction object
+ * @param {number|null} deckId - Archidekt deck ID
+ * @param {string|null} alias - Deck alias
+ * @returns {Promise<void>}
+ */
 async function handleDeck(interaction, deckId, alias) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
@@ -295,6 +363,14 @@ async function handleDeck(interaction, deckId, alias) {
   }
 }
 
+/**
+ * Handle the `/archidekt search` subcommand
+ * @param {Interaction} interaction - Discord interaction object
+ * @param {string} query - Card name search query
+ * @param {number|null} deckId - Archidekt deck ID
+ * @param {string|null} alias - Deck alias
+ * @returns {Promise<void>}
+ */
 async function handleSearch(interaction, query, deckId, alias) {
   if (!query || query.trim().length === 0) {
     return interaction.reply({
@@ -346,6 +422,14 @@ async function handleSearch(interaction, query, deckId, alias) {
   }
 }
 
+/**
+ * Handle errors from Archidekt command handlers
+ * @param {Interaction} interaction - Discord interaction object
+ * @param {Error} error - The error that occurred
+ * @param {number|null} deckId - Deck ID for logging context
+ * @param {string} subcommand - Subcommand name for logging context
+ * @returns {Promise<void>}
+ */
 async function handleError(interaction, error, deckId, subcommand) {
   logger.error(
     {
@@ -444,6 +528,11 @@ module.exports = {
       subcommand.setName('list').setDescription('List your linked Archidekt decks')
     ),
 
+  /**
+   * Autocomplete handler for deck name/alias/ID options
+   * @param {Interaction} interaction - Autocomplete interaction
+   * @returns {Promise<void>}
+   */
   async autocomplete(interaction) {
     const focusedOption = interaction.options.getFocused(true)
     const userId = interaction.user.id
@@ -484,6 +573,11 @@ module.exports = {
     }
   },
 
+  /**
+   * Execute the Archidekt command with the appropriate subcommand handler
+   * @param {Interaction} interaction - Discord command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
     const deckOption = interaction.options.getString('deck')
