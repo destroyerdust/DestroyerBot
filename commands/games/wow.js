@@ -101,7 +101,7 @@ function normalizeVersion(versionInput) {
 
 /**
  * Builds the appropriate namespace for the WoW token API based on version and region
- * @param {'retail' | 'classic' | 'classic1x'} version
+ * @param {'retail' | 'classic'} version
  * @param {string} region
  * @returns {string}
  */
@@ -112,7 +112,7 @@ function getVersionedNamespace(version, region) {
 
 /**
  * Retrieves the display label for a version value
- * @param {'retail' | 'classic' | 'classic1x'} version
+ * @param {'retail' | 'classic'} version
  * @returns {string}
  */
 function getVersionLabel(version) {
