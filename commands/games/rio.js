@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Raider.IO command - World of Warcraft character and guild information
+ * Displays Mythic+ scores, progression, and weekly affixes from Raider.IO
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -54,6 +59,10 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+/**
+ * Raider.IO WoW command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('rio')
@@ -117,6 +126,12 @@ module.exports = {
             .addChoices(...REGION_CHOICES)
         )
     ),
+  /**
+   * Executes the rio command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
     const realm = interaction.options.getString('realm')

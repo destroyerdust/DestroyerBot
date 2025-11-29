@@ -1,3 +1,8 @@
+/**
+ * @fileoverview 3D Print Status command - monitors Prusa Mini+ 3D printer
+ * Owner-only command that fetches and displays current printer status
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -8,6 +13,10 @@ const miniAPI = process.env.MINI_API
 const ownerId = process.env.OWNER_ID
 const logger = require('../../logger')
 
+/**
+ * 3D printer status command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('3d-print-status')
@@ -17,6 +26,12 @@ module.exports = {
       InteractionContextType.PrivateChannel,
       InteractionContextType.BotDM,
     ]),
+  /**
+   * Executes the 3d-print-status command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     // Check if the user is authorized
     if (interaction.user.id !== ownerId) {

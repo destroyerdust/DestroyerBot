@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Server Info command - displays comprehensive server statistics
+ * Shows member counts, channel statistics, roles, features, and server settings
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -212,11 +217,21 @@ function buildChannelStatsText(stats) {
   return channelStats.join('\n') || 'None'
 }
 
+/**
+ * Server info command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('server-info')
     .setDescription('Display comprehensive information about this server.')
     .setContexts([InteractionContextType.Guild]),
+  /**
+   * Executes the server-info command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const guild = interaction.guild
 

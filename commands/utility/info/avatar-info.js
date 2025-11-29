@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Avatar Info command - displays detailed avatar information
+ * Shows avatar URLs and detects animated (GIF) avatars
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -6,6 +11,10 @@ const {
 } = require('discord.js')
 const logger = require('../../../logger')
 
+/**
+ * Avatar info command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('avatar-info')
@@ -14,6 +23,12 @@ module.exports = {
     .addUserOption((option) =>
       option.setName('user').setDescription('The user to get avatar info for').setRequired(false)
     ),
+  /**
+   * Executes the avatar-info command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const requestedUser = interaction.options.getUser('user')
     const user = requestedUser || interaction.user

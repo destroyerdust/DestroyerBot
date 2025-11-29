@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Clean command - deletes bot messages from a channel
+ * Removes recent and older bot messages using bulk delete and individual deletion
+ */
+
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
@@ -7,6 +12,10 @@ const {
 const { hasCommandPermission } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
+/**
+ * Clean command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('clean')

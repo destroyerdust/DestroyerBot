@@ -1,3 +1,8 @@
+/**
+ * @fileoverview WoW command - World of Warcraft realm and token price information
+ * Displays realm status and WoW Token prices via Blizzard API
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -138,6 +143,10 @@ function validateBlizzardCredentials() {
   }
 }
 
+/**
+ * WoW command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('wow')
@@ -185,6 +194,12 @@ module.exports = {
             .setAutocomplete(true)
         )
     ),
+  /**
+   * Autocomplete handler for version option
+   * @async
+   * @param {import('discord.js').AutocompleteInteraction} interaction - The autocomplete interaction
+   * @returns {Promise<void>}
+   */
   async autocomplete(interaction) {
     const focusedOption = interaction.options.getFocused(true)
 
@@ -214,6 +229,12 @@ module.exports = {
       }
     }
   },
+  /**
+   * Executes the wow command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
     const region = interaction.options.getString('region') || 'us'

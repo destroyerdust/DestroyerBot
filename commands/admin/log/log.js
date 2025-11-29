@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Log configuration command - manage server logging for various events
+ * Allows administrators to configure where and what events are logged
+ */
+
 const {
   ChannelType,
   EmbedBuilder,
@@ -183,6 +188,10 @@ async function handleTest(interaction, guildId) {
   })
 }
 
+/**
+ * Log configuration command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('log')
@@ -252,6 +261,12 @@ module.exports = {
     )
     .addSubcommand((subcommand) => subcommand.setName('test').setDescription('Send a test log')),
 
+  /**
+   * Autocomplete handler for event option
+   * @async
+   * @param {import('discord.js').AutocompleteInteraction} interaction - The autocomplete interaction
+   * @returns {Promise<void>}
+   */
   async autocomplete(interaction) {
     const focusedValue = interaction.options.getFocused().toLowerCase()
     const choices = LOG_EVENTS.filter(
@@ -268,6 +283,12 @@ module.exports = {
     await interaction.respond(choices)
   },
 
+  /**
+   * Executes the log configuration command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const guildId = interaction.guild.id
     const subcommandGroup = interaction.options.getSubcommandGroup(false)
