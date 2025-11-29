@@ -18,6 +18,12 @@ module.exports = {
       ApplicationIntegrationType.UserInstall,
     ])
     .setContexts([InteractionContextType.Guild, InteractionContextType.BotDM]),
+  /**
+   * Execute the bot-stats command to display bot statistics and system information
+   * Displays uptime, server count, member count, memory usage, cache sizes, and version info
+   * @param {Interaction} interaction - Discord command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     // Defer immediately to avoid timeout on slow operations
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })

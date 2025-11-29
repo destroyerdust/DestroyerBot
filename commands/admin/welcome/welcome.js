@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Welcome message configuration command
+ * Allows server administrators to set up automatic welcome messages for new members.
+ * Supports message templates with dynamic placeholders ({user}, {username}, {guild}).
+ */
+
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
@@ -18,6 +24,12 @@ const logger = require('../../../logger')
 
 const PLACEHOLDER_HELP = 'Use {user}, {username}, {guild} for dynamic values.'
 
+/**
+ * Renders a welcome message template with dynamic member-specific values
+ * @param {string} template - Message template with {user}, {username}, {guild} placeholders
+ * @param {import('discord.js').GuildMember} member - Guild member to substitute into template
+ * @returns {string} Rendered message with placeholders replaced
+ */
 function renderWelcomeMessage(template, member) {
   if (!template) return ''
   return template
@@ -26,11 +38,32 @@ function renderWelcomeMessage(template, member) {
     .replace(/{guild}/g, member.guild.name)
 }
 
+/**
+ * Truncates text to a maximum length, appending ellipsis if exceeded
+ * @param {string} text - Text to truncate
+ * @param {number} [limit=1900] - Maximum length before truncation
+ * @returns {string} Truncated text with "..." appended if exceeding limit
+ */
 function truncate(text, limit = 1900) {
   if (!text) return ''
   return text.length > limit ? `${text.slice(0, limit - 3)}...` : text
 }
 
+/**
+ * Welcome message configuration command
+ * Allows administrators to set up automatic welcome messages with dynamic placeholders.
+ *
+ * Subcommands:
+ * - `/welcome channel set <channel>` - Set the channel for welcome messages
+ * - `/welcome channel status` - Show configured welcome channel
+ * - `/welcome message set <content>` - Set the welcome message template
+ * - `/welcome message show` - Display current welcome message
+ * - `/welcome toggle <enabled>` - Enable or disable welcome messages
+ * - `/welcome status` - Show full welcome configuration
+ * - `/welcome test` - Send a test welcome message
+ *
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('welcome')
@@ -92,6 +125,12 @@ module.exports = {
       subcommand.setName('test').setDescription('Send a test welcome')
     ),
 
+  /**
+   * Executes the welcome configuration command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const guildId = interaction.guild.id
     const subcommandGroup = interaction.options.getSubcommandGroup(false)

@@ -20,6 +20,12 @@ module.exports = {
         .setMinValue(1)
         .setMaxValue(100)
     ),
+  /**
+   * Execute the clean command to delete bot messages from the channel
+   * Deletes recent messages using bulk delete (if possible) and older messages individually
+   * @param {Interaction} interaction - Discord command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     // Check bot permissions
     if (
