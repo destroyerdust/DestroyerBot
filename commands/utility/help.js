@@ -1,7 +1,6 @@
 /**
- * Help Command
- * Displays comprehensive information about all available bot commands
- * Dynamically generates help content based on registered commands
+ * @fileoverview Help command - displays comprehensive bot command information
+ * Dynamically generates help content based on registered commands and categories
  */
 
 const {

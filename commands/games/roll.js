@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Roll command - roll dice of various types
+ * Supports d4, d6, d8, d10, d12, d20, and d100 dice with optional quantity
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -37,6 +42,10 @@ function rollDie(sides) {
   return Math.floor(Math.random() * sides) + 1
 }
 
+/**
+ * Roll command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('roll')
@@ -62,6 +71,12 @@ module.exports = {
         .setMaxValue(10)
     ),
 
+  /**
+   * Executes the roll command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     try {
       const diceType = interaction.options.getString('size') || 'd6'

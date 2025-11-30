@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Weather command - get current weather for a location
+ * Fetches weather data from Pirate Weather API with support for multiple unit systems
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -8,6 +13,10 @@ const {
 const logger = require('../../logger')
 const pirateWeatherApiKey = process.env.PIRATE_WEATHER_API_KEY
 
+/**
+ * Weather command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('weather')

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Permission command - manage role-based command access control
+ * Allows administrators to set which roles can use specific commands
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -13,6 +18,10 @@ const {
 } = require('../../utils/guildSettings')
 const logger = require('../../logger')
 
+/**
+ * Permission configuration command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('permission')

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Archidekt command - manage and search Magic the Gathering decks
+ * Allows users to link, search, and manage their Archidekt deck collections
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -456,6 +461,10 @@ async function handleError(interaction, error, deckId, subcommand) {
   }
 }
 
+/**
+ * Archidekt command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('archidekt')

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Toggle Command - enable or disable commands for the server
+ * Allows administrators to turn commands on/off for their server
+ */
+
 const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType } = require('discord.js')
 const {
   disableCommandAsync,
@@ -10,6 +15,10 @@ const logger = require('../../logger')
 // Commands that cannot be disabled (admin commands)
 const PROTECTED_COMMANDS = new Set(['togglecommand', 'permission', 'log', 'welcome'])
 
+/**
+ * Toggle command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('togglecommand')
@@ -52,6 +61,12 @@ module.exports = {
             .setAutocomplete(true)
         )
     ),
+  /**
+   * Autocomplete handler for command option
+   * @async
+   * @param {import('discord.js').AutocompleteInteraction} interaction - The autocomplete interaction
+   * @returns {Promise<void>}
+   */
   async autocomplete(interaction) {
     const focusedValue = interaction.options.getFocused().toLowerCase()
 
@@ -67,6 +82,12 @@ module.exports = {
 
     await interaction.respond(filtered)
   },
+  /**
+   * Executes the togglecommand command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
     const commandName = interaction.options.getString('command')

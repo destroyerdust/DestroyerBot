@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Bot Stats command - displays bot statistics and system information
+ * Shows uptime, server count, member count, memory usage, and version details
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -9,6 +14,10 @@ const {
 const logger = require('../../../logger')
 const os = require('node:os')
 
+/**
+ * Bot stats command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('bot-stats')

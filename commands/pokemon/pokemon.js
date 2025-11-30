@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Pokemon TCG command - search and view Pokemon Trading Card Game cards
+ * Supports card search, random card, series info, and latest set information
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -469,6 +474,10 @@ async function sendCardEmbed(interaction, item, source) {
   )
 }
 
+/**
+ * Pokemon TCG command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('pokemon')
@@ -505,6 +514,12 @@ module.exports = {
         )
     ),
 
+  /**
+   * Autocomplete handler for series option
+   * @async
+   * @param {import('discord.js').AutocompleteInteraction} interaction - The autocomplete interaction
+   * @returns {Promise<void>}
+   */
   async autocomplete(interaction) {
     const focusedOption = interaction.options.getFocused(true)
 
@@ -547,6 +562,12 @@ module.exports = {
     }
   },
 
+  /**
+   * Executes the pokemon command with the appropriate subcommand
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()
     const user = interaction.user

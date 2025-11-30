@@ -13,6 +13,10 @@ const { hasCommandPermissionAsync } = require('../../utils/guildSettings')
  * Allows authorized users to set nicknames for guild members
  */
 
+/**
+ * Set nickname command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('setnick')
@@ -31,6 +35,12 @@ module.exports = {
         .setMaxLength(32)
     ),
 
+  /**
+   * Executes the setnick command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     // Defer immediately for potentially slow operations
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })

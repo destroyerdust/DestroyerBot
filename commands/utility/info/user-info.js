@@ -1,3 +1,8 @@
+/**
+ * @fileoverview User Info command - displays detailed user profile information
+ * Shows user badges, account creation date, roles, and guild membership details
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -89,6 +94,10 @@ function formatBadges(user) {
   return flags.map((flag) => `${FLAG_EMOJIS[flag] || '🏷️'} ${flag}`).join('\n')
 }
 
+/**
+ * User info command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('user-info')
@@ -97,6 +106,12 @@ module.exports = {
     .addUserOption((option) =>
       option.setName('user').setDescription('The user to get info about').setRequired(false)
     ),
+  /**
+   * Executes the user-info command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const requestedUser = interaction.options.getUser('user')
     const user = requestedUser || interaction.user

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Role List command - displays all server roles with details
+ * Shows comprehensive role information including member counts and colors
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -32,11 +37,21 @@ function formatRole(role, position) {
   return `#${position} ${colorEmoji} ${role.name} (${memberCount} member${memberCount !== 1 ? 's' : ''})`
 }
 
+/**
+ * Role list command module
+ * @type {import('discord.js').Command}
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('role-list')
     .setDescription('Display a comprehensive list of all server roles')
     .setContexts([InteractionContextType.Guild]),
+  /**
+   * Executes the role-list command
+   * @async
+   * @param {import('discord.js').CommandInteraction} interaction - The command interaction
+   * @returns {Promise<void>}
+   */
   async execute(interaction) {
     const guild = interaction.guild
 
