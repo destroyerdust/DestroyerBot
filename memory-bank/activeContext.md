@@ -4,22 +4,50 @@
 
 ### Memory Bank Maintenance
 
-- **Status**: Active - Memory bank fully maintained and current
-- **Location**: `development` branch
+- **Status**: ✅ Active - Memory bank updated and synchronized with codebase
+- **Location**: `main` branch (latest commit: 765b811)
 - **Goal**: Keep comprehensive project documentation synchronized with codebase state
 - **Files Maintained**: All 6 core memory bank files
 - **Update Frequency**: Regular updates as changes occur
-- **Last Updated**: November 24, 2025
+- **Last Updated**: December 4, 2025
 
 ### Immediate Priorities
 
-1. ✅ Complete memory bank update with recent refactoring work (November 24, 2025)
-2. ✅ Verify command inventory (archidekt, roll added to gaming commands)
-3. [ ] Establish continuous documentation maintenance workflow
-4. [ ] Review codebase for alignment with documented patterns
-5. [ ] Identify optimization opportunities going forward
+1. ✅ Complete memory bank update with recent refactoring work
+2. ✅ JSDoc documentation added to all commands
+3. ✅ Dependencies updated to latest versions (November 30, 2025)
+4. ✅ Husky git hooks implemented for code quality
+5. [ ] Implement comprehensive test suite
+6. [ ] Performance testing for large servers
 
 ## Recent Changes
+
+### JSDoc Documentation Implementation
+
+- **Status**: ✅ Completed - November 29, 2025
+- **Scope**: Added comprehensive JSDoc comments to all command files
+- **Details**: All 29 command files now have structured documentation
+- **Impact**: Improved code documentation and IDE intellisense support
+- **Commit**: f9a20bb "added jsdocs to all command files"
+
+### Dependency Updates (NCU)
+
+- **Status**: ✅ Completed - November 30, 2025
+- **Updated Dependencies**:
+  - discord.js: ^14.24.2 → ^14.25.1
+  - mongoose: ^8.19.2 → ^9.0.0
+  - prettier: ^3.6.2 → ^3.7.3
+  - eslint: ^9.39.0 → ^9.39.1
+- **Impact**: Latest security patches and features
+- **Commit**: b8e8fec "ncu update"
+
+### Husky Git Hooks Implementation
+
+- **Status**: ✅ Completed - November 2025
+- **Scope**: Added Husky for automated code quality checks
+- **Configuration**: Pre-commit hooks for linting and formatting
+- **Impact**: Enforces code quality standards before commits
+- **Dependencies**: husky: ^9.1.7
 
 ### Package Manager Standardization: Bun
 
@@ -44,6 +72,28 @@
 - **Impact**: All commands now fully compliant with Discord.js v14+ API standards
 - **Verification**: All commands successfully deployed and tested
 
+### Permission Commands Consolidation
+
+- **Status**: ✅ Completed - November 25, 2025
+- **Scope**: Unified 4 separate permission commands into single `/permission` command
+- **Subcommands**:
+  - `list` - View all command permissions and disabled commands
+  - `set` - Assign role to command
+  - `remove` - Remove role from command
+  - `reset` - Clear all permissions
+- **Rationale**: Better UX, cleaner command list, consistent interface
+- **Impact**: Simplified permission management workflow
+- **Commits**: ac6e8a9, 486afa9, f64e379, 290fc21, b3227e7
+
+### WoW Command Environment Validation
+
+- **Status**: ✅ Completed - November 25, 2025
+- **Scope**: Added environment variable verification for Blizzard API credentials
+- **Changes**: Commands verify BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET are defined
+- **Rationale**: Prevent runtime errors when API keys missing
+- **Impact**: Better error handling and user feedback
+- **Commit**: 42d8d60
+
 ### Archidekt Command Refactoring
 
 - **Status**: ✅ Completed - November 24, 2025
@@ -66,9 +116,9 @@
 - **Organization**:
   - `log/` - Message logging (1 command)
   - `welcome/` - Welcome system (1 command)
-  - `permissions/` - Permission management (4 commands)
-  - Root level - Command toggles (1 command)
+  - Root level - Permission management (1 unified command), Command toggles (1 command)
 - **Impact**: Improved code structure and team navigation
+- **Note**: Permission commands consolidated from 4 separate commands to 1 with subcommands
 
 ### Database Indexing Optimization
 
@@ -108,11 +158,25 @@
 
 ## Active Decisions and Considerations
 
+### Code Documentation Strategy
+
+- **Decision**: Use JSDoc for all command files
+- **Rationale**: Improved IDE support, better code documentation, easier onboarding
+- **Impact**: All commands now have structured documentation
+- **Consideration**: Maintain JSDoc comments as code evolves
+
+### Git Hooks for Code Quality
+
+- **Decision**: Implement Husky for pre-commit hooks
+- **Rationale**: Automatically enforce code quality standards before commits
+- **Impact**: Prevents commits with linting or formatting issues
+- **Consideration**: Balance between automation and developer friction
+
 ### Discord.js Version Strategy
 
 - **Decision**: Maintain v14+ compliance as the standard
 - **Rationale**: Latest stable version with active maintenance and modern features
-- **Impact**: Requires ongoing updates as Discord.js evolves
+- **Impact**: Requires ongoing updates as Discord.js evolves (now on v14.25.1)
 - **Consideration**: Balance between new features and stability
 
 ### Code Organization Strategy
@@ -140,8 +204,9 @@
 
 ### Code Style & Standards
 
-- **ESLint + Prettier**: Strictly enforced across codebase
-- **Async/Await**: Preferred for readability and error handling
+- **ESLint + Prettier**: Strictly enforced across codebase via Husky pre-commit hooks
+- **JSDoc Documentation**: Required for all command files with @fileoverview and type annotations
+- **Async/Await**: Preferred for readability and error handling (all functions use async)
 - **Error Messages**: User-friendly with clear actionable guidance
 - **Logging**: Structured Pino logging with contextual data
 - **Comments**: Focused on "why" rather than "what" code does
@@ -174,10 +239,12 @@
 
 ### Recent Discoveries
 
-- **v14+ Compatibility**: Full v14 compliance now achieved across all commands
+- **v14+ Compatibility**: Full v14 compliance now achieved across all commands (v14.25.1)
 - **Command Organization**: Nested folders improved navigation without breaking dynamic loading
+- **Permission Consolidation**: Subcommand pattern works well for related functionality
 - **Performance**: Database indexing provides significant gains for common query patterns
-- **Code Quality**: Consistent refactoring maintains high code standards
+- **Code Quality**: Husky hooks and JSDoc documentation maintain high standards
+- **Async Patterns**: All utility functions converted to async for consistency
 
 ### Technical Observations
 
@@ -189,9 +256,12 @@
 ### Codebase Health
 
 - **Strength**: Well-organized modular architecture
-- **Strength**: Comprehensive command coverage across all categories
+- **Strength**: Comprehensive command coverage across all categories (29 commands)
 - **Strength**: Complete memory bank documentation system
-- **Strength**: Modern JavaScript practices throughout
+- **Strength**: Modern JavaScript practices throughout with JSDoc documentation
+- **Strength**: Automated code quality enforcement via Husky
+- **Strength**: Consistent async/await patterns
+- **Strength**: Up-to-date dependencies (December 2025)
 - **Opportunity**: Test suite needs expansion
 - **Opportunity**: Edge case handling could be enhanced
 
