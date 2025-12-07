@@ -41,14 +41,6 @@ module.exports = {
       })
     }
 
-    // const data = await testGet();
-    // console.log(data);
-    // console.log(data.material);
-
-    // if (typeof data.progress !== 'undefined') {
-    // 	console.log('No Progress');
-    // }
-
     const { temp_nozzle, temp_bed, material, progress, print_dur, project_name, time_est } =
       await fetch(miniAPI).then((res) => res.json())
 
@@ -104,9 +96,3 @@ function secondsToDhms(seconds) {
   const sDisplay = s > 0 ? s + (s == 1 ? ' second' : ' seconds') : ''
   return dDisplay + hDisplay + mDisplay + sDisplay
 }
-
-// async function testGet() {
-// 	const response = await fetch(miniAPI);
-// 	const body = response.json();
-// 	return body;
-// }
