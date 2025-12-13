@@ -447,7 +447,7 @@
 - **Database Indexes**: 9 optimized indexes
 - **JSDoc Coverage**: 100% for commands
 - **Discord.js Version**: 14.25.1 (latest)
-- **Mongoose Version**: 9.0.0 (latest)
+- **Mongoose Version**: 9.0.1 (latest)
 - **Code Quality**: Automated enforcement via Husky
 
 ### Qualitative Metrics
