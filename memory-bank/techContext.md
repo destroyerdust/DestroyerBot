@@ -4,14 +4,15 @@
 
 ### Core Runtime
 
-- **Node.js**: Server-side JavaScript runtime
-- **Discord.js v14**: Official Discord API library for bot interactions
+- **Node.js**: Server-side JavaScript runtime (16.9.0+ required)
+- **Discord.js v14**: Official Discord API library for bot interactions (v14.25.1)
 - **PM2**: Process manager for production deployment and monitoring
+- **Bun**: Fast package manager and runtime for scripts
 
 ### Data Storage
 
 - **MongoDB**: NoSQL database for persistent data storage
-- **Mongoose**: ODM for MongoDB with schema validation and middleware
+- **Mongoose**: ODM for MongoDB with schema validation and middleware (v9.0.0)
 
 ### External APIs
 
@@ -24,10 +25,11 @@
 ### Development Tools
 
 - **Bun**: Package manager/runtime for dependency management and scripts
-- **ESLint**: Code linting and style enforcement
-- **Prettier**: Code formatting and consistency
-- **Pino**: Advanced logging library with structured output
-- **Pino-Pretty**: Development-friendly log formatting
+- **ESLint**: Code linting and style enforcement (v9.39.1)
+- **Prettier**: Code formatting and consistency (v3.7.3)
+- **Husky**: Git hooks for automated pre-commit checks (v9.1.7)
+- **Pino**: Advanced logging library with structured output (v10.1.0)
+- **Pino-Pretty**: Development-friendly log formatting (v13.1.2)
 
 ## Development Setup
 
@@ -91,16 +93,17 @@ bun stop
 
 ### Production Dependencies
 
-- `discord.js@^14.24.2`: Core Discord bot functionality
-- `mongoose@^8.19.2`: MongoDB object modeling
+- `discord.js@^14.25.1`: Core Discord bot functionality (updated November 30, 2025)
+- `mongoose@^9.0.0`: MongoDB object modeling (updated November 30, 2025)
 - `dotenv@^17.2.3`: Environment variable management
 - `@tcgdex/sdk@^2.7.1`: Pokemon TCG API client
 - `pino@^10.1.0`: Structured logging
 
 ### Development Dependencies
 
-- `eslint@^9.39.0`: Code linting
-- `prettier@^3.6.2`: Code formatting
+- `eslint@^9.39.1`: Code linting (updated November 30, 2025)
+- `prettier@^3.7.3`: Code formatting (updated November 30, 2025)
+- `husky@^9.1.7`: Git hooks for code quality automation
 - `pino-pretty@^13.1.2`: Development log formatting
 
 ## Tool Usage Patterns
@@ -109,7 +112,8 @@ bun stop
 
 - **ESLint**: Run automatically on file changes, fix issues with `bun run format`
 - **Prettier**: Format all code with `bun run format`, check with `bun run format:check`
-- **Git Hooks**: Pre-commit hooks ensure code quality before commits
+- **Husky**: Git hooks automatically enforce linting and formatting on pre-commit
+- **JSDoc**: All command files include comprehensive documentation with type annotations
 
 ### Logging Strategy
 
@@ -128,9 +132,12 @@ bun stop
 ### Command Architecture
 
 - **Modular Structure**: Commands organized by category in `/commands` directory
+- **Subcommand Pattern**: Related functionality grouped (e.g., `/permission` with list/set/remove/reset)
 - **Permission Checks**: Role-based access control for sensitive commands
 - **Error Handling**: Comprehensive error catching with user-friendly messages
 - **Autocomplete**: Dynamic command options where applicable
+- **JSDoc Documentation**: All commands include structured documentation
+- **Async/Await**: Consistent async patterns throughout
 
 ### Event Handling
 
