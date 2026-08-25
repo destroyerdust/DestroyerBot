@@ -191,7 +191,7 @@ An automated moderation logging system that tracks message activities in Discord
 
 ### Tools
 
-- **ESLint**: Code linting with `.eslintrc.json` configuration
+- **ESLint**: Code linting with `eslint.config.js` configuration
 - **Prettier**: Code formatting with `.prettierrc.json` configuration
 - **Pino**: Advanced logging library for better log management
 - **Husky**: Pre-commit hook runs `bun format` to enforce Prettier before commits (installed via the `prepare` script run during `bun install`; if the hook is missing, run `bun run prepare`)
